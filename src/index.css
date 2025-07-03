@@ -80,10 +80,11 @@ html.dark .react-calendar__tile--active sup {
 
 /* 라이트 모드에서 선택된 날짜의 윗첨자 색상 */
 .react-calendar__tile--active sup {
-	color: #ffffff; /* 흰색으로 설정하여 대비를 높임 */
+  color: #2D3142; /* dark-navy로 설정하여 대비를 높임 */
 }
 
 /* 다크 모드에서 다른 월의 날짜 색상 */
 html.dark .react-calendar__tile--other-month {
-	color: #5a5c5e; /* dark-gray */
+  color: #A1A6B2; /* light-gray */
+  opacity: 0.5; /* 옅게 보이도록 투명도 조절 */
 }

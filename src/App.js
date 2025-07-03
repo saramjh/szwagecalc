@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import CalendarView from "./components/CalendarView"
 import HourlyRateSettingModal from "./components/HourlyRateSettingModal"
 import HamburgerMenu from "./components/HamburgerMenu" // HamburgerMenu 임포트
 import { supabase } from "./supabaseClient"
 import moment from "moment"
+
+// This is a dummy comment to trigger a new commit
 
 function App() {
 	const [hourlyRate, setHourlyRate] = useState(10000) // Default hourly rate

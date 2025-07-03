@@ -126,18 +126,17 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, onSave, hourlyRate, s
 				endMoment.add(1, "day") // 일단 다음 날로 간주하여 시간 차이 계산
 			}
 
-			const duration = moment.duration(endMoment.diff(startMoment))
-			const hours = duration.asHours()
+			      const duration = moment.duration(endMoment.diff(startMoment));
+      const hours = duration.asHours();
 
-			if (hours < 0) {
-				// 계산된 시간이 음수이면 유효하지 않은 입력
-				setTimeError(true)
-				setDailyWage(0) // 오류 시 일급 0
-				alert("퇴근 시간은 출근 시간보다 빠를 수 없습니다.") // 즉시 경고
-				return // 계산 중단
-			} else {
-				setTimeError(false)
-			}
+      if (hours < 0) { // 계산된 시간이 음수이면 유효하지 않은 입력
+        setTimeError(true);
+        setDailyWage(0); // 오류 시 일급 0
+        alert('퇴근 시간은 출근 시간보다 빠를 수 없습니다.'); // 즉시 경고
+        return; // 계산 중단
+      } else {
+        setTimeError(false);
+      }
 
 			const calculatedWage = Math.floor(hours * hourlyRateForDate + Number(mealAllowance)) // 소수점 제거
 			setDailyWage(calculatedWage)
