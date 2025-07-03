@@ -2,6 +2,7 @@
   "name": "szwagecalc",
   "version": "0.1.0",
   "private": true,
+  "homepage": "http://saramjh.github.io/szwagecalc",
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
     "@testing-library/dom": "^10.4.0",
