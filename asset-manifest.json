@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/szwagecalc/static/css/main.d092833d.css",
+    "main.js": "/szwagecalc/static/js/main.4730c91d.js",
+    "index.html": "/szwagecalc/index.html",
+    "main.d092833d.css.map": "/szwagecalc/static/css/main.d092833d.css.map",
+    "main.4730c91d.js.map": "/szwagecalc/static/js/main.4730c91d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d092833d.css",
+    "static/js/main.4730c91d.js"
+  ]
+}
