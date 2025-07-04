@@ -2,7 +2,7 @@
   "name": "szwagecalc",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://saramjh.github.io/szwagecalc",
+  "homepage": ".",
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
     "@testing-library/dom": "^10.4.0",
@@ -14,6 +14,7 @@
     "postcss": "^8.4.23",
     "react": "^19.1.0",
     "react-calendar": "^6.0.0",
+    "react-datepicker": "^8.4.0",
     "react-dom": "^19.1.0",
     "react-scripts": "^5.0.1",
     "tailwindcss": "^3.3.2",
@@ -24,7 +25,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "tailwind:init": "npx tailwindcss init -p"
+    "tailwind:init": "npx tailwindcss init -p",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -43,5 +46,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }

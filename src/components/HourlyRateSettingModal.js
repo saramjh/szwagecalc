@@ -1,25 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import moment from 'moment';
 
-const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, currentHourlyRate }) => {
-  const [hourlyRate, setHourlyRate] = useState(currentHourlyRate);
+const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jobs }) => {
+  const [hourlyRate, setHourlyRate] = useState(0);
+  const [selectedJobId, setSelectedJobId] = useState(null);
+  const [effectiveDate, setEffectiveDate] = useState(moment().format('YYYY-MM-DD'));
+
+  const [showModal, setShowModal] = useState(false); // 모달의 실제 렌더링 여부
+  const [animateModal, setAnimateModal] = useState(false); // 애니메이션 클래스 적용 여부
 
   useEffect(() => {
-    setHourlyRate(currentHourlyRate);
-  }, [currentHourlyRate]);
+    if (isOpen) {
+      setShowModal(true); // 모달을 DOM에 렌더링 시작
+      setTimeout(() => setAnimateModal(true), 10); // 약간의 지연 후 애니메이션 시작
+    } else {
+      setAnimateModal(false); // 애니메이션 역재생 시작
+      setTimeout(() => setShowModal(false), 300); // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
+    }
+  }, [isOpen]);
 
-  const handleSave = async () => {
-    // Supabase에 시급 저장 (예: settings 테이블)
-    // 여기서는 간단히 onSaveHourlyRate 콜백으로 전달
-    onSaveHourlyRate(hourlyRate);
+  useEffect(() => {
+    const fetchCurrentHourlyRate = async () => {
+      if (!session || !selectedJobId) return;
+
+      const { data, error } = await supabase
+        .from('hourly_rate_history')
+        .select('hourly_rate, effective_date')
+        .eq('user_id', session.user.id)
+        .eq('job_id', selectedJobId)
+        .order('effective_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching current hourly rate:', error);
+        setHourlyRate(0);
+        setEffectiveDate(moment().format('YYYY-MM-DD'));
+      } else if (data) {
+        setHourlyRate(data.hourly_rate);
+        setEffectiveDate(data.effective_date);
+      } else {
+        setHourlyRate(0);
+        setEffectiveDate(moment().format('YYYY-MM-DD'));
+      }
+    };
+
+    if (isOpen && session && selectedJobId) {
+      fetchCurrentHourlyRate();
+    }
+  }, [isOpen, session, selectedJobId]);
+
+  useEffect(() => {
+    if (isOpen && jobs.length > 0 && !selectedJobId) {
+      setSelectedJobId(jobs[0].id);
+    }
+    if (!isOpen) {
+      setSelectedJobId(null);
+      setEffectiveDate(moment().format('YYYY-MM-DD'));
+    }
+  }, [isOpen, jobs]);
+
+  const handleSave = () => {
+    if (!session || !selectedJobId) return;
+    onSaveHourlyRate(selectedJobId, hourlyRate, effectiveDate);
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-all duration-300 ease-out">
-      <div className="bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-6 w-full max-w-md mx-4">
+    <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-6 w-full max-w-md mx-4 transform transition-all duration-300 ease-out ${animateModal ? 'translate-y-0' : 'translate-y-10'}`}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-dark-navy dark:text-white">시급 설정</h2>
           <button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
@@ -28,6 +80,35 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, currentHour
         </div>
 
         <div className="space-y-4">
+          <div>
+            <label htmlFor="jobSelect" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
+              직업 선택
+            </label>
+            <select
+              id="jobSelect"
+              value={selectedJobId || ''}
+              onChange={(e) => setSelectedJobId(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+            >
+              {jobs.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {job.job_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="effectiveDate" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
+              언제부터 적용되는 시급인가요?
+            </label>
+            <input
+              type="date"
+              id="effectiveDate"
+              value={effectiveDate}
+              onChange={(e) => setEffectiveDate(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+            />
+          </div>
           <div>
             <label htmlFor="hourlyRate" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
               시급 (원)

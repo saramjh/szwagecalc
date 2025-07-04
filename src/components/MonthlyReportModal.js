@@ -1,69 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import moment from 'moment';
 import { supabase } from '../supabaseClient';
 
-const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, hourlyRate, session }) => {
+const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) => {
   const [monthlyRecords, setMonthlyRecords] = useState([]);
   const [totalWorkHours, setTotalWorkHours] = useState(0);
   const [totalMealAllowance, setTotalMealAllowance] = useState(0);
   const [totalGrossIncome, setTotalGrossIncome] = useState(0);
+  const [selectedJobFilterId, setSelectedJobFilterId] = useState('all'); // 선택된 직업 필터 ID 상태 ('all' 또는 job.id)
+
+  const [showModal, setShowModal] = useState(false); // 모달의 실제 렌더링 여부
+  const [animateModal, setAnimateModal] = useState(false); // 애니메이션 클래스 적용 여부
 
   useEffect(() => {
-    if (isOpen && selectedMonth && session) {
-      fetchMonthlyRecords();
-    }
-  }, [isOpen, selectedMonth, hourlyRate, session]);
-
-  const fetchMonthlyRecords = async () => {
-    if (!session) return;
-
-    const startOfMonth = moment(selectedMonth).startOf('month').format('YYYY-MM-DD');
-    const endOfMonth = moment(selectedMonth).endOf('month').format('YYYY-MM-DD');
-
-    const { data, error } = await supabase
-      .from('work_records')
-      .select('*')
-      .gte('date', startOfMonth)
-      .lte('date', endOfMonth)
-      .eq('user_id', session.user.id) // 사용자 ID로 필터링
-      .order('date', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching monthly work records:', error);
+    if (isOpen) {
+      setShowModal(true); // 모달을 DOM에 렌더링 시작
+      setTimeout(() => setAnimateModal(true), 10); // 약간의 지연 후 애니메이션 시작
     } else {
-      // 각 기록에 해당하는 시급을 가져와서 계산
-      const recordsWithHourlyRate = await Promise.all(data.map(async (record) => {
-        const { data: rateData, error: rateError } = await supabase
-          .from('hourly_rate_history')
-          .select('hourly_rate')
-          .eq('user_id', session.user.id)
-          .lte('effective_date', record.date)
-          .or(`end_date.gte.${record.date},end_date.is.null`)
-          .order('effective_date', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (rateError && rateError.code !== 'PGRST116') {
-          console.error(`Error fetching hourly rate for ${record.date}:`, rateError);
-          return { ...record, hourly_rate_for_date: 0 }; // 오류 발생 시 0으로 처리
-        } else if (rateData) {
-          return { ...record, hourly_rate_for_date: rateData.hourly_rate };
-        } else {
-          return { ...record, hourly_rate_for_date: 0 }; // 시급 정보가 없으면 0으로 처리
-        }
-      }));
-
-      setMonthlyRecords(recordsWithHourlyRate);
-      calculateMonthlySummary(recordsWithHourlyRate);
+      setAnimateModal(false); // 애니메이션 역재생 시작
+      setTimeout(() => setShowModal(false), 300); // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
     }
-  };
+  }, [isOpen]);
 
-  const calculateMonthlySummary = (records) => {
-    let hours = 0;
-    let meal = 0;
-    let income = 0;
+  const calculateMonthlySummary = useCallback((records) => {
+    let totalIncome = 0;
+    let totalHours = 0;
+    let totalMeal = 0;
 
     records.forEach(record => {
+      totalIncome += record.daily_wage || 0;
+      totalMeal += record.meal_allowance || 0;
+
       if (record.start_time && record.end_time) {
         const start = moment(record.start_time, 'HH:mm');
         const end = moment(record.end_time, 'HH:mm');
@@ -71,24 +38,54 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, hourlyRate, sessio
         if (end.isBefore(start)) {
           duration = moment.duration(end.add(1, 'day').diff(start));
         }
-        hours += duration.asHours();
+        totalHours += duration.asHours();
       }
-      meal += record.meal_allowance || 0;
-      // Recalculate daily wage based on hourly_rate_for_date
-      const dailyCalculatedWage = Math.floor((record.hourly_rate_for_date * (record.end_time && record.start_time ? moment.duration(moment(record.end_time, 'HH:mm').diff(moment(record.start_time, 'HH:mm'))).asHours() : 0)) + Number(record.meal_allowance || 0));
-      income += dailyCalculatedWage;
     });
 
-    setTotalWorkHours(hours);
-    setTotalMealAllowance(meal);
-    setTotalGrossIncome(income);
-  };
+    setTotalGrossIncome(totalIncome);
+    setTotalWorkHours(totalHours);
+    setTotalMealAllowance(totalMeal);
+  }, []);
 
-  if (!isOpen) return null;
+  const fetchMonthlyRecords = useCallback(async () => {
+    if (!session) return;
+
+    const startOfMonth = moment(selectedMonth).startOf('month').format('YYYY-MM-DD');
+    const endOfMonth = moment(selectedMonth).endOf('month').format('YYYY-MM-DD');
+
+    let query = supabase
+      .from('work_records')
+      .select('*, jobs(job_name)')
+      .eq('user_id', session.user.id)
+      .gte('date', startOfMonth)
+      .lte('date', endOfMonth);
+
+    if (selectedJobFilterId !== 'all') {
+      query = query.eq('job_id', selectedJobFilterId);
+    }
+
+    const { data, error } = await query.order('date', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching monthly work records:', error);
+      setMonthlyRecords([]);
+    } else {
+      setMonthlyRecords(data || []);
+      calculateMonthlySummary(data || []);
+    }
+  }, [session, selectedMonth, selectedJobFilterId, calculateMonthlySummary]);
+
+  useEffect(() => {
+    if (isOpen && selectedMonth && session) {
+      fetchMonthlyRecords();
+    }
+  }, [isOpen, selectedMonth, session, fetchMonthlyRecords]);
+
+  if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-all duration-300 ease-out">
-      <div className="bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-6 w-full max-w-md mx-4">
+    <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-6 w-full max-w-md mx-4 transform transition-all duration-300 ease-out ${animateModal ? 'translate-y-0' : 'translate-y-10'}`}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-dark-navy dark:text-white">
             {moment(selectedMonth).format('YYYY년 M월')} 월급 보고서
@@ -96,6 +93,23 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, hourlyRate, sessio
           <button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
             &times;
           </button>
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="jobFilter" className="block text-sm font-medium text-medium-gray dark:text-light-gray mb-1">
+            직업 필터
+          </label>
+          <select
+            id="jobFilter"
+            value={selectedJobFilterId}
+            onChange={(e) => setSelectedJobFilterId(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+          >
+            <option value="all">모든 직업</option>
+            {jobs.map(job => (
+              <option key={job.id} value={job.id}>{job.job_name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-2 mb-6">
@@ -119,6 +133,9 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, hourlyRate, sessio
               <div key={record.id} className="border-b border-gray-100 py-2 last:border-b-0 shadow-md bg-cream-white dark:bg-charcoal-gray">
                 <p className="text-sm text-dark-navy dark:text-white font-medium">
                   {moment(record.date).format('M월 D일 (ddd)')}
+                  {record.jobs && record.jobs.job_name && (
+                    <span className="ml-2 text-xs text-mint-green">({record.jobs.job_name})</span>
+                  )}
                 </p>
                 <p className="text-xs text-medium-gray dark:text-light-gray ml-2">
                   근무: {record.start_time || ''} ~ {record.end_time || ''} ({
@@ -131,9 +148,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, hourlyRate, sessio
                   식대: {record.meal_allowance.toLocaleString()}원
                 </p>
                 <p className="text-sm text-dark-navy dark:text-white ml-2 font-semibold">
-                  일급: {Math.floor((
-                    (record.hourly_rate_for_date * (record.end_time && record.start_time ? moment.duration(moment(record.end_time, 'HH:mm').diff(moment(record.start_time, 'HH:mm'))).asHours() : 0)) + Number(record.meal_allowance || 0)
-                  )).toLocaleString()}원
+                  일급: {(record.daily_wage || 0).toLocaleString()}원
                 </p>
               </div>
             ))
