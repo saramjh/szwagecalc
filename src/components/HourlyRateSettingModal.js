@@ -107,8 +107,8 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
           </div>
           <div>
             <label htmlFor="effectiveDate" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
-              언제부터 적용되는 시급인가요?
-            </label>
+                적용 시작일
+              </label>
             <input
               type="date"
               id="effectiveDate"

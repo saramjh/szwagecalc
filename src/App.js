@@ -5,18 +5,19 @@ import HamburgerMenu from "./components/HamburgerMenu" // HamburgerMenu 임포�
 import JobManagementModal from "./components/JobManagementModal" // JobManagementModal 임포트
 import { supabase } from "./supabaseClient"
 import moment from "moment"
-import { ToastProvider } from "./contexts/ToastContext"
-import { ConfirmProvider } from "./contexts/ConfirmContext"
+import { ToastProvider, useToast } from "./contexts/ToastContext";
+import { ConfirmProvider } from "./contexts/ConfirmContext";
 
 // This is a dummy comment to trigger a new commit
 
-function App() {
+const AppContent = () => {
 	const [isHourlyRateModalOpen, setIsHourlyRateModalOpen] = useState(false)
 	const [isJobManagementModalOpen, setIsJobManagementModalOpen] = useState(false) // 직업 관리 모달 상태 추가
 	const [session, setSession] = useState(null)
 	const [username, setUsername] = useState(null) // username 상태 추가
 	const [jobs, setJobs] = useState([]) // 직업 목록 상태 추가
 	const [deferredPrompt, setDeferredPrompt] = useState(null) // PWA 설치 프롬프트 상태
+	const showToast = useToast()
 
 	const fetchProfile = useCallback(async () => {
 		if (!session) return
@@ -166,9 +167,10 @@ function App() {
 
 		if (insertError) {
 			console.error("Error inserting new hourly rate:", insertError)
-						alert(`시급 저장 중 오류가 발생했습니다.`);
+			showToast("저장하지 못했어요", "error")
 		} else {
 			console.log("New hourly rate saved successfully.")
+			showToast("시급을 저장했어요", "success")
 			fetchJobs() // 시급 저장 후 직업 목록을 다시 가져와 최신 시급 정보 반영
 		}
 	}
@@ -199,67 +201,75 @@ function App() {
 	};
 
 	return (
-		<ToastProvider>
-			<ConfirmProvider>
-				<div className="App bg-cream-white dark:bg-deep-navy min-h-screen flex flex-col items-center justify-center p-4">
-					{session && (
-						<div className="absolute top-4 left-4 z-50 flex items-center space-x-2 cursor-pointer" onClick={handleGoHome}>
-							<img src={process.env.PUBLIC_URL + "/logo192.png"} alt="시급이요 로고" className="w-8 h-8" />
-							<h1 className="text-dark-navy dark:text-white text-xl font-bold">시급이요</h1>
-						</div>
-					)}
-					{!session ? (
-						<div className="flex flex-col items-center bg-cream-white dark:bg-charcoal-gray p-8 rounded-xl shadow-2xl max-w-md mx-auto my-8">
-							<h1 className="text-dark-navy dark:text-white text-4xl font-bold mb-6 flex items-center justify-center">
-								<span role="img" aria-label="money bag" className="mr-2 text-3xl">
-									💰
-								</span>
-								시급이요
-								<span role="img" aria-label="clock" className="ml-2 text-3xl">
-									⏰{" "}
-								</span>
-							</h1>
-							<p className="bg-gradient-to-r from-mint-green to-lemon-yellow text-white p-6 rounded-xl shadow-lg text-xl font-semibold mb-4 text-center flex flex-col items-center gap-2 bg-200% animate-gradient-flow">
-								<span>내 시급</span>
-								<span>내 근무 기록</span>
-								<span>내 수입을 한눈에! ⏰</span>
-							</p>
-
-							<button
-								onClick={handleGoogleLogin}
-								className="px-6 py-3 bg-mint-green text-white rounded-lg text-lg font-semibold shadow-md
-												hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 mt-10">
-								Google 로그인
-							</button>
-							<p className="text-light-gray dark:text-white text-xs mt-4 text-center">로그인하여 개인화된 서비스를 이용하세요.</p>
-						</div>
-					) : (
-						<>
-							<CalendarView onOpenHourlyRateModal={() => setIsHourlyRateModalOpen(true)} session={session} jobs={jobs} />
-							<HourlyRateSettingModal
-								isOpen={isHourlyRateModalOpen}
-								onClose={() => {
-									setIsHourlyRateModalOpen(false)
-									fetchHourlyRate() // 모달이 닫힐 때 시급 정보를 다시 가져옴
-									fetchJobs() // 직업 정보도 다시 가져올 수 있음 (필요 시)
-								}}
-								onSaveHourlyRate={saveHourlyRate}
-								session={session}
-								jobs={jobs}
-								fetchJobs={fetchJobs}
-							/>
-							<JobManagementModal isOpen={isJobManagementModalOpen} onClose={() => setIsJobManagementModalOpen(false)} session={session} jobs={jobs} fetchJobs={fetchJobs} />
-						</>
-					)}
-				</div>
+		<>
+			<div className="App bg-cream-white dark:bg-deep-navy min-h-screen flex flex-col items-center justify-center p-4">
 				{session && (
-					<div className="absolute top-4 right-4 z-50">
-						<HamburgerMenu session={session} onLogout={handleLogout} username={username} onOpenJobManagementModal={() => setIsJobManagementModalOpen(true)} deferredPrompt={deferredPrompt} onInstallPWA={handleInstallPWA} />
+					<div className="absolute top-4 left-4 z-50 flex items-center space-x-2 cursor-pointer" onClick={handleGoHome}>
+						<img src={process.env.PUBLIC_URL + "/logo192.png"} alt="시급이요 로고" className="w-8 h-8" />
+						<h1 className="text-dark-navy dark:text-white text-xl font-bold">시급이요</h1>
 					</div>
 				)}
-			</ConfirmProvider>
-		</ToastProvider>
+				{!session ? (
+					<div className="flex flex-col items-center bg-cream-white dark:bg-charcoal-gray p-8 rounded-xl shadow-2xl max-w-md mx-auto my-8">
+						<h1 className="text-dark-navy dark:text-white text-4xl font-bold mb-6 flex items-center justify-center">
+							<span role="img" aria-label="money bag" className="mr-2 text-3xl">
+								💰
+							</span>
+							시급이요
+							<span role="img" aria-label="clock" className="ml-2 text-3xl">
+								⏰{" "}
+							</span>
+						</h1>
+						<p className="bg-gradient-to-r from-mint-green to-lemon-yellow text-white p-6 rounded-xl shadow-lg text-xl font-semibold mb-4 text-center flex flex-col items-center gap-2 bg-200% animate-gradient-flow">
+							<span>내 시급</span>
+							<span>내 근무 기록</span>
+							<span>내 수입을 한눈에! ⏰</span>
+						</p>
+
+						<button
+							onClick={handleGoogleLogin}
+							className="px-6 py-3 bg-mint-green text-white rounded-lg text-lg font-semibold shadow-md
+										hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 mt-10">
+							Google 로그인
+						</button>
+						<p className="text-light-gray dark:text-white text-xs mt-4 text-center">로그인하여 개인화된 서비스를 이용하세요.</p>
+					</div>
+				) : (
+					<>
+						<CalendarView onOpenHourlyRateModal={() => setIsHourlyRateModalOpen(true)} session={session} jobs={jobs} />
+						<HourlyRateSettingModal
+							isOpen={isHourlyRateModalOpen}
+							onClose={() => {
+								setIsHourlyRateModalOpen(false)
+								fetchHourlyRate() // 모달이 닫힐 때 시급 정보를 다시 가져옴
+								fetchJobs() // 직업 정보도 다시 가져올 수 있음 (필요 시)
+							}}
+							onSaveHourlyRate={saveHourlyRate}
+							session={session}
+							jobs={jobs}
+							fetchJobs={fetchJobs}
+						/>
+						<JobManagementModal isOpen={isJobManagementModalOpen} onClose={() => setIsJobManagementModalOpen(false)} session={session} jobs={jobs} fetchJobs={fetchJobs} />
+					</>
+				)}
+			</div>
+			{session && (
+				<div className="absolute top-4 right-4 z-50">
+					<HamburgerMenu session={session} onLogout={handleLogout} username={username} onOpenJobManagementModal={() => setIsJobManagementModalOpen(true)} deferredPrompt={deferredPrompt} onInstallPWA={handleInstallPWA} />
+				</div>
+			)}
+		</>
 	)
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <ConfirmProvider>
+        <AppContent />
+      </ConfirmProvider>
+    </ToastProvider>
+  )
 }
 
 export default App

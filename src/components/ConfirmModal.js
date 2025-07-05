@@ -34,13 +34,13 @@ const ConfirmModal = ({ message, onConfirm, onCancel }) => {
             onClick={onCancel}
             className="px-5 py-2 bg-medium-gray text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105"
           >
-            취소
+            아니요
           </button>
           <button
             onClick={onConfirm}
             className="px-5 py-2 bg-mint-green text-white rounded-lg hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105"
           >
-            확인
+            네
           </button>
         </div>
       </div>

@@ -3,8 +3,8 @@ import moment from "moment"
 import { supabase } from "../supabaseClient" // Supabase 클라이언트 임포트
 import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
-import DatePicker from 'react-datepicker'
-import 'react-datepicker/dist/react-datepicker.css'
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 
 const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, recordToEdit }) => {
 	const showToast = useToast()
@@ -39,105 +39,105 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		if (isOpen) {
 			setShowModal(true) // 모달을 DOM에 렌더링 시작
 			setTimeout(() => setAnimateModal(true), 10) // 약간의 지연 후 애니메이션 시작
-			document.body.classList.add('modal-open'); // 모달이 열릴 때 body 스크롤 잠금
+			document.body.classList.add("modal-open") // 모달이 열릴 때 body 스크롤 잠금
 			if (recordToEdit) {
-				setRecordId(recordToEdit.id);
-				setSelectedJobId(recordToEdit.job_id);
-				setStartTime(recordToEdit.start_time);
-				setEndTime(recordToEdit.end_time);
-				setMealAllowance(recordToEdit.meal_allowance);
-				setNotes(recordToEdit.notes);
-				setDailyWage(recordToEdit.daily_wage);
+				setRecordId(recordToEdit.id)
+				setSelectedJobId(recordToEdit.job_id)
+				setStartTime(recordToEdit.start_time)
+				setEndTime(recordToEdit.end_time)
+				setMealAllowance(recordToEdit.meal_allowance)
+				setNotes(recordToEdit.notes)
+				setDailyWage(recordToEdit.daily_wage)
 			} else {
-				resetForm();
+				resetForm()
 			}
 		} else {
 			setAnimateModal(false) // 애니메이션 역재생 시작
 			setTimeout(() => setShowModal(false), 300) // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
-			document.body.classList.remove('modal-open'); // 모달이 닫힐 때 body 스크롤 잠금 해제
-			resetForm();
+			document.body.classList.remove("modal-open") // 모달이 닫힐 때 body 스크롤 잠금 해제
+			resetForm()
 		}
-	}, [isOpen, recordToEdit, resetForm]);
+	}, [isOpen, recordToEdit, resetForm])
 
 	// 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
 	useEffect(() => {
 		return () => {
-			document.body.classList.remove('modal-open');
-		};
-	}, []);
+			document.body.classList.remove("modal-open")
+		}
+	}, [])
 
 	// 선택된 직업 또는 날짜가 변경될 때 해당 시점의 시급을 가져오는 useEffect
 	useEffect(() => {
 		const fetchHourlyRateForDate = async () => {
 			if (!session || !selectedJobId || !selectedDate) {
-				setHourlyRateForDate(0);
-				return;
+				setHourlyRateForDate(0)
+				return
 			}
 
 			const { data, error } = await supabase
-				.from('hourly_rate_history')
-				.select('hourly_rate')
-				.eq('user_id', session.user.id)
-				.eq('job_id', selectedJobId)
-				.lte('effective_date', moment(selectedDate).format('YYYY-MM-DD'))
-				.or(`end_date.gte.${moment(selectedDate).format('YYYY-MM-DD')},end_date.is.null`)
-				.order('effective_date', { ascending: false })
-				.limit(1);
+				.from("hourly_rate_history")
+				.select("hourly_rate")
+				.eq("user_id", session.user.id)
+				.eq("job_id", selectedJobId)
+				.lte("effective_date", moment(selectedDate).format("YYYY-MM-DD"))
+				.or(`end_date.gte.${moment(selectedDate).format("YYYY-MM-DD")},end_date.is.null`)
+				.order("effective_date", { ascending: false })
+				.limit(1)
 
 			if (error) {
-				console.error('Error fetching hourly rate for date:', error);
-				setHourlyRateForDate(0);
+				console.error("Error fetching hourly rate for date:", error)
+				setHourlyRateForDate(0)
 			} else if (data && data.length > 0) {
-				setHourlyRateForDate(data[0].hourly_rate);
+				setHourlyRateForDate(data[0].hourly_rate)
 			} else {
-				setHourlyRateForDate(0);
+				setHourlyRateForDate(0)
 			}
-		};
+		}
 
-		fetchHourlyRateForDate();
-	}, [session, selectedJobId, selectedDate]);
+		fetchHourlyRateForDate()
+	}, [session, selectedJobId, selectedDate])
 
 	// 시간 또는 시급이 변경될 때 일급을 계산하는 useEffect
 	useEffect(() => {
 		if (startTime && endTime && hourlyRateForDate !== 0) {
-			const startMoment = moment(startTime, "HH:mm");
-			const endMoment = moment(endTime, "HH:mm");
+			const startMoment = moment(startTime, "HH:mm")
+			const endMoment = moment(endTime, "HH:mm")
 
 			if (endMoment.isBefore(startMoment)) {
-				setTimeError(true);
-				setDailyWage(0);
-				return;
+				setTimeError(true)
+				setDailyWage(0)
+				return
 			}
-			setTimeError(false);
+			setTimeError(false)
 
-			const duration = moment.duration(endMoment.diff(startMoment));
-			const hours = duration.asHours();
-			const calculatedWage = Math.round(hours * hourlyRateForDate) + mealAllowance;
-			setDailyWage(calculatedWage);
+			const duration = moment.duration(endMoment.diff(startMoment))
+			const hours = duration.asHours()
+			const calculatedWage = Math.round(hours * hourlyRateForDate) + mealAllowance
+			setDailyWage(calculatedWage)
 		} else {
-			setDailyWage(0);
+			setDailyWage(0)
 		}
-	}, [startTime, endTime, hourlyRateForDate, mealAllowance]);
+	}, [startTime, endTime, hourlyRateForDate, mealAllowance])
 
 	const handleSave = async () => {
 		if (!session || !selectedJobId || !selectedDate || !startTime || !endTime) {
-			showToast("필수 항목을 모두 입력해주세요.", "error");
-			return;
+			showToast("시간을 입력해주세요.", "error")
+			return
 		}
 
 		// 시간 유효성 검사
-		const startMoment = moment(startTime, "HH:mm");
-		const endMoment = moment(endTime, "HH:mm");
+		const startMoment = moment(startTime, "HH:mm")
+		const endMoment = moment(endTime, "HH:mm")
 
 		if (endMoment.isBefore(startMoment)) {
-			showToast("퇴근 시간이 출근 시간보다 빠릅니다.", "error");
-			return;
+			showToast("퇴근 시간을 다시 확인해주세요.", "error")
+			return
 		}
 
 		// 일급 계산 (hourlyRateForDate 사용)
-		const duration = moment.duration(endMoment.diff(startMoment));
-		const hours = duration.asHours();
-		const calculatedDailyWage = Math.round(hours * hourlyRateForDate) + mealAllowance;
+		const duration = moment.duration(endMoment.diff(startMoment))
+		const hours = duration.asHours()
+		const calculatedDailyWage = Math.round(hours * hourlyRateForDate) + mealAllowance
 
 		const newRecord = {
 			user_id: session.user.id,
@@ -148,35 +148,35 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 			meal_allowance: mealAllowance,
 			notes: notes,
 			daily_wage: calculatedDailyWage,
-		};
+		}
 
 		try {
 			if (recordId) {
 				// 기존 기록 업데이트
-				const { error } = await supabase.from("work_records").update(newRecord).eq("id", recordId);
-				if (error) throw error;
-				showToast("근무 기록이 업데이트되었습니다.", "success");
+				const { error } = await supabase.from("work_records").update(newRecord).eq("id", recordId)
+				if (error) throw error
+				showToast("수정했어요", "success")
 			} else {
 				// 새 기록 삽입
-				const { error } = await supabase.from("work_records").insert([newRecord]);
-				if (error) throw error;
-				showToast("근무 기록이 저장되었습니다.", "success");
+				const { error } = await supabase.from("work_records").insert([newRecord])
+				if (error) throw error
+				showToast("저장했어요", "success")
 			}
-			onClose();
-			resetForm();
+			onClose()
+			resetForm()
 		} catch (error) {
-			console.error("근무 기록 저장 오류:", error);
-			showToast("근무 기록 저장 중 오류가 발생했습니다.", "error");
+			console.error("근무 기록 저장 오류:", error)
+			showToast("저장하지 못했어요", "error")
 		}
-	};
+	}
 
 	const handleDelete = async () => {
 		if (!recordId) {
-			showToast("삭제할 기록이 없습니다.", "error")
+			showToast("삭제할 기록이 없어요", "error")
 			return
 		}
 
-		showConfirm("근무 기록을 삭제하시겠습니까?", async () => {
+		showConfirm("정말 삭제하시겠어요?", async () => {
 			try {
 				const { error } = await supabase.from("work_records").delete().eq("id", recordId)
 
@@ -184,12 +184,12 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 					throw error
 				}
 
-				showToast("근무 기록이 삭제되었습니다.", "success")
+				showToast("삭제했어요", "success")
 				onClose() // 모달 닫기
 				resetForm() // 폼 초기화
 			} catch (error) {
 				console.error("근무 기록 삭제 오류:", error)
-				showToast("근무 기록 삭제 중 오류가 발생했습니다.", "error")
+				showToast("삭제하지 못했어요", "error")
 			}
 		})
 	}
@@ -197,8 +197,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 	if (!showModal) return null
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-xs px-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? 'translate-y-0' : 'translate-y-10'}`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-xs px-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0" : "translate-y-10"}`}>
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedDate).format("YYYY년 M월 D일 (ddd)")} 기록</h2>
 					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
@@ -268,9 +268,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							timeFormat="HH:mm"
 							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
 						/>
-						{timeError && (
-							<p className="text-coral-pink text-sm mt-1">퇴근 시간은 출근 시간보다 늦어야 합니다.</p>
-						)}
+						{timeError && <p className="text-coral-pink text-sm mt-1">퇴근 시간은 출근 시간보다 늦어야 해요.</p>}
 					</div>
 					<div>
 						<label htmlFor="mealAllowance" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
@@ -314,7 +312,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 						</button>
 						<button
 							onClick={resetForm}
-							className="w-full sm:w-auto px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition-all duration-200 
+							className="w-full sm:w-auto px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition-all duration-200 
      ease-in-out transform hover:scale-105">
 							초기화
 						</button>

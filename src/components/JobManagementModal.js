@@ -52,8 +52,10 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 
 			if (error) {
 				console.error("Error updating job:", error)
+				showToast("수정하지 못했어요", "error")
 			} else {
 				console.log("Job updated successfully:", newJobName)
+				showToast("직업 정보를 바꿨어요", "success")
 				setEditingJob(null)
 				fetchJobs() // App.js의 직업 목록 새로고침
 				onClose() // 모달 닫기
@@ -65,8 +67,10 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 
 			if (error) {
 				console.error("Error adding job:", error)
+				showToast("추가하지 못했어요", "error")
 			} else {
 				console.log("Job added successfully:", newJobName)
+				showToast("새로운 직업을 추가했어요", "success")
 				fetchJobs() // App.js의 직업 목록 새로고침
 				onClose() // 모달 닫기
 			}
@@ -79,16 +83,16 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 		if (!session) return
 
 		showConfirm(
-			"직업 및 관련 기록을 모두 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+			"정말 삭제하시겠어요? 관련 기록이 모두 사라져요.",
 			async () => {
 				const { error } = await supabase.rpc("delete_job_and_related_records", { job_id_to_delete: jobId })
 
 				if (error) {
 					console.error("Error deleting job and related records:", error)
-					showToast(`직업 삭제 중 오류가 발생했습니다.`, "error")
+					showToast(`삭제하지 못했어요`, "error")
 				} else {
 					console.log("Job and all related records deleted successfully:", jobId)
-					showToast("직업 및 관련 기록이 삭제되었습니다.", "success")
+					showToast("삭제했어요", "success")
 					fetchJobs() // 목록 새로고침
 					onClose() // 모달 닫기
 				}
