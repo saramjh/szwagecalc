@@ -6,6 +6,8 @@ const isLocalhost = Boolean(
 		window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
 )
 
+// 2025-07-05-2: Force cache refresh for serviceWorkerRegistration.js
+
 export function register(config) {
 	if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
 		// The URL constructor is available in all browsers that support SW.
@@ -17,7 +19,7 @@ export function register(config) {
 			return
 		}
 
-		window.addEventListener("load", () => {
+				window.addEventListener("load", () => {
 			const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`
 
 			if (isLocalhost) {
@@ -27,7 +29,7 @@ export function register(config) {
 				// Add some additional logging to localhost, pointing developers to the
 				// service worker/PWA documentation.
 				navigator.serviceWorker.ready.then(() => {
-					console.log("This web app is being served cache-first by a service " + "worker. To learn more, visit https://cra.link/PWA")
+					console.log("This web app is being served cache-first by a service worker. To learn more, visit https://cra.link/PWA")
 				})
 			} else {
 				// Is not localhost. Just register service worker
@@ -52,7 +54,7 @@ function registerValidSW(swUrl, config) {
 							// At this point, the updated precached content has been fetched,
 							// but the previous service worker will still serve the older
 							// content until all client tabs are closed.
-							console.log("New content is available and will be used when all " + "tabs for this page are closed. See https://cra.link/PWA.")
+							console.log("New content is available and will be used when all tabs for this page are closed. See https://cra.link/PWA.")
 
 							// Execute callback
 							if (config && config.onUpdate) {

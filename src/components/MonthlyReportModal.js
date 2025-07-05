@@ -16,11 +16,20 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
     if (isOpen) {
       setShowModal(true); // 모달을 DOM에 렌더링 시작
       setTimeout(() => setAnimateModal(true), 10); // 약간의 지연 후 애니메이션 시작
+      document.body.classList.add('modal-open'); // 모달이 열릴 때 body 스크롤 잠금
     } else {
       setAnimateModal(false); // 애니메이션 역재생 시작
       setTimeout(() => setShowModal(false), 300); // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
+      document.body.classList.remove('modal-open'); // 모달이 닫힐 때 body 스크롤 잠금 해제
     }
   }, [isOpen]);
+
+  // 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
 
   const calculateMonthlySummary = useCallback((records) => {
     let totalIncome = 0;
@@ -85,8 +94,8 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 
   return (
     <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-      <div className={`bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-6 w-full max-w-md mx-4 transform transition-all duration-300 ease-out ${animateModal ? 'translate-y-0' : 'translate-y-10'}`}>
-        <div className="flex justify-between items-center mb-4">
+			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-6 w-full max-w-xs mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? 'translate-y-0' : 'translate-y-10'}`}>
+				<div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-dark-navy dark:text-white">
             {moment(selectedMonth).format('YYYY년 M월')} 월급 보고서
           </h2>
@@ -119,7 +128,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
           <p className="text-dark-navy dark:text-white">
             <span className="font-semibold">총 식대:</span> {totalMealAllowance.toLocaleString()}원
           </p>
-          <p className="text-3xl font-bold text-mint-green">
+          <p className="text-2xl font-bold text-mint-green">
             총 수입: {totalGrossIncome.toLocaleString()}원
           </p>
         </div>

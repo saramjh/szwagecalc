@@ -8,11 +8,20 @@ const ConfirmModal = ({ message, onConfirm, onCancel }) => {
     if (message) { // message가 있을 때 모달을 띄움
       setShowModal(true); // 모달을 DOM에 렌더링 시작
       setTimeout(() => setAnimateModal(true), 10); // 약간의 지연 후 애니메이션 시작
+      document.body.classList.add('modal-open'); // 모달이 열릴 때 body 스크롤 잠금
     } else {
       setAnimateModal(false); // 애니메이션 역재생 시작
       setTimeout(() => setShowModal(false), 300); // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
+      document.body.classList.remove('modal-open'); // 모달이 닫힐 때 body 스크롤 잠금 해제
     }
   }, [message]);
+
+  // 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
 
   if (!showModal) return null;
 

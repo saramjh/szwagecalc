@@ -39,6 +39,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		if (isOpen) {
 			setShowModal(true) // 모달을 DOM에 렌더링 시작
 			setTimeout(() => setAnimateModal(true), 10) // 약간의 지연 후 애니메이션 시작
+			document.body.classList.add('modal-open'); // 모달이 열릴 때 body 스크롤 잠금
 			if (recordToEdit) {
 				setRecordId(recordToEdit.id);
 				setSelectedJobId(recordToEdit.job_id);
@@ -53,9 +54,17 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		} else {
 			setAnimateModal(false) // 애니메이션 역재생 시작
 			setTimeout(() => setShowModal(false), 300) // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
+			document.body.classList.remove('modal-open'); // 모달이 닫힐 때 body 스크롤 잠금 해제
 			resetForm();
 		}
 	}, [isOpen, recordToEdit, resetForm]);
+
+	// 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
+	useEffect(() => {
+		return () => {
+			document.body.classList.remove('modal-open');
+		};
+	}, []);
 
 	// 선택된 직업 또는 날짜가 변경될 때 해당 시점의 시급을 가져오는 useEffect
 	useEffect(() => {
@@ -103,16 +112,16 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 
 			const duration = moment.duration(endMoment.diff(startMoment));
 			const hours = duration.asHours();
-			const calculatedWage = Math.round(hours * hourlyRateForDate);
+			const calculatedWage = Math.round(hours * hourlyRateForDate) + mealAllowance;
 			setDailyWage(calculatedWage);
 		} else {
 			setDailyWage(0);
 		}
-	}, [startTime, endTime, hourlyRateForDate]);
+	}, [startTime, endTime, hourlyRateForDate, mealAllowance]);
 
 	const handleSave = async () => {
 		if (!session || !selectedJobId || !selectedDate || !startTime || !endTime) {
-			showToast("모든 필수 항목을 입력해주세요 (직업, 날짜, 출퇴근 시간).", "error");
+			showToast("필수 항목을 모두 입력해주세요.", "error");
 			return;
 		}
 
@@ -121,7 +130,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		const endMoment = moment(endTime, "HH:mm");
 
 		if (endMoment.isBefore(startMoment)) {
-			showToast("퇴근 시간은 출근 시간보다 늦어야 합니다.", "error");
+			showToast("퇴근 시간이 출근 시간보다 빠릅니다.", "error");
 			return;
 		}
 
@@ -146,51 +155,50 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				// 기존 기록 업데이트
 				const { error } = await supabase.from("work_records").update(newRecord).eq("id", recordId);
 				if (error) throw error;
-				showToast("근무 기록이 성공적으로 업데이트되었습니다.", "success");
+				showToast("근무 기록이 업데이트되었습니다.", "success");
 			} else {
 				// 새 기록 삽입
 				const { error } = await supabase.from("work_records").insert([newRecord]);
 				if (error) throw error;
-				showToast("근무 기록이 성공적으로 저장되었습니다.", "success");
+				showToast("근무 기록이 저장되었습니다.", "success");
 			}
 			onClose();
 			resetForm();
 		} catch (error) {
 			console.error("근무 기록 저장 오류:", error);
-			showToast("근무 기록 저장 중 오류가 발생했습니다: " + error.message, "error");
+			showToast("근무 기록 저장 중 오류가 발생했습니다.", "error");
 		}
 	};
 
 	const handleDelete = async () => {
-		const confirmed = await showConfirm("정말로 이 근무 기록을 삭제하시겠습니까?")
-		if (!confirmed) return
-
 		if (!recordId) {
 			showToast("삭제할 기록이 없습니다.", "error")
 			return
 		}
 
-		try {
-			const { error } = await supabase.from("work_records").delete().eq("id", recordId)
+		showConfirm("근무 기록을 삭제하시겠습니까?", async () => {
+			try {
+				const { error } = await supabase.from("work_records").delete().eq("id", recordId)
 
-			if (error) {
-				throw error
+				if (error) {
+					throw error
+				}
+
+				showToast("근무 기록이 삭제되었습니다.", "success")
+				onClose() // 모달 닫기
+				resetForm() // 폼 초기화
+			} catch (error) {
+				console.error("근무 기록 삭제 오류:", error)
+				showToast("근무 기록 삭제 중 오류가 발생했습니다.", "error")
 			}
-
-			showToast("근무 기록이 성공적으로 삭제되었습니다.", "success")
-			onClose() // 모달 닫기
-			resetForm() // 폼 초기화
-		} catch (error) {
-			console.error("근무 기록 삭제 오류:", error)
-			showToast("근무 기록 삭제 중 오류가 발생했습니다: " + error.message, "error")
-		}
+		})
 	}
 
 	if (!showModal) return null
 
 	return (
 		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? 'translate-y-0' : 'translate-y-10'}`}>
+			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-xs px-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? 'translate-y-0' : 'translate-y-10'}`}>
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedDate).format("YYYY년 M월 D일 (ddd)")} 기록</h2>
 					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
@@ -291,28 +299,28 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 
 				<div className="mt-6 text-right text-lg font-semibold text-mint-green">예상 일급: {dailyWage.toLocaleString()}원</div>
 
-				<div className="mt-6 flex justify-between items-center">
+				<div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between sm:items-center">
 					{recordId && (
-						<button onClick={handleDelete} className="px-4 py-2 text-coral-pink bg-coral-pink-light rounded-lg hover:bg-coral-pink focus:outline-none focus:ring-2 focus:ring-coral-pink focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
+						<button onClick={handleDelete} className="w-full sm:w-auto px-4 py-2 text-coral-pink bg-coral-pink-light rounded-lg hover:bg-coral-pink focus:outline-none focus:ring-2 focus:ring-coral-pink focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
 							삭제
 						</button>
 					)}
-					<div className="flex space-x-3 ml-auto">
+					<div className="flex flex-col gap-3 sm:flex-row sm:ml-auto">
 						<button
 							onClick={onClose}
-							className="px-4 py-2 bg-medium-gray text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out
+							className="w-full sm:w-auto px-4 py-2 bg-medium-gray text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out
      transform hover:scale-105">
 							취소
 						</button>
 						<button
 							onClick={resetForm}
-							className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition-all duration-200 
+							className="w-full sm:w-auto px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition-all duration-200 
      ease-in-out transform hover:scale-105">
 							초기화
 						</button>
 						<button
 							onClick={handleSave}
-							className="px-4 py-2 bg-mint-green text-white rounded-lg hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 
+							className="w-full sm:w-auto px-4 py-2 bg-mint-green text-white rounded-lg hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 
      ease-in-out transform hover:scale-105">
 							저장
 						</button>

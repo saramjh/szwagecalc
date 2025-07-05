@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../supabaseClient';
 
-const HamburgerMenu = ({ session, onLogout, username }) => {
+const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, deferredPrompt, onInstallPWA }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const menuRef = useRef(null); // 메뉴 컨테이너를 참조할 ref
@@ -118,7 +117,21 @@ const HamburgerMenu = ({ session, onLogout, username }) => {
             {isDarkMode ? '라이트 모드' : '다크 모드'}
           </button>
           <button
-            onClick={onLogout}
+            onClick={() => { setIsOpen(false); onOpenJobManagementModal(); }}
+            className="block w-full text-left px-4 py-2 text-dark-navy dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+          >
+            직업 관리
+          </button>
+          {deferredPrompt && (
+            <button
+              onClick={() => { setIsOpen(false); onInstallPWA(); }}
+              className="block w-full text-left px-4 py-2 text-dark-navy dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
+              홈 화면에 추가
+            </button>
+          )}
+          <button
+            onClick={() => { setIsOpen(false); onLogout(); }}
             className="block w-full text-left px-4 py-2 text-dark-navy dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
           >
             로그아웃

@@ -14,11 +14,20 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
     if (isOpen) {
       setShowModal(true); // 모달을 DOM에 렌더링 시작
       setTimeout(() => setAnimateModal(true), 10); // 약간의 지연 후 애니메이션 시작
+      document.body.classList.add('modal-open'); // 모달이 열릴 때 body 스크롤 잠금
     } else {
       setAnimateModal(false); // 애니메이션 역재생 시작
       setTimeout(() => setShowModal(false), 300); // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
+      document.body.classList.remove('modal-open'); // 모달이 닫힐 때 body 스크롤 잠금 해제
     }
   }, [isOpen]);
+
+  // 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
 
   useEffect(() => {
     const fetchCurrentHourlyRate = async () => {
@@ -30,16 +39,15 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
         .eq('user_id', session.user.id)
         .eq('job_id', selectedJobId)
         .order('effective_date', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching current hourly rate:', error);
         setHourlyRate(0);
         setEffectiveDate(moment().format('YYYY-MM-DD'));
-      } else if (data) {
-        setHourlyRate(data.hourly_rate);
-        setEffectiveDate(data.effective_date);
+      } else if (data && data.length > 0) {
+        setHourlyRate(data[0].hourly_rate);
+        setEffectiveDate(data[0].effective_date);
       } else {
         setHourlyRate(0);
         setEffectiveDate(moment().format('YYYY-MM-DD'));
@@ -59,7 +67,7 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
       setSelectedJobId(null);
       setEffectiveDate(moment().format('YYYY-MM-DD'));
     }
-  }, [isOpen, jobs]);
+  }, [isOpen, jobs, selectedJobId]);
 
   const handleSave = () => {
     if (!session || !selectedJobId) return;

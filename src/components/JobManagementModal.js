@@ -18,11 +18,20 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 		if (isOpen) {
 			setShowModal(true) // 모달을 DOM에 렌더링 시작
 			setTimeout(() => setAnimateModal(true), 10) // 약간의 지연 후 애니메이션 시작
+			document.body.classList.add('modal-open'); // 모달이 열릴 때 body 스크롤 잠금
 		} else {
 			setAnimateModal(false) // 애니메이션 역재생 시작
 			setTimeout(() => setShowModal(false), 300) // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
+			document.body.classList.remove('modal-open'); // 모달이 닫힐 때 body 스크롤 잠금 해제
 		}
 	}, [isOpen])
+
+	// 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
+	useEffect(() => {
+		return () => {
+			document.body.classList.remove('modal-open');
+		};
+	}, []);
 
 	useEffect(() => {
 		// 모달이 열릴 때마다 직업 목록을 다시 가져올 필요 없음 (App.js에서 관리)
@@ -70,16 +79,16 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 		if (!session) return
 
 		showConfirm(
-			"정말로 이 직업을 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며, 관련된 모든 근무 기록과 시급 정보가 함께 삭제됩니다.",
+			"직업 및 관련 기록을 모두 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
 			async () => {
 				const { error } = await supabase.rpc("delete_job_and_related_records", { job_id_to_delete: jobId })
 
 				if (error) {
 					console.error("Error deleting job and related records:", error)
-					showToast(`직업 삭제 중 오류가 발생했습니다: ${error.message}`, "error")
+					showToast(`직업 삭제 중 오류가 발생했습니다.`, "error")
 				} else {
 					console.log("Job and all related records deleted successfully:", jobId)
-					showToast("직업 및 관련 기록이 성공적으로 삭제되었습니다.", "success")
+					showToast("직업 및 관련 기록이 삭제되었습니다.", "success")
 					fetchJobs() // 목록 새로고침
 					onClose() // 모달 닫기
 				}

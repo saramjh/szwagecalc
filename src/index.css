@@ -13,6 +13,10 @@ body {
 	color: #2d3142; /* 라이트 모드 기본 텍스트 */
 }
 
+.modal-open {
+  overflow: hidden;
+}
+
 .react-calendar__tile {
 	position: relative;
 }
