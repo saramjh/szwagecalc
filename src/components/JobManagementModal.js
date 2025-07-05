@@ -56,9 +56,10 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 			} else {
 				console.log("Job updated successfully:", newJobName)
 				showToast("직업 정보를 바꿨어요", "success")
-				setEditingJob(null)
+				setEditingJob(null) // 편집 모드 해제
+				setNewJobName("") // 입력 필드 초기화
+				setNewJobDescription("") // 입력 필드 초기화
 				fetchJobs() // App.js의 직업 목록 새로고침
-				onClose() // 모달 닫기
 			}
 		} else {
 			// 추가 모드
@@ -71,12 +72,11 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 			} else {
 				console.log("Job added successfully:", newJobName)
 				showToast("새로운 직업을 추가했어요", "success")
+				setNewJobName("") // 입력 필드 초기화
+				setNewJobDescription("") // 입력 필드 초기화
 				fetchJobs() // App.js의 직업 목록 새로고침
-				onClose() // 모달 닫기
 			}
 		}
-		setNewJobName("")
-		setNewJobDescription("")
 	}
 
 	const handleDeleteJob = async (jobId) => {
@@ -94,7 +94,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 					console.log("Job and all related records deleted successfully:", jobId)
 					showToast("삭제했어요", "success")
 					fetchJobs() // 목록 새로고침
-					onClose() // 모달 닫기
+					// 모달 닫기 호출 제거
 				}
 			}
 		)

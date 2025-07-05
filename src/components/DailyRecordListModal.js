@@ -3,9 +3,11 @@ import moment from "moment"
 import { supabase } from "../supabaseClient"
 import DailyRecordModal from "./DailyRecordModal"
 import { useConfirm } from "../contexts/ConfirmContext"
+import { useToast } from "../contexts/ToastContext"
 
 const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) => {
 	const showConfirm = useConfirm()
+	const showToast = useToast()
 	const [dailyRecords, setDailyRecords] = useState([])
 	const [isDailyRecordModalOpen, setIsDailyRecordModalOpen] = useState(false)
 	const [selectedRecordForEdit, setSelectedRecordForEdit] = useState(null) // 편집할 기록
@@ -64,13 +66,15 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 	const handleDeleteRecord = async (recordId) => {
 		if (!session) return
 
-		showConfirm("근무 기록을 삭제하시겠습니까?", async () => {
+		showConfirm("정말 삭제하시겠어요?", async () => {
 			const { error } = await supabase.from("work_records").delete().eq("id", recordId).eq("user_id", session.user.id)
 
 			if (error) {
 				console.error("Error deleting record:", error)
+				showToast("삭제하지 못했어요", "error")
 			} else {
 				console.log("Record deleted:", recordId)
+				showToast("삭제했어요", "success")
 				fetchDailyRecords() // 목록 새로고침
 			}
 		})
@@ -99,9 +103,10 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 						<p className="text-medium-gray dark:text-light-gray text-center py-4">기록된 근무가 없습니다.</p>
 					) : (
 						dailyRecords.map((record) => (
-							<div key={record.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0">
-								<div className="flex flex-col space-y-1 mb-2 sm:mb-0">
-									{record.jobs?.job_name && <span className="inline-block bg-gray-100 dark:bg-gray-700 text-dark-navy dark:text-white px-2 py-1 rounded-full text-xs font-medium self-start">{record.jobs.job_name}</span>}
+							<div key={record.id} className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0">
+								{/* 정보 섹션 */}
+								<div className="flex-grow">
+									{record.jobs?.job_name && <span className="inline-block bg-gray-100 dark:bg-gray-700 text-dark-navy dark:text-white px-2 py-1 rounded-full text-xs font-medium self-start mb-1">{record.jobs.job_name}</span>}
 									<p className="text-lg font-bold text-dark-navy dark:text-white">일급: {record.daily_wage.toLocaleString()}원</p>
 									<p className="text-sm text-medium-gray dark:text-light-gray">
 										근무: {record.start_time} ~ {record.end_time} (
@@ -114,11 +119,12 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 									<p className="text-sm text-medium-gray dark:text-light-gray">식대: {record.meal_allowance.toLocaleString()}원</p>
 									{record.notes && <p className="text-sm text-medium-gray dark:text-light-gray">비고: {record.notes}</p>}
 								</div>
-								<div className="flex space-x-2 sm:flex-col sm:space-x-0 sm:space-y-2">
-									<button onClick={() => handleEditRecord(record)} className="px-3 py-1 rounded-lg text-sm font-medium text-white bg-medium-gray hover:bg-gray-600 transition-colors duration-200">
+								{/* 버튼 섹션 */}
+								<div className="flex flex-col space-y-2 ml-4">
+									<button onClick={() => handleEditRecord(record)} className="px-3 py-1 rounded-lg text-sm font-medium text-white bg-medium-gray hover:bg-gray-600 transition-colors duration-200 w-16">
 										편집
 									</button>
-									<button onClick={() => handleDeleteRecord(record.id)} className="px-3 py-1 rounded-lg text-sm font-medium text-white bg-coral-pink hover:bg-coral-pink-dark transition-colors duration-200">
+									<button onClick={() => handleDeleteRecord(record.id)} className="px-3 py-1 rounded-lg text-sm font-medium text-white bg-coral-pink hover:bg-coral-pink-dark transition-colors duration-200 w-16">
 										삭제
 									</button>
 								</div>
