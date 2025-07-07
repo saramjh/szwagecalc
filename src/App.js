@@ -98,7 +98,7 @@ const AppContent = () => {
 
 	const fetchJobs = useCallback(async () => {
 		if (!session) return
-		const { data, error } = await supabase.from("jobs").select("id, job_name, description").eq("user_id", session.user.id).order("created_at", { ascending: true })
+		const { data, error } = await supabase.from("jobs").select("id, job_name, description, payday, color").eq("user_id", session.user.id).eq("is_deleted", false).order("created_at", { ascending: true })
 
 		if (error) {
 			console.error("Error fetching jobs:", error)

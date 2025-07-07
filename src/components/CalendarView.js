@@ -4,29 +4,23 @@ import moment from "moment"
 import { supabase } from "../supabaseClient"
 import DailyRecordListModal from "./DailyRecordListModal"
 import MonthlyReportModal from "./MonthlyReportModal"
-import UsageGuideModal from "./UsageGuideModal" // UsageGuideModal 임포트
+import UsageGuideModal from "./UsageGuideModal"
 
 const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 	const [date, setDate] = useState(new Date())
 	const [workRecords, setWorkRecords] = useState([])
-	const [isDailyRecordListModalOpen, setIsDailyRecordListModalOpen] = useState(false) // DailyRecordListModal 상태
+	const [isDailyRecordListModalOpen, setIsDailyRecordListModalOpen] = useState(false)
 	const [selectedDateForDailyModal, setSelectedDateForDailyModal] = useState(null)
 	const [isMonthlyModalOpen, setIsMonthlyModalOpen] = useState(false)
 	const [selectedMonthForMonthlyModal, setSelectedMonthForMonthlyModal] = useState(new Date())
-	const [isUsageGuideModalOpen, setIsUsageGuideModalOpen] = useState(false) // 사용 가이드 모달 상태
+	const [isUsageGuideModalOpen, setIsUsageGuideModalOpen] = useState(false)
 
 	const fetchWorkRecords = useCallback(async () => {
 		if (!session) return
-
-		const { data, error } = await supabase
-			.from("work_records")
-			.select("*, jobs(job_name)") // job_name도 함께 가져오도록 수정
-			.eq("user_id", session.user.id)
-
+		const { data, error } = await supabase.from("work_records").select("*, jobs(job_name)").eq("user_id", session.user.id)
 		if (error) {
 			console.error("Error fetching work records:", error)
 		} else {
-			console.log("Fetched work records:", data)
 			setWorkRecords(data)
 		}
 	}, [session])
@@ -40,17 +34,17 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 	const handleDateChange = (newDate) => {
 		setDate(newDate)
 		setSelectedDateForDailyModal(newDate)
-		setIsDailyRecordListModalOpen(true) // DailyRecordListModal 열기
+		setIsDailyRecordListModalOpen(true)
 	}
 
 	const handleDailyRecordListModalClose = () => {
 		setIsDailyRecordListModalOpen(false)
 		setSelectedDateForDailyModal(null)
-		fetchWorkRecords() // 목록 모달 닫을 때 근무 기록 새로고침
+		fetchWorkRecords()
 	}
 
 	const handleMonthlyModalOpen = () => {
-		setSelectedMonthForMonthlyModal(date) // 현재 달력을 보고 있는 달을 기준으로 설정
+		setSelectedMonthForMonthlyModal(date)
 		setIsMonthlyModalOpen(true)
 	}
 
@@ -66,36 +60,61 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 		setIsUsageGuideModalOpen(false)
 	}
 
-	// 각 날짜에 근무 시간 표시 (예시)
+	const getPaydayJobsForDate = (date) => {
+		return jobs.filter((job) => {
+			if (!job.payday) return false
+			const currentYear = date.getFullYear()
+			const currentMonth = date.getMonth()
+			const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+			const actualPayday = Math.min(job.payday, lastDayOfMonth)
+			return date.getDate() === actualPayday
+		})
+	}
+
+	const tileClassName = ({ date, view }) => {
+		if (view === "month") {
+			const paydayJobs = getPaydayJobsForDate(date)
+			if (paydayJobs.length > 0) {
+				return "payday-tile"
+			}
+		}
+		return null
+	}
+
 	const tileContent = ({ date, view }) => {
 		if (view === "month") {
 			const formattedDate = moment(date).format("YYYY-MM-DD")
 			const dailyRecords = workRecords.filter((rec) => rec.date === formattedDate)
 
-			if (dailyRecords.length > 0) {
-				let totalHours = 0
-				dailyRecords.forEach((record) => {
-					if (record.start_time && record.end_time) {
-						const start = moment(record.start_time, "HH:mm")
-						const end = moment(record.end_time, "HH:mm")
-						let duration = moment.duration(end.diff(start))
-						if (end.isBefore(start)) {
-							duration = moment.duration(end.add(1, "day").diff(start))
-						}
-						totalHours += duration.asHours()
+			let totalHours = 0
+			dailyRecords.forEach((record) => {
+				if (record.start_time && record.end_time) {
+					const start = moment(record.start_time, "HH:mm")
+					const end = moment(record.end_time, "HH:mm")
+					let duration = moment.duration(end.diff(start))
+					if (end.isBefore(start)) {
+						duration = moment.duration(end.add(1, "day").diff(start))
 					}
-				})
+					totalHours += duration.asHours()
+				}
+			})
 
-				return (
-					<div className="relative w-full h-full">
-						{" "}
-						{totalHours > 0 && <div className="absolute -top-6 -right-1 text-[0.5rem] text-white bg-coral-pink rounded-sm w-7 h-3 flex items-center justify-center font-semibold -mt-1 -mr-1">{totalHours.toFixed(1)}h</div>}
-						{dailyRecords.length > 1 && <div className="absolute bottom-9 -left-1 w-2 h-2 rounded-full bg-mint-green animate-pulse"></div>}
-					</div>
-				)
-			}
+			return (
+				<div className="relative w-full h-full">
+					{totalHours > 0 && <div className={`absolute -top-6 -right-1 text-[0.5rem] text-white bg-coral-pink rounded-sm w-7 h-3 flex items-center justify-center font-semibold -mt-1 -mr-1 z-10`}>{totalHours.toFixed(1)}h</div>}
+					{dailyRecords.length > 0 && <div className={`absolute bottom-3 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-coral-pink-light text-xs font-bold text-coral-pink dark:bg-charcoal-gray dark:text-mint-green z-10`}>{dailyRecords.length}</div>}
+				</div>
+			)
 		}
 		return null
+	}
+
+	const formatDay = (locale, date) => {
+		const paydayJobs = getPaydayJobsForDate(date)
+		if (paydayJobs.length > 0) {
+			return "💰"
+		}
+		return moment(date).format("D")
 	}
 
 	const usageManualContent = `1. 직업 설정:
@@ -116,6 +135,8 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 				onChange={handleDateChange}
 				value={date}
 				tileContent={tileContent}
+				tileClassName={tileClassName}
+				formatDay={formatDay}
 				weekStartsOn={0}
 				locale="en-US"
 				onActiveStartDateChange={({ activeStartDate }) => setDate(activeStartDate)}

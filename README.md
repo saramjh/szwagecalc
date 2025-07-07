@@ -2,14 +2,12 @@
 
 **내 시급, 내 근무 기록, 내 수입을 한눈에!**
 
-
 ![image](https://github.com/user-attachments/assets/78ae96b8-0aa8-4820-ae61-49894ed8608a)
 ![image](https://github.com/user-attachments/assets/bc2aded2-de9b-4a22-a883-f99ec19cca62)
 ![image](https://github.com/user-attachments/assets/351c1209-f73a-43ba-b6a6-50e12a36418d)
 ![image](https://github.com/user-attachments/assets/3a215ef6-8d02-4186-80ab-789099bba52a)
 ![image](https://github.com/user-attachments/assets/fba5814c-874c-4455-9f81-544dcf722c50)
 ![image](https://github.com/user-attachments/assets/4fa656ca-00cb-446c-a6da-a2026827f3cd)
-
 
 시급이요(szwagecalc)는 여러 아르바이트의 급여를 가장 편리하게 계산하고 관리할 수 있도록 돕는 웹 애플리케이션입니다. 복잡한 엑셀 시트나 수기 계산 없이, 직관적인 UI로 당신의 소중한 시간을 아껴보세요.
 
@@ -23,20 +21,24 @@
 
 ### ✨ **주요 특징**
 
-*   **🏢 여러 개의 아르바이트를 한 번에!**
-    *   여러 직업을 손쉽게 추가하고, 각기 다른 시급과 근무 기록을 체계적으로 관리할 수 있습니다.
+- **🏢 여러 개의 아르바이트를 한 번에!**
 
-*   **🧠 과거 시급까지 똑똑하게 계산**
-    *   시급이 변경되어도 걱정 마세요. '적용 시작일' 기준의 정확한 시급을 찾아 급여를 자동으로 계산해주는 스마트함을 갖췄습니다.
+  - 여러 직업을 손쉽게 추가하고, 각기 다른 시급과 근무 기록을 체계적으로 관리할 수 있습니다.
 
-*   **📅 달력으로 한눈에 보는 근무 기록**
-    *   달력 기반의 직관적인 인터페이스로 언제, 얼마나 일했는지 쉽게 파악하고, 클릭 한 번으로 근무를 기록할 수 있습니다.
+- **🧠 과거 시급까지 똑똑하게 계산**
 
-*   **📊 월별 리포트로 자동 정산**
-    *   매월 총 근무 시간, 예상 수입 등을 포함한 상세 리포트를 제공하여 재정 관리를 돕습니다.
+  - 시급이 변경되어도 걱정 마세요. '적용 시작일' 기준의 정확한 시급을 찾아 급여를 자동으로 계산해주는 스마트함을 갖췄습니다.
 
-*   **📱 앱처럼 설치해서 사용**
-    *   PWA(Progressive Web App)를 지원하여, 앱처럼 홈 화면에 추가하고 오프라인에서도 사용할 수 있습니다.
+- **📅 달력으로 한눈에 보는 근무 기록**
+
+  - 달력 기반의 직관적인 인터페이스로 언제, 얼마나 일했는지 쉽게 파악하고, 클릭 한 번으로 근무를 기록할 수 있습니다.
+
+- **📊 월별 리포트로 자동 정산**
+
+  - 매월 총 근무 시간, 예상 수입 등을 포함한 상세 리포트를 제공하여 재정 관리를 돕습니다.
+
+- **📱 앱처럼 설치해서 사용**
+  - PWA(Progressive Web App)를 지원하여, 앱처럼 홈 화면에 추가하고 오프라인에서도 사용할 수 있습니다.
 
 ---
 
@@ -84,9 +86,9 @@ React와 Supabase를 기반으로 빠르게 프로토타입을 구현했으며, 
 
 ### 🛠️ **기술 스택**
 
-*   **프론트엔드**: React, Tailwind CSS
-*   **백엔드**: Supabase
-*   **배포**: GitHub Pages
+- **프론트엔드**: React, Tailwind CSS
+- **백엔드**: Supabase
+- **배포**: GitHub Pages
 
 ---
 
@@ -155,6 +157,7 @@ npm run deploy
 - `job_name`: `text`
 - `description`: `text` (nullable)
 - `created_at`: `timestamptz`
+- `is_deleted`: `boolean` (default: `FALSE`)
 
 #### `hourly_rate_history`
 
@@ -188,7 +191,7 @@ npm run deploy
 
 - **직업 관리 (`JobManagementModal`)**
 
-  - [x] **직업 삭제 오류 해결:** Foreign Key 제약 조건 위반 문제를 해결하기 위해 `delete_job_and_related_records` RPC 함수를 구현하여 관련 데이터를 한 번에 삭제했습니다.
+  - [x] **직업 삭제 시 근무 기록 유지 (소프트 삭제):** 직업을 삭제하더라도 해당 직업과 관련된 근무 기록은 보존되도록 소프트 삭제 방식을 도입했습니다. `jobs` 테이블에 `is_deleted` 컬럼을 추가하고, 직업 삭제 시 이 값을 `TRUE`로 업데이트하며, UI에서는 `is_deleted`가 `FALSE`인 직업만 표시하도록 변경했습니다.
   - [x] **직업 설명 저장 오류 해결:** `description` 필드가 정상적으로 저장 및 로드되도록 수정했습니다.
   - [x] **모달 유지 기능 추가:** 직업 추가/변경/삭제 후 모달이 닫히지 않고 변경 사항이 반영된 상태로 유지되도록 개선했습니다.
 
@@ -216,7 +219,7 @@ npm run deploy
 
 시급이요 앱에 대한 소중한 의견을 보내주세요. 여러분의 피드백은 앱 개선에 큰 도움이 됩니다.
 
-**[feedback@hrwage.run.place](mailto:feedback@hrwage.run.place)**
+**[devtestudinidae@gmail.com](mailto:devtestudinidae@gmail.com)**
 
 ---
 

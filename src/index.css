@@ -19,6 +19,7 @@ body {
 
 .react-calendar__tile {
 	position: relative;
+	aspect-ratio: 1 / 1; /* Add this line to make tiles square */
 }
 
 code {
@@ -92,3 +93,19 @@ html.dark .react-calendar__tile--other-month {
   color: #A1A6B2; /* light-gray */
   opacity: 0.5; /* 옅게 보이도록 투명도 조절 */
 }
+
+/* Custom styles for the total hours badge */
+.total-hours-badge {
+  background-color: rgba(255, 140, 148, 0.9); /* Semi-transparent coral-pink */
+  color: white;
+  border-radius: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: bold;
+  line-height: 1;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 1;
+}
+
