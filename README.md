@@ -2,6 +2,15 @@
 
 **내 시급, 내 근무 기록, 내 수입을 한눈에!**
 
+
+![image](https://github.com/user-attachments/assets/78ae96b8-0aa8-4820-ae61-49894ed8608a)
+![image](https://github.com/user-attachments/assets/bc2aded2-de9b-4a22-a883-f99ec19cca62)
+![image](https://github.com/user-attachments/assets/351c1209-f73a-43ba-b6a6-50e12a36418d)
+![image](https://github.com/user-attachments/assets/3a215ef6-8d02-4186-80ab-789099bba52a)
+![image](https://github.com/user-attachments/assets/fba5814c-874c-4455-9f81-544dcf722c50)
+![image](https://github.com/user-attachments/assets/4fa656ca-00cb-446c-a6da-a2026827f3cd)
+
+
 시급이요(szwagecalc)는 여러 아르바이트의 급여를 가장 편리하게 계산하고 관리할 수 있도록 돕는 웹 애플리케이션입니다. 복잡한 엑셀 시트나 수기 계산 없이, 직관적인 UI로 당신의 소중한 시간을 아껴보세요.
 
 ---
