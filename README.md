@@ -1,13 +1,14 @@
 # 💰 시급이요 (szwagecalc)
 
 **내 시급, 내 근무 기록, 내 수입을 한눈에!**
+![image](https://github.com/user-attachments/assets/ce7d6bf4-cae0-411e-b675-255c8b4ee8a5)
+![image](https://github.com/user-attachments/assets/af8752d2-9829-4bd3-8438-7229f5272469)
+![image](https://github.com/user-attachments/assets/e95c391b-4ce3-45f9-a490-1cfd9c4162a6)
+![image](https://github.com/user-attachments/assets/e19afacd-9ded-474f-bb03-07f84a5cc651)
+![image](https://github.com/user-attachments/assets/e869d6d8-cb38-4339-b1b1-576382df6866)
+![image](https://github.com/user-attachments/assets/a675a758-8a2a-490f-9c56-a9653440192f)
+![image](https://github.com/user-attachments/assets/f9d00e60-ce1e-42d2-97bf-687eb223e595)
 
-![image](https://github.com/user-attachments/assets/78ae96b8-0aa8-4820-ae61-49894ed8608a)
-![image](https://github.com/user-attachments/assets/bc2aded2-de9b-4a22-a883-f99ec19cca62)
-![image](https://github.com/user-attachments/assets/351c1209-f73a-43ba-b6a6-50e12a36418d)
-![image](https://github.com/user-attachments/assets/3a215ef6-8d02-4186-80ab-789099bba52a)
-![image](https://github.com/user-attachments/assets/fba5814c-874c-4455-9f81-544dcf722c50)
-![image](https://github.com/user-attachments/assets/4fa656ca-00cb-446c-a6da-a2026827f3cd)
 
 시급이요(szwagecalc)는 여러 아르바이트의 급여를 가장 편리하게 계산하고 관리할 수 있도록 돕는 웹 애플리케이션입니다. 복잡한 엑셀 시트나 수기 계산 없이, 직관적인 UI로 당신의 소중한 시간을 아껴보세요.
 
