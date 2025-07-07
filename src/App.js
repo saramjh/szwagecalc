@@ -5,8 +5,8 @@ import HamburgerMenu from "./components/HamburgerMenu" // HamburgerMenu 임포�
 import JobManagementModal from "./components/JobManagementModal" // JobManagementModal 임포트
 import { supabase } from "./supabaseClient"
 import moment from "moment"
-import { ToastProvider, useToast } from "./contexts/ToastContext";
-import { ConfirmProvider } from "./contexts/ConfirmContext";
+import { ToastProvider, useToast } from "./contexts/ToastContext"
+import { ConfirmProvider } from "./contexts/ConfirmContext"
 
 // This is a dummy comment to trigger a new commit
 
@@ -118,10 +118,10 @@ const AppContent = () => {
 			setSession(session)
 		})
 
-		window.addEventListener('beforeinstallprompt', (e) => {
-			e.preventDefault();
-			setDeferredPrompt(e);
-		});
+		window.addEventListener("beforeinstallprompt", (e) => {
+			e.preventDefault()
+			setDeferredPrompt(e)
+		})
 
 		return () => subscription.unsubscribe()
 	}, [])
@@ -189,16 +189,16 @@ const AppContent = () => {
 
 	const handleInstallPWA = async () => {
 		if (deferredPrompt) {
-			deferredPrompt.prompt();
-			const { outcome } = await deferredPrompt.userChoice;
-			console.log(`User response to the install prompt: ${outcome}`);
-			setDeferredPrompt(null); // 프롬프트 사용 후 초기화
+			deferredPrompt.prompt()
+			const { outcome } = await deferredPrompt.userChoice
+			console.log(`User response to the install prompt: ${outcome}`)
+			setDeferredPrompt(null) // 프롬프트 사용 후 초기화
 		}
-	};
+	}
 
 	const handleGoHome = () => {
-		window.location.reload();
-	};
+		window.location.reload()
+	}
 
 	return (
 		<>
@@ -254,7 +254,7 @@ const AppContent = () => {
 				)}
 			</div>
 			{session && (
-				<div className="absolute top-4 right-4 z-50">
+				<div className="absolute top-4 right-4 z-0">
 					<HamburgerMenu session={session} onLogout={handleLogout} username={username} onOpenJobManagementModal={() => setIsJobManagementModalOpen(true)} deferredPrompt={deferredPrompt} onInstallPWA={handleInstallPWA} />
 				</div>
 			)}
@@ -263,13 +263,13 @@ const AppContent = () => {
 }
 
 function App() {
-  return (
-    <ToastProvider>
-      <ConfirmProvider>
-        <AppContent />
-      </ConfirmProvider>
-    </ToastProvider>
-  )
+	return (
+		<ToastProvider>
+			<ConfirmProvider>
+				<AppContent />
+			</ConfirmProvider>
+		</ToastProvider>
+	)
 }
 
 export default App

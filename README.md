@@ -203,6 +203,14 @@ npm run deploy
 
 ---
 
+### 📧 **피드백**
+
+시급이요 앱에 대한 소중한 의견을 보내주세요. 여러분의 피드백은 앱 개선에 큰 도움이 됩니다.
+
+**[feedback@hrwage.run.place](mailto:feedback@hrwage.run.place)**
+
+---
+
 ## 기여
 
 이 프로젝트에 기여하고 싶으시다면, 언제든지 Pull Request를 보내주세요. 버그 리포트나 기능 제안도 환영합니다.

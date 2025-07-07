@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import moment from "moment"
 import { supabase } from "../supabaseClient"
 import DailyRecordModal from "./DailyRecordModal"
@@ -53,6 +53,10 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 		}
 	}, [])
 
+	const totalDailyWage = useMemo(() => {
+		return dailyRecords.reduce((total, record) => total + record.daily_wage, 0)
+	}, [dailyRecords])
+
 	const handleAddRecord = () => {
 		setSelectedRecordForEdit(null) // 새 기록 추가 모드
 		setIsDailyRecordModalOpen(true)
@@ -91,8 +95,11 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 	return (
 		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
 			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0" : "translate-y-10"}`}>
-				<div className="flex justify-between items-center mb-4">
-					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedDate).format("YYYY년 M월 D일 (ddd)")}</h2>
+				<div className="flex justify-between items-start mb-4">
+					<div>
+						<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedDate).format("YYYY년 M월 D일 (ddd)")}</h2>
+						{totalDailyWage > 0 && <p className="text-lg font-semibold text-mint-green dark:text-mint-green-light mt-1">총 일급: {totalDailyWage.toLocaleString()}원</p>}
+					</div>
 					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
 						&times;
 					</button>
