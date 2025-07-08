@@ -5,29 +5,29 @@ import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
 import { PencilIcon, Trash2Icon, PlusIcon } from "lucide-react"
 
+const colorPresets = [
+	{ name: "Red", value: "#ffadad" },
+	{ name: "Orange", value: "#ffd6a5" },
+	{ name: "Yellow", value: "#fdffb6" },
+	{ name: "Green", value: "#caffbf" },
+	{ name: "Blue", value: "#9bf6ff" },
+	{ name: "Purple", value: "#bdb2ff" },
+	{ name: "Gray", value: "#eaeaea" },
+]
+
 const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 	const showToast = useToast()
 	const showConfirm = useConfirm()
 	const [newJobName, setNewJobName] = useState("")
 	const [newJobDescription, setNewJobDescription] = useState("")
 	const [newPayday, setNewPayday] = useState("")
-	const [newColor, setNewColor] = useState("")
+	const [newColor, setNewColor] = useState(colorPresets[0].value)
 	const [paydayError, setPaydayError] = useState("")
 	const [editingJob, setEditingJob] = useState(null)
 	const [viewMode, setViewMode] = useState("list") // 'list', 'add', 'edit'
 
 	const [showModal, setShowModal] = useState(false)
 	const [animateModal, setAnimateModal] = useState(false)
-
-	const colorPresets = [
-		{ name: "Red", value: "#ffadad" },
-		{ name: "Orange", value: "#ffd6a5" },
-		{ name: "Yellow", value: "#fdffb6" },
-		{ name: "Green", value: "#caffbf" },
-		{ name: "Blue", value: "#9bf6ff" },
-		{ name: "Purple", value: "#bdb2ff" },
-		{ name: "Gray", value: "#eaeaea" },
-	]
 
 	useEffect(() => {
 		if (isOpen) {
@@ -44,7 +44,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 				setNewJobName("")
 				setNewJobDescription("")
 				setNewPayday("")
-				setNewColor("")
+				setNewColor(colorPresets[0].value)
 				setPaydayError("")
 				setViewMode("list") // Reset view mode on close
 			}, 300)
@@ -83,7 +83,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 			job_name: newJobName,
 			description: newJobDescription,
 			payday: newPayday ? parseInt(newPayday, 10) : null,
-			color: newColor || null,
+			color: newColor,
 		}
 
 		if (editingJob) {
@@ -133,7 +133,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 		setNewJobName(job.job_name)
 		setNewJobDescription(job.description || "")
 		setNewPayday(job.payday || "")
-		setNewColor(job.color || "")
+		setNewColor(job.color || colorPresets[0].value)
 		setPaydayError("")
 		setViewMode("edit") // Switch to edit view
 	}
@@ -143,7 +143,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 		setNewJobName("")
 		setNewJobDescription("")
 		setNewPayday("")
-		setNewColor("")
+		setNewColor(colorPresets[0].value)
 		setPaydayError("")
 		setViewMode("list") // Switch back to list view
 	}
@@ -153,7 +153,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 		setNewJobName("")
 		setNewJobDescription("")
 		setNewPayday("")
-		setNewColor("")
+		setNewColor(colorPresets[0].value)
 		setPaydayError("")
 		setViewMode("add") // Switch to add view
 	}
@@ -252,7 +252,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 							{paydayError && <p className="text-red-500 text-xs mt-1">{paydayError}</p>}
 						</div>
 						<div>
-							<label className="block text-sm font-medium text-medium-gray dark:text-light-gray">직업 색상 (선택 사항)</label>
+							<label className="block text-sm font-medium text-medium-gray dark:text-light-gray">직업 색상</label>
 							<div className="mt-2 flex flex-wrap gap-2">
 								{colorPresets.map((color) => (
 									<button
@@ -264,15 +264,6 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 										aria-label={color.name}
 									/>
 								))}
-								<button
-									type="button"
-									onClick={() => setNewColor("")}
-									className={`w-8 h-8 rounded-full border-2 flex items-center justify-center bg-gray-200 dark:bg-gray-600 transition-transform transform hover:scale-110 ${!newColor ? "ring-2 ring-offset-2 ring-mint-green dark:ring-offset-charcoal-gray" : "border-transparent"}`}
-									aria-label="No color">
-									<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-									</svg>
-								</button>
 							</div>
 						</div>
 						<div className="mt-6 flex justify-end space-x-3">

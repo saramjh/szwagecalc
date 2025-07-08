@@ -6,6 +6,15 @@ import { useConfirm } from "../contexts/ConfirmContext"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 
+const getContrastingTextColor = (hexColor) => {
+	if (!hexColor) return "#000000"; // 기본값으로 검은색 반환
+	const r = parseInt(hexColor.slice(1, 3), 16);
+	const g = parseInt(hexColor.slice(3, 5), 16);
+	const b = parseInt(hexColor.slice(5, 7), 16);
+	const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+	return (yiq >= 128) ? '#000000' : '#FFFFFF';
+};
+
 const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, recordToEdit }) => {
 	const showToast = useToast()
 	const showConfirm = useConfirm()
@@ -207,10 +216,17 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 	}
 
 	if (!showModal) return null
+	const size = "medium"
+	const modalSizeClass = {
+		small: "sm:max-w-md",
+		medium: "sm:max-w-xl",
+		large: "sm:max-w-3xl",
+		full: "sm:max-w-full",
+	}[size]
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} overflow-y-auto p-4`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full sm:max-w-lg transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"} mt-[5vh] my-auto`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} overflow-y-auto p-4`}>
+			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full ${modalSizeClass} transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"} my-auto`}>
 				<div className="flex justify-between items-start mb-4">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{recordToEdit ? "근무 기록 편집" : "새 근무 기록"}</h2>
 					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
@@ -229,10 +245,10 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 										key={job.id}
 										onClick={() => setSelectedJobId(job.id)}
 										className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200`}
-										style={{
-											backgroundColor: selectedJobId === job.id ? job.color : job.color ? job.color + "33" : "#e5e7eb", // 선택된 경우 직업 색상, 아니면 직업 색상에 투명도 20% (33) 또는 기본 회색
-											color: selectedJobId === job.id ? "white" : "#1a202c", // 선택된 경우 흰색, 아니면 어두운 색
-										}}>
+										style={{ 
+					backgroundColor: job.color || "#E5E7EB", 
+					color: job.color ? getContrastingTextColor(job.color) : "#1F2937"
+				}}>
 										{job.job_name}
 									</button>
 								))
@@ -240,7 +256,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 						</div>
 					</div>
 					<div>
-						<label htmlFor="hourlyRateDisplay" className="block text-sm font-medium text-light-gray-500 dark:text-dark-text">
+						<label htmlFor="hourlyRateDisplay" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
 							적용 시급
 						</label>
 						<input
@@ -248,8 +264,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							id="hourlyRateDisplay"
 							value={`${hourlyRateForDate != null ? hourlyRateForDate.toLocaleString() : "0"}원`}
 							readOnly
-							className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md 
-     bg-light-gray-100 dark:bg-dark-gray-300 text-light-text dark:text-dark-text sm:text-sm"
+							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md 
+     bg-gray-100 dark:bg-gray-700 text-dark-navy dark:text-white sm:text-sm"
 						/>
 					</div>
 					<div className="flex gap-4">
@@ -291,7 +307,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 					{timeError && <p className="text-red-500 text-xs mt-1">퇴근 시간은 출근 시간보다 늦어야 해요.</p>}
 					<div></div>
 					<div>
-						<label htmlFor="mealAllowance" className="block text-sm font-medium text-light-gray-500 dark:text-dark-text">
+						<label htmlFor="mealAllowance" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
 							식대 (원)
 						</label>
 						<input
@@ -299,11 +315,11 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							id="mealAllowance"
 							value={mealAllowance}
 							onChange={(e) => setMealAllowance(Math.max(0, parseInt(e.target.value) || 0))}
-							className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-light-bg dark:bg-dark-gray-200 text-light-text dark:text-dark-text"
+							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
 						/>
 					</div>
 					<div>
-						<label htmlFor="notes" className="block text-sm font-medium text-light-gray-500 dark:text-dark-text">
+						<label htmlFor="notes" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
 							비고
 						</label>
 						<textarea
@@ -311,7 +327,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							rows="2"
 							value={notes}
 							onChange={(e) => setNotes(e.target.value)}
-							className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-light-bg dark:bg-dark-gray-200 text-light-text dark:text-dark-text"></textarea>
+							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"></textarea>
 					</div>
 				</div>
 
@@ -319,12 +335,12 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 
 				<div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between sm:items-center">
 					{recordId && (
-						<button onClick={handleDelete} className="w-full sm:w-auto px-4 py-2 text-white bg-coral-pink rounded-full font-medium hover:bg-coral-pink-dark focus:outline-none focus:ring-2 focus:ring-coral-pink focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
+						<button onClick={handleDelete} className="w-full sm:w-auto px-6 py-3 text-white bg-coral-pink rounded-full font-medium hover:bg-coral-pink-dark focus:outline-none focus:ring-2 focus:ring-coral-pink focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
 							삭제
 						</button>
 					)}
 					<div className="flex flex-col gap-3 sm:flex-row sm:ml-auto">
-						<button onClick={onClose} className="w-full sm:w-auto px-4 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
+						<button onClick={onClose} className="w-full sm:w-auto px-3 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
 							취소
 						</button>
 						<button
@@ -335,7 +351,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 						</button>
 						<button
 							onClick={handleSave}
-							className="w-full sm:w-auto px-4 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 
+							className="w-full sm:w-auto px-3 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 
      ease-in-out transform hover:scale-105">
 							저장
 						</button>

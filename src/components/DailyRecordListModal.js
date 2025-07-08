@@ -6,28 +6,37 @@ import { useConfirm } from "../contexts/ConfirmContext"
 import { useToast } from "../contexts/ToastContext"
 import { PencilIcon, Trash2Icon, PlusIcon } from "lucide-react"
 
-const formatDuration = (start_time, end_time) => {
-    if (!start_time || !end_time) return '0시간 0분';
-
-    const start = moment(start_time, "HH:mm");
-    const end = moment(end_time, "HH:mm");
-    let duration = moment.duration(end.diff(start));
-
-    if (end.isBefore(start)) {
-        duration = moment.duration(end.add(1, "day").diff(start));
-    }
-
-    const hours = Math.floor(duration.asHours());
-    const minutes = duration.minutes();
-
-    let formatted = '';
-    if (hours > 0) {
-        formatted += `${hours}시간 `;
-    }
-    formatted += `${minutes}분`;
-
-    return formatted.trim();
+const getContrastingTextColor = (hexColor) => {
+	if (!hexColor) return "#000000";
+	const r = parseInt(hexColor.slice(1, 3), 16);
+	const g = parseInt(hexColor.slice(3, 5), 16);
+	const b = parseInt(hexColor.slice(5, 7), 16);
+	const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+	return (yiq >= 128) ? '#000000' : '#FFFFFF';
 };
+
+const formatDuration = (start_time, end_time) => {
+	if (!start_time || !end_time) return "0시간 0분"
+
+	const start = moment(start_time, "HH:mm")
+	const end = moment(end_time, "HH:mm")
+	let duration = moment.duration(end.diff(start))
+
+	if (end.isBefore(start)) {
+		duration = moment.duration(end.add(1, "day").diff(start))
+	}
+
+	const hours = Math.floor(duration.asHours())
+	const minutes = duration.minutes()
+
+	let formatted = ""
+	if (hours > 0) {
+		formatted += `${hours}시간 `
+	}
+	formatted += `${minutes}분`
+
+	return formatted.trim()
+}
 
 const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) => {
 	const showConfirm = useConfirm()
@@ -117,69 +126,75 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 	if (!showModal) return null
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
-				<div className="flex justify-between items-start mb-4">
-					<div>
-						<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedDate).format("YYYY년 M월 D일 (ddd)")}</h2>
-					</div>
-					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
-						&times;
-					</button>
-				</div>
-
-				<div className="space-y-4 mb-6 max-h-60 overflow-y-auto">
-					{dailyRecords.length === 0 ? (
-						<p className="text-medium-gray dark:text-light-gray text-center py-4">기록된 근무가 없습니다. 지금 바로 첫 근무를 추가해보세요!</p>
-					) : (
-						dailyRecords.map((record) => (
-							<div key={record.id} className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0 rounded-md">
-								{/* 정보 섹션 */}
-								<div className="flex-grow cursor-pointer p-2 -m-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors duration-150" onClick={() => handleEditRecord(record)}>
-									{record.jobs?.job_name && (
-										<span className="inline-block text-white px-2 py-1 rounded-full text-xs font-medium self-start mb-1" style={{ backgroundColor: record.jobs?.color || "transparent" }}>
-											{record.jobs.job_name}
-										</span>
-									)}
-									<p className="text-lg font-bold text-dark-navy dark:text-white">+{record.daily_wage.toLocaleString()}원</p>
-									<p className="text-sm text-medium-gray dark:text-light-gray">
-										{record.start_time.slice(0, 5)} ~ {record.end_time.slice(0, 5)}
-									</p>
-									<p className="text-sm text-medium-gray dark:text-light-gray">
-										({formatDuration(record.start_time, record.end_time)})
-									</p>
-									{record.meal_allowance > 0 && <p className="text-sm text-medium-gray dark:text-light-gray">식대: {record.meal_allowance.toLocaleString()}원</p>}
-									{record.notes && <p className="text-sm text-medium-gray dark:text-light-gray">비고: {record.notes}</p>}
-								</div>
-								{/* 버튼 섹션 */}
-								<div className="flex flex-col space-y-2 ml-4">
-									<button onClick={() => handleEditRecord(record)} className="p-2 rounded-full text-medium-gray dark:text-light-gray hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" aria-label="편집">
-										<PencilIcon size={20} />
-									</button>
-									<button onClick={() => handleDeleteRecord(record.id)} className="p-2 rounded-full text-coral-pink hover:bg-red-100 dark:hover:bg-red-900 transition-colors duration-200" aria-label="삭제">
-										<Trash2Icon size={20} />
-									</button>
-								</div>
-							</div>
-						))
-					)}
-				</div>
-
-				<div className="mt-6 flex flex-col sm:flex-row justify-between items-center p-4 bg-cream-white dark:bg-charcoal-gray border-t border-gray-200 dark:border-gray-700 rounded-b-2xl -mx-6 -mb-6">
-					{totalDailyWage > 0 && <p className="text-lg font-semibold text-mint-green dark:text-mint-green-light mb-4 sm:mb-0">총 일급: {totalDailyWage.toLocaleString()}원</p>}
-					<div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-						<button
-							onClick={handleAddRecord}
-							className="px-4 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 w-full sm:w-auto">
-							<PlusIcon size={20} />
-							<span>근무 추가</span>
-						</button>
-						<button onClick={onClose} className="px-4 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 w-full sm:w-auto">
-							닫기
+		<>
+			<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+				<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
+					<div className="flex justify-between items-start mb-4">
+						<div>
+							<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedDate).format("YYYY년 M월 D일 (ddd)")}</h2>
+						</div>
+						<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
+							&times;
 						</button>
 					</div>
-				</div>
 
+					<div className="space-y-4 mb-6 max-h-60 overflow-y-auto">
+						{dailyRecords.length === 0 ? (
+							<p className="text-medium-gray dark:text-light-gray text-center py-4">기록된 근무가 없습니다. 지금 바로 첫 근무를 추가해보세요!</p>
+						) : (
+							dailyRecords.map((record) => (
+								<div key={record.id} className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0 rounded-md">
+									{/* 정보 섹션 */}
+									<div className="flex-grow cursor-pointer p-2 -m-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors duration-150" onClick={() => handleEditRecord(record)}>
+										{record.jobs?.job_name && (
+											<span 
+												className="inline-block px-2 py-1 rounded-full text-xs font-medium self-start mb-1"
+												style={{
+													backgroundColor: record.jobs?.color || "#E5E7EB",
+													color: record.jobs?.color ? getContrastingTextColor(record.jobs.color) : "#1F2937"
+												}}
+											>
+												{record.jobs.job_name}
+											</span>
+										)}
+										<p className="text-lg font-bold text-dark-navy dark:text-white">+{record.daily_wage.toLocaleString()}원</p>
+										<p className="text-sm text-medium-gray dark:text-light-gray">
+											{record.start_time.slice(0, 5)} ~ {record.end_time.slice(0, 5)}
+										</p>
+										<p className="text-sm text-medium-gray dark:text-light-gray">({formatDuration(record.start_time, record.end_time)})</p>
+										{record.meal_allowance > 0 && <p className="text-sm text-medium-gray dark:text-light-gray">식대: {record.meal_allowance.toLocaleString()}원</p>}
+										{record.notes && <p className="text-sm text-medium-gray dark:text-light-gray">비고: {record.notes}</p>}
+									</div>
+									{/* 버튼 섹션 */}
+									<div className="flex flex-col space-y-2 ml-4">
+										<button onClick={() => handleEditRecord(record)} className="p-2 rounded-full text-medium-gray dark:text-light-gray hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" aria-label="편집">
+											<PencilIcon size={20} />
+										</button>
+										<button onClick={() => handleDeleteRecord(record.id)} className="p-2 rounded-full text-coral-pink hover:bg-red-100 dark:hover:bg-red-900 transition-colors duration-200" aria-label="삭제">
+											<Trash2Icon size={20} />
+										</button>
+									</div>
+								</div>
+							))
+						)}
+					</div>
+
+					<div className="mt-6 flex flex-col sm:flex-row justify-between items-center p-4 bg-cream-white dark:bg-charcoal-gray border-t border-gray-200 dark:border-gray-700 rounded-b-2xl -mx-6 -mb-6">
+						{totalDailyWage > 0 && <p className="text-lg font-semibold text-mint-green dark:text-mint-green-light mb-4 sm:mb-0">총 일급: {totalDailyWage.toLocaleString()}원</p>}
+						<div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+							<button
+								onClick={handleAddRecord}
+								className="px-3 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 w-full sm:w-auto">
+								<PlusIcon size={25} className="font-black" />
+							</button>
+							<button onClick={onClose} className="px-3 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 w-full sm:w-auto">
+								닫기
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			{isDailyRecordModalOpen && (
 				<DailyRecordModal
 					selectedDate={selectedDate}
 					isOpen={isDailyRecordModalOpen}
@@ -187,9 +202,10 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 					session={session}
 					jobs={jobs}
 					recordToEdit={selectedRecordForEdit} // 편집할 기록 전달
+					size="large" // DailyRecordModal을 'large' 크기로 열도록 지정
 				/>
-			</div>
-		</div>
+			)}
+		</>
 	)
 }
 
