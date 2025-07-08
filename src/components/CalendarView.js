@@ -100,9 +100,11 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 			})
 
 			return (
-				<div className="relative w-full h-full">
-					{totalHours > 0 && <div className={`absolute -top-6 -right-1 text-[0.5rem] text-white bg-coral-pink rounded-md w-6 h-3 flex items-center justify-center font-semibold -mt-1 -mr-1 `}>{totalHours.toFixed(1)}h</div>}
-					{dailyRecords.length > 0 && <div className={`absolute bottom-3.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-coral-pink-light text-[0.5rem] font-bold text-pink-500 dark:bg-charcoal-gray dark:text-mint-green`}>{dailyRecords.length}</div>}
+				<div className="absolute -top-1.5 right-1 w-full h-full flex flex-col items-center justify-start pt-1 sm:pt-2 sm:space-y-1">
+					{totalHours > 0 && <div className={`text-[0.5rem] sm:text-xs text-white bg-coral-pink rounded-sm w-6 h-3 sm:w-10 sm:h-4 relative left-2 flex items-center justify-center font-semibold`}>{totalHours.toFixed(1)}h</div>}
+					{dailyRecords.length > 0 && (
+						<div className={`flex relative top-3 left-3 h-2.5 w-2.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-coral-pink-light text-[0.5rem] sm:text-xs sm:top-5 sm:left-4 font-bold text-pink-500 dark:bg-gray-500 dark:text-mint-green`}>{dailyRecords.length}</div>
+					)}
 				</div>
 			)
 		}
@@ -110,10 +112,6 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 	}
 
 	const formatDay = (locale, date) => {
-		const paydayJobs = getPaydayJobsForDate(date)
-		if (paydayJobs.length > 0) {
-			return "💰"
-		}
 		return moment(date).format("D")
 	}
 
@@ -138,28 +136,28 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 				tileClassName={tileClassName}
 				formatDay={formatDay}
 				weekStartsOn={0}
-				locale="en-US"
+				locale="ko-KR"
 				onActiveStartDateChange={({ activeStartDate }) => setDate(activeStartDate)}
 				className="react-calendar-custom border-none rounded-lg shadow-lg p-4 bg-cream-white dark:bg-charcoal-gray"
 			/>
 			<div className="flex flex-col sm:flex-row sm:space-x-2 mt-4 w-full justify-center">
 				<button
 					onClick={onOpenHourlyRateModal}
-					className="w-full sm:w-auto px-4 py-3 bg-lemon-yellow text-dark-navy rounded-full text-lg font-semibold shadow-md
+					className="w-full sm:w-auto px-3 py-2 bg-lemon-yellow text-dark-navy rounded-full text-base font-medium shadow-md
                    hover:bg-lemon-yellow focus:outline-none focus:ring-2 focus:ring-lemon-yellow focus:ring-opacity-50
                    transition-all duration-300 ease-in-out transform hover:scale-105 mb-2 sm:mb-0">
 					시급 설정
 				</button>
 				<button
 					onClick={handleMonthlyModalOpen}
-					className="w-full sm:w-auto px-4 py-3 bg-mint-green text-white rounded-full text-lg font-semibold shadow-md
+					className="w-full sm:w-auto px-3 py-2 bg-mint-green text-white rounded-full text-base font-medium shadow-md
                    hover:bg-mint-green focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50
                    transition-all duration-300 ease-in-out transform hover:scale-105 mb-2 sm:mb-0">
 					월급 확인
 				</button>
 				<button
 					onClick={handleOpenUsageGuideModal}
-					className="w-full sm:w-auto px-4 py-3 bg-medium-gray text-white rounded-full text-lg font-semibold shadow-md
+					className="w-full sm:w-auto px-3 py-2 bg-medium-gray text-white rounded-full text-base font-medium shadow-md
                    hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50
                    transition-all duration-300 ease-in-out transform hover:scale-105">
 					사용법
