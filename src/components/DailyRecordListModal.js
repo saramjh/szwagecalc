@@ -6,6 +6,29 @@ import { useConfirm } from "../contexts/ConfirmContext"
 import { useToast } from "../contexts/ToastContext"
 import { PencilIcon, Trash2Icon, PlusIcon } from "lucide-react"
 
+const formatDuration = (start_time, end_time) => {
+    if (!start_time || !end_time) return '0시간 0분';
+
+    const start = moment(start_time, "HH:mm");
+    const end = moment(end_time, "HH:mm");
+    let duration = moment.duration(end.diff(start));
+
+    if (end.isBefore(start)) {
+        duration = moment.duration(end.add(1, "day").diff(start));
+    }
+
+    const hours = Math.floor(duration.asHours());
+    const minutes = duration.minutes();
+
+    let formatted = '';
+    if (hours > 0) {
+        formatted += `${hours}시간 `;
+    }
+    formatted += `${minutes}분`;
+
+    return formatted.trim();
+};
+
 const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) => {
 	const showConfirm = useConfirm()
 	const showToast = useToast()
@@ -123,12 +146,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 										{record.start_time.slice(0, 5)} ~ {record.end_time.slice(0, 5)}
 									</p>
 									<p className="text-sm text-medium-gray dark:text-light-gray">
-										(
-										{moment
-											.duration(moment(record.end_time, "HH:mm").diff(moment(record.start_time, "HH:mm")))
-											.asHours()
-											.toFixed(1)}
-										시간)
+										({formatDuration(record.start_time, record.end_time)})
 									</p>
 									{record.meal_allowance > 0 && <p className="text-sm text-medium-gray dark:text-light-gray">식대: {record.meal_allowance.toLocaleString()}원</p>}
 									{record.notes && <p className="text-sm text-medium-gray dark:text-light-gray">비고: {record.notes}</p>}

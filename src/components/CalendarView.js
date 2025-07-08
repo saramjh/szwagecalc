@@ -142,27 +142,29 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 				onActiveStartDateChange={({ activeStartDate }) => setDate(activeStartDate)}
 				className="react-calendar-custom border-none rounded-lg shadow-lg p-4 bg-cream-white dark:bg-charcoal-gray"
 			/>
-			<button
-				onClick={onOpenHourlyRateModal}
-				className="w-full mt-4 px-4 py-3 bg-lemon-yellow text-dark-navy rounded-lg text-lg font-semibold shadow-md
+			<div className="flex flex-col sm:flex-row sm:space-x-2 mt-4 w-full justify-center">
+				<button
+					onClick={onOpenHourlyRateModal}
+					className="w-full sm:w-auto px-4 py-3 bg-lemon-yellow text-dark-navy rounded-full text-lg font-semibold shadow-md
                    hover:bg-lemon-yellow focus:outline-none focus:ring-2 focus:ring-lemon-yellow focus:ring-opacity-50
-                   transition-all duration-300 ease-in-out transform hover:scale-105">
-				시급 설정
-			</button>
-			<button
-				onClick={handleMonthlyModalOpen}
-				className="w-full mt-2 px-4 py-3 bg-mint-green text-white rounded-lg text-lg font-semibold shadow-md
+                   transition-all duration-300 ease-in-out transform hover:scale-105 mb-2 sm:mb-0">
+					시급 설정
+				</button>
+				<button
+					onClick={handleMonthlyModalOpen}
+					className="w-full sm:w-auto px-4 py-3 bg-mint-green text-white rounded-full text-lg font-semibold shadow-md
                    hover:bg-mint-green focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50
-                   transition-all duration-300 ease-in-out transform hover:scale-105">
-				월급 확인
-			</button>
-			<button
-				onClick={handleOpenUsageGuideModal}
-				className="w-full mt-2 px-4 py-3 bg-medium-gray text-white rounded-lg text-lg font-semibold shadow-md
+                   transition-all duration-300 ease-in-out transform hover:scale-105 mb-2 sm:mb-0">
+					월급 확인
+				</button>
+				<button
+					onClick={handleOpenUsageGuideModal}
+					className="w-full sm:w-auto px-4 py-3 bg-medium-gray text-white rounded-full text-lg font-semibold shadow-md
                    hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50
                    transition-all duration-300 ease-in-out transform hover:scale-105">
-				사용법
-			</button>
+					사용법
+				</button>
+			</div>
 			<DailyRecordListModal selectedDate={selectedDateForDailyModal} isOpen={isDailyRecordListModalOpen} onClose={handleDailyRecordListModalClose} session={session} jobs={jobs} />
 			<MonthlyReportModal selectedMonth={selectedMonthForMonthlyModal} isOpen={isMonthlyModalOpen} onClose={handleMonthlyModalClose} session={session} jobs={jobs} />
 			<UsageGuideModal isOpen={isUsageGuideModalOpen} onClose={handleCloseUsageGuideModal} manualContent={usageManualContent} />

@@ -3,7 +3,7 @@ import { supabase } from "../supabaseClient"
 
 import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
-import { PlusIcon } from "lucide-react"
+import { PencilIcon, Trash2Icon, PlusIcon } from "lucide-react"
 
 const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 	const showToast = useToast()
@@ -187,19 +187,12 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 											<div className="font-bold text-lg text-dark-navy dark:text-white">{job.job_name}</div>
 											{job.payday && <p className="text-sm text-medium-gray dark:text-light-gray mt-0.5">월급일: 매월 {job.payday}일</p>}
 										</div>
-										<div className="flex space-x-2 ml-4 flex-shrink-0">
-											<button
-												onClick={() => handleEditClick(job)}
-												className="px-3 py-1 text-sm bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
-												수정
+										<div className="flex flex-col space-y-2 ml-4 flex-shrink-0">
+											<button onClick={() => handleEditClick(job)} className="p-2 rounded-full text-medium-gray dark:text-light-gray hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200" aria-label="수정">
+												<PencilIcon size={20} />
 											</button>
-											<button
-												onClick={() => handleDeleteJob(job.id)}
-												className={`px-3 py-1 text-sm bg-coral-pink text-white rounded-full font-medium hover:bg-coral-pink-dark focus:outline-none focus:ring-2 focus:ring-coral-pink focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 ${
-													index === 0 ? "opacity-50 cursor-not-allowed" : ""
-												}`}
-												disabled={index === 0}>
-												삭제
+											<button onClick={() => handleDeleteJob(job.id)} className={`p-2 rounded-full text-coral-pink hover:bg-red-100 dark:hover:bg-red-900 transition-colors duration-200 ${index === 0 ? "opacity-50 cursor-not-allowed" : ""}`} disabled={index === 0} aria-label="삭제">
+												<Trash2Icon size={20} />
 											</button>
 										</div>
 									</div>

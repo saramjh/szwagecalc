@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react"
 import moment from "moment"
+import "moment/locale/ko" // 한국어 로케일 임포트
 import { supabase } from "../supabaseClient"
+
+moment.locale('ko'); // moment.js 로케일 설정
 
 const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) => {
 	const [monthlyRecords, setMonthlyRecords] = useState([])
@@ -79,6 +82,21 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
     return formatted.trim();
 };
 
+  const formatTotalHours = (totalHours) => {
+    if (totalHours === 0) return '0시간 0분';
+
+    const hours = Math.floor(totalHours);
+    const minutes = Math.round((totalHours - hours) * 60);
+
+    let formatted = '';
+    if (hours > 0) {
+        formatted += `${hours}시간 `;
+    }
+    formatted += `${minutes}분`;
+
+    return formatted.trim();
+  };
+
   const fetchMonthlyRecords = useCallback(async () => {
 		if (!session) return
 
@@ -141,14 +159,19 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 					</div>
 				</div>
 
-				<div className="space-y-2 mb-6">
-					<p className="text-dark-navy dark:text-white">
-						<span className="font-semibold">총 근무 시간:</span> {totalWorkHours.toFixed(1)} 시간
-					</p>
-					<p className="text-dark-navy dark:text-white">
-						<span className="font-semibold">총 식대:</span> {totalMealAllowance.toLocaleString()}원
-					</p>
-					<p className="text-3xl font-extrabold text-mint-green dark:text-mint-green-light mt-2">총 수입: {totalGrossIncome.toLocaleString()}원</p>
+				<div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6">
+					<div className="flex justify-between items-center mb-2">
+						<p className="text-dark-navy dark:text-white text-sm font-semibold">총 근무 시간</p>
+						<p className="text-dark-navy dark:text-white text-base">{formatTotalHours(totalWorkHours)}</p>
+					</div>
+					<div className="flex justify-between items-center mb-2">
+						<p className="text-dark-navy dark:text-white text-sm font-semibold">총 식대</p>
+						<p className="text-dark-navy dark:text-white text-base">{totalMealAllowance.toLocaleString()}원</p>
+					</div>
+					<div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
+						<p className="text-dark-navy dark:text-white text-lg font-bold">총 수입</p>
+												<p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap">{totalGrossIncome.toLocaleString()}원</p>
+					</div>
 				</div>
 
 				<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3">일별 상세 내역</h3>
@@ -157,25 +180,44 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 						<p className="text-medium-gray dark:text-light-gray text-center py-4">기록된 내역이 없습니다.</p>
 					) : (
 						            monthlyRecords.map((record) => (
-              <div key={record.id} className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0 rounded-md">
-                <div className="flex flex-col flex-grow">
-                  <p className="text-lg font-bold text-dark-navy dark:text-white">{moment(record.date).format('M월 D일 (ddd)')}</p>
-                  <p className="text-sm text-medium-gray dark:text-light-gray mt-1">
-                    {record.start_time || ''} ~ {record.end_time || ''}
+              <div key={record.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 mb-3 last:mb-0">
+                {/* Top Row: Date (Left) and Daily Wage (Right, Emphasized) */}
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-sm font-medium text-dark-navy dark:text-white">
+                    {/* 날짜 형식 변경: YYYY년 M월 D일 (ddd) -> M월 D일 (ddd) */}
+                    {moment(record.date).format('M월 D일 (ddd)')}
                   </p>
-                  <p className="text-sm text-medium-gray dark:text-light-gray mt-0.5">
-                    ({formatDuration(record.start_time, record.end_time)})
+                  <p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap flex-shrink-0">
+                    +{record.daily_wage.toLocaleString()}원
                   </p>
-                  {record.meal_allowance > 0 && <p className="text-sm text-medium-gray dark:text-light-gray mt-0.5">식대: {record.meal_allowance.toLocaleString()}원</p>}
                 </div>
-                <div className="flex flex-col items-end justify-between h-full">
-                  {record.jobs?.job_name && (
-                    <span className="inline-block text-white px-2 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: record.jobs?.color || "transparent" }}>
+
+                {/* Bottom Section: Work Details (Time, Duration, Meal Allowance) */}
+                <div className="text-xs text-medium-gray dark:text-light-gray mb-1">
+                  {/* Start ~ End Time and Work Duration */}
+                  {(record.start_time && record.end_time) && (
+                    <p>
+                      {record.start_time.slice(0, 5)} ~ {record.end_time.slice(0, 5)}
+                      <span className="ml-2">({formatDuration(record.start_time, record.end_time)})</span>
+                    </p>
+                  )}
+                  {/* Meal Allowance (only if > 0) */}
+                  {record.meal_allowance > 0 && (
+                    <p>식대: {record.meal_allowance.toLocaleString()}원</p>
+                  )}
+                </div>
+
+                {/* Bottom Row: Job Title (Colored Chip) */}
+                {record.jobs?.job_name && (
+                  <div>
+                    <span
+                      className="inline-block text-white px-2 py-1 rounded-full text-xs font-semibold mt-1"
+                      style={{ backgroundColor: record.jobs?.color || "transparent" }}
+                    >
                       {record.jobs.job_name}
                     </span>
-                  )}
-                  <p className="text-lg font-bold text-mint-green dark:text-mint-green-light mt-auto">+{record.daily_wage.toLocaleString()}원</p>
-                </div>
+                  </div>
+                )}
               </div>
             ))
 					)}
