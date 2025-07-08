@@ -101,8 +101,8 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 
 			return (
 				<div className="relative w-full h-full">
-					{totalHours > 0 && <div className={`absolute -top-6 -right-1 text-[0.5rem] text-white bg-coral-pink rounded-sm w-7 h-3 flex items-center justify-center font-semibold -mt-1 -mr-1 z-10`}>{totalHours.toFixed(1)}h</div>}
-					{dailyRecords.length > 0 && <div className={`absolute bottom-3 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-coral-pink-light text-xs font-bold text-coral-pink dark:bg-charcoal-gray dark:text-mint-green z-10`}>{dailyRecords.length}</div>}
+					{totalHours > 0 && <div className={`absolute -top-6 -right-1 text-[0.5rem] text-white bg-coral-pink rounded-md w-6 h-3 flex items-center justify-center font-semibold -mt-1 -mr-1 `}>{totalHours.toFixed(1)}h</div>}
+					{dailyRecords.length > 0 && <div className={`absolute bottom-3.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-coral-pink-light text-[0.5rem] font-bold text-pink-500 dark:bg-charcoal-gray dark:text-mint-green`}>{dailyRecords.length}</div>}
 				</div>
 			)
 		}
