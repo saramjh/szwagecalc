@@ -51,12 +51,35 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 			}
 		})
 
-		setTotalGrossIncome(totalIncome)
-		setTotalWorkHours(totalHours)
-		setTotalMealAllowance(totalMeal)
-	}, [])
+		setTotalGrossIncome(totalIncome);
+    setTotalWorkHours(totalHours);
+    setTotalMealAllowance(totalMeal);
+  }, []);
 
-	const fetchMonthlyRecords = useCallback(async () => {
+  const formatDuration = (start_time, end_time) => {
+    if (!start_time || !end_time) return '0시간 0분';
+
+    const start = moment(start_time, "HH:mm");
+    const end = moment(end_time, "HH:mm");
+    let duration = moment.duration(end.diff(start));
+
+    if (end.isBefore(start)) {
+        duration = moment.duration(end.add(1, "day").diff(start));
+    }
+
+    const hours = Math.floor(duration.asHours());
+    const minutes = duration.minutes();
+
+    let formatted = '';
+    if (hours > 0) {
+        formatted += `${hours}시간 `;
+    }
+    formatted += `${minutes}분`;
+
+    return formatted.trim();
+};
+
+  const fetchMonthlyRecords = useCallback(async () => {
 		if (!session) return
 
 		const startOfMonth = moment(selectedMonth).startOf("month").format("YYYY-MM-DD")
@@ -133,34 +156,28 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 					{monthlyRecords.length === 0 ? (
 						<p className="text-medium-gray dark:text-light-gray text-center py-4">기록된 내역이 없습니다.</p>
 					) : (
-						monthlyRecords.map((record) => (
-							<div key={record.id} className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0 rounded-md">
-								<div className="flex-grow">
-									<p className="text-lg font-bold text-dark-navy dark:text-white">{moment(record.date).format("M월 D일 (ddd)")}</p>
-									<p className="text-sm text-medium-gray dark:text-light-gray">
-										{record.start_time.slice(0, 5) || ""} ~ {record.end_time.slice(0, 5) || ""}
-									</p>
-									<p className="text-sm text-medium-gray dark:text-light-gray mt-0.5">
-										{record.start_time.slice(0, 5) && record.end_time.slice(0, 5)
-											? moment
-													.duration(moment(record.end_time.slice(0, 5), "HH:mm").diff(moment(record.start_time.slice(0, 5), "HH:mm")))
-													.asHours()
-													.toFixed(1)
-											: "0.0"}
-										시간
-									</p>
-									{record.meal_allowance > 0 && <p className="text-sm text-medium-gray dark:text-light-gray mt-0.5">식대: {record.meal_allowance.toLocaleString()}원</p>}
-								</div>
-								<div className="flex flex-col items-end">
-									{record.jobs?.job_name && (
-										<span className="inline-block text-white px-2 py-1 rounded-full text-xs font-medium self-start mb-1" style={{ backgroundColor: record.jobs?.color || "transparent" }}>
-											{record.jobs.job_name}
-										</span>
-									)}
-									<p className="text-lg font-bold text-mint-green dark:text-mint-green-light mt-1">+{record.daily_wage.toLocaleString()}원</p>
-								</div>
-							</div>
-						))
+						            monthlyRecords.map((record) => (
+              <div key={record.id} className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0 rounded-md">
+                <div className="flex flex-col flex-grow">
+                  <p className="text-lg font-bold text-dark-navy dark:text-white">{moment(record.date).format('M월 D일 (ddd)')}</p>
+                  <p className="text-sm text-medium-gray dark:text-light-gray mt-1">
+                    {record.start_time || ''} ~ {record.end_time || ''}
+                  </p>
+                  <p className="text-sm text-medium-gray dark:text-light-gray mt-0.5">
+                    ({formatDuration(record.start_time, record.end_time)})
+                  </p>
+                  {record.meal_allowance > 0 && <p className="text-sm text-medium-gray dark:text-light-gray mt-0.5">식대: {record.meal_allowance.toLocaleString()}원</p>}
+                </div>
+                <div className="flex flex-col items-end justify-between h-full">
+                  {record.jobs?.job_name && (
+                    <span className="inline-block text-white px-2 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: record.jobs?.color || "transparent" }}>
+                      {record.jobs.job_name}
+                    </span>
+                  )}
+                  <p className="text-lg font-bold text-mint-green dark:text-mint-green-light mt-auto">+{record.daily_wage.toLocaleString()}원</p>
+                </div>
+              </div>
+            ))
 					)}
 				</div>
 
