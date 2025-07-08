@@ -120,7 +120,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 									)}
 									<p className="text-lg font-bold text-dark-navy dark:text-white">+{record.daily_wage.toLocaleString()}원</p>
 									<p className="text-sm text-medium-gray dark:text-light-gray">
-										{record.start_time} ~ {record.end_time}
+										{record.start_time.slice(0, 5)} ~ {record.end_time.slice(0, 5)}
 									</p>
 									<p className="text-sm text-medium-gray dark:text-light-gray">
 										(
