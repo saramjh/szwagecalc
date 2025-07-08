@@ -125,6 +125,18 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 			return
 		}
 
+		// 시급 유효성 검사: 시급이 0이면 저장 방지 및 안내
+		if (hourlyRateForDate === 0) {
+			showToast("해당 직업의 시급을 설정해주세요.", "error")
+			return // 저장 방지
+		}
+
+		// 시급 유효성 검사: 시급이 0이면 저장 방지 및 안내
+		if (hourlyRateForDate === 0) {
+			showToast("해당 직업의 시급을 설정해주세요.", "error")
+			return // 저장 방지
+		}
+
 		// 시간 유효성 검사
 		const startMoment = moment(startTime, "HH:mm")
 		const endMoment = moment(endTime, "HH:mm")
@@ -197,35 +209,38 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 	if (!showModal) return null
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-xs px-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0" : "translate-y-10"}`}>
-				<div className="flex justify-between items-center mb-4">
-					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedDate).format("YYYY년 M월 D일 (ddd)")} 기록</h2>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} overflow-y-auto p-4`}>
+			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full sm:max-w-lg transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"} mt-[5vh] my-auto`}>
+				<div className="flex justify-between items-start mb-4">
+					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{recordToEdit ? "근무 기록 편집" : "새 근무 기록"}</h2>
 					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
 						&times;
 					</button>
 				</div>
-
 				<div className="space-y-4">
 					<div>
-						<label htmlFor="jobSelect" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
-							직업 선택
-						</label>
-						<select
-							id="jobSelect"
-							value={selectedJobId || ""}
-							onChange={(e) => setSelectedJobId(e.target.value)}
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white">
-							{jobs.length === 0 && <option value="">직업을 추가해주세요</option>}
-							{jobs.map((job) => (
-								<option key={job.id} value={job.id}>
-									{job.job_name}
-								</option>
-							))}
-						</select>
+						<label className="block text-sm font-medium text-medium-gray dark:text-light-gray">직업 선택</label>
+						<div className="mt-1 flex flex-wrap gap-2">
+							{jobs.length === 0 ? (
+								<p className="text-sm text-medium-gray dark:text-light-gray">직업을 추가해주세요</p>
+							) : (
+								jobs.map((job) => (
+									<button
+										key={job.id}
+										onClick={() => setSelectedJobId(job.id)}
+										className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200`}
+										style={{
+											backgroundColor: selectedJobId === job.id ? job.color : job.color ? job.color + "33" : "#e5e7eb", // 선택된 경우 직업 색상, 아니면 직업 색상에 투명도 20% (33) 또는 기본 회색
+											color: selectedJobId === job.id ? "white" : "#1a202c", // 선택된 경우 흰색, 아니면 어두운 색
+										}}>
+										{job.job_name}
+									</button>
+								))
+							)}
+						</div>
 					</div>
 					<div>
-						<label htmlFor="hourlyRateDisplay" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
+						<label htmlFor="hourlyRateDisplay" className="block text-sm font-medium text-light-gray-500 dark:text-dark-text">
 							적용 시급
 						</label>
 						<input
@@ -233,45 +248,50 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							id="hourlyRateDisplay"
 							value={`${hourlyRateForDate != null ? hourlyRateForDate.toLocaleString() : "0"}원`}
 							readOnly
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md 
-     bg-gray-100 dark:bg-gray-700 text-dark-navy dark:text-white sm:text-sm"
+							className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md 
+     bg-light-gray-100 dark:bg-dark-gray-300 text-light-text dark:text-dark-text sm:text-sm"
 						/>
 					</div>
-					<div>
-						<label htmlFor="startTime" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
-							출근 시간
-						</label>
-						<DatePicker
-							id="startTime"
-							selected={startTime ? moment(startTime, "HH:mm").toDate() : null}
-							onChange={(date) => setStartTime(moment(date).format("HH:mm"))}
-							showTimeSelect
-							showTimeSelectOnly
-							timeIntervals={15}
-							dateFormat="HH:mm"
-							timeFormat="HH:mm"
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
-						/>
+					<div className="flex gap-4">
+						<div className="flex-1">
+							<label htmlFor="startTime" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
+								출근 시간
+							</label>
+							<DatePicker
+								id="startTime"
+								selected={startTime ? moment(startTime, "HH:mm").toDate() : null}
+								onChange={(date) => setStartTime(moment(date).format("HH:mm"))}
+								showTimeSelect
+								showTimeSelectOnly
+								timeIntervals={15}
+								dateFormat="HH:mm"
+								timeFormat="HH:mm"
+								className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+								inputProps={{ autoComplete: "off" }}
+							/>
+						</div>
+						<div className="flex-1">
+							<label htmlFor="endTime" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
+								퇴근 시간
+							</label>
+							<DatePicker
+								id="endTime"
+								selected={endTime ? moment(endTime, "HH:mm").toDate() : null}
+								onChange={(date) => setEndTime(moment(date).format("HH:mm"))}
+								showTimeSelect
+								showTimeSelectOnly
+								timeIntervals={15}
+								dateFormat="HH:mm"
+								timeFormat="HH:mm"
+								className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+								inputProps={{ autoComplete: "off" }}
+							/>
+						</div>
 					</div>
+					{timeError && <p className="text-red-500 text-xs mt-1">퇴근 시간은 출근 시간보다 늦어야 해요.</p>}
+					<div></div>
 					<div>
-						<label htmlFor="endTime" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
-							퇴근 시간
-						</label>
-						<DatePicker
-							id="endTime"
-							selected={endTime ? moment(endTime, "HH:mm").toDate() : null}
-							onChange={(date) => setEndTime(moment(date).format("HH:mm"))}
-							showTimeSelect
-							showTimeSelectOnly
-							timeIntervals={15}
-							dateFormat="HH:mm"
-							timeFormat="HH:mm"
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
-						/>
-						{timeError && <p className="text-coral-pink text-sm mt-1">퇴근 시간은 출근 시간보다 늦어야 해요.</p>}
-					</div>
-					<div>
-						<label htmlFor="mealAllowance" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
+						<label htmlFor="mealAllowance" className="block text-sm font-medium text-light-gray-500 dark:text-dark-text">
 							식대 (원)
 						</label>
 						<input
@@ -279,11 +299,11 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							id="mealAllowance"
 							value={mealAllowance}
 							onChange={(e) => setMealAllowance(Math.max(0, parseInt(e.target.value) || 0))}
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+							className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-light-bg dark:bg-dark-gray-200 text-light-text dark:text-dark-text"
 						/>
 					</div>
 					<div>
-						<label htmlFor="notes" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
+						<label htmlFor="notes" className="block text-sm font-medium text-light-gray-500 dark:text-dark-text">
 							비고
 						</label>
 						<textarea
@@ -291,7 +311,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							rows="2"
 							value={notes}
 							onChange={(e) => setNotes(e.target.value)}
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"></textarea>
+							className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-light-bg dark:bg-dark-gray-200 text-light-text dark:text-dark-text"></textarea>
 					</div>
 				</div>
 
@@ -299,26 +319,23 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 
 				<div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between sm:items-center">
 					{recordId && (
-						<button onClick={handleDelete} className="w-full sm:w-auto px-4 py-2 text-coral-pink bg-coral-pink-light rounded-lg hover:bg-coral-pink focus:outline-none focus:ring-2 focus:ring-coral-pink focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
+						<button onClick={handleDelete} className="w-full sm:w-auto px-4 py-2 text-white bg-coral-pink rounded-full font-medium hover:bg-coral-pink-dark focus:outline-none focus:ring-2 focus:ring-coral-pink focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
 							삭제
 						</button>
 					)}
 					<div className="flex flex-col gap-3 sm:flex-row sm:ml-auto">
-						<button
-							onClick={onClose}
-							className="w-full sm:w-auto px-4 py-2 bg-medium-gray text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out
-     transform hover:scale-105">
+						<button onClick={onClose} className="w-full sm:w-auto px-4 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
 							취소
 						</button>
 						<button
 							onClick={resetForm}
-							className="w-full sm:w-auto px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition-all duration-200 
-     ease-in-out transform hover:scale-105">
+							className="w-full sm:w-auto px-3 py-2 bg-gray-200 text-dark-navy rounded-full font-medium hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-opacity-50 transition-all duration-200 
+     ease-in-out transform hover:scale-105 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
 							초기화
 						</button>
 						<button
 							onClick={handleSave}
-							className="w-full sm:w-auto px-4 py-2 bg-mint-green text-white rounded-lg hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 
+							className="w-full sm:w-auto px-4 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 
      ease-in-out transform hover:scale-105">
 							저장
 						</button>
