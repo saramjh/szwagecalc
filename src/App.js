@@ -202,7 +202,7 @@ const AppContent = () => {
 
 	return (
 		<>
-			<div className="App bg-cream-white dark:bg-deep-navy min-h-screen flex flex-col items-center justify-center p-4">
+			<div className="App bg-cream-white dark:bg-deep-navy min-h-screen flex flex-col items-center justify-center p-4 pt-16">
 				{session && (
 					<div className="absolute top-4 left-4 z-50 flex items-center space-x-2 cursor-pointer" onClick={handleGoHome}>
 						<img src={process.env.PUBLIC_URL + "/logo192.png"} alt="시급이요 로고" className="w-8 h-8" />
@@ -211,25 +211,20 @@ const AppContent = () => {
 				)}
 				{!session ? (
 					<div className="flex flex-col items-center bg-cream-white dark:bg-charcoal-gray p-8 rounded-xl shadow-2xl max-w-md mx-auto my-8">
-						<h1 className="text-dark-navy dark:text-white text-4xl font-bold mb-6 flex items-center justify-center">
-							<span role="img" aria-label="money bag" className="mr-2 text-3xl">
-								💰
-							</span>
-							시급이요
-							<span role="img" aria-label="clock" className="ml-2 text-3xl">
-								⏰{" "}
-							</span>
-						</h1>
-						<p className="bg-gradient-to-r from-mint-green to-lemon-yellow text-white p-6 rounded-xl shadow-lg text-xl font-semibold mb-4 text-center flex flex-col items-center gap-2 bg-200% animate-gradient-flow">
+						<div className="flex items-center justify-center mb-6">
+							<img src={process.env.PUBLIC_URL + "/logo192.png"} alt="시급이요 로고" className="w-12 h-12 mr-3" />
+							<h1 className="text-dark-navy dark:text-white text-4xl font-bold">시급이요</h1>
+						</div>
+						<p className="bg-gray-100 dark:bg-gray-700 text-dark-navy dark:text-white p-6 rounded-xl shadow-lg text-lg font-semibold mb-8 text-center flex flex-col items-center gap-2">
 							<span>내 시급</span>
 							<span>내 근무 기록</span>
-							<span>내 수입을 한눈에! ⏰</span>
+							<span>내 수입을 한눈에!</span>
 						</p>
 
 						<button
 							onClick={handleGoogleLogin}
-							className="px-6 py-3 bg-mint-green text-white rounded-lg text-lg font-semibold shadow-md
-										hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 mt-10">
+							className="px-6 py-3 bg-mint-green text-white rounded-full text-lg font-semibold shadow-md
+										hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 mt-8 flex items-center justify-center space-x-2">
 							Google 로그인
 						</button>
 						<p className="text-light-gray dark:text-white text-xs mt-4 text-center">로그인하여 개인화된 서비스를 이용하세요.</p>

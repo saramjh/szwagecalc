@@ -246,8 +246,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 										onClick={() => setSelectedJobId(job.id)}
 										className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200`}
 										style={{ 
-					backgroundColor: job.color || "#E5E7EB", 
-					color: job.color ? getContrastingTextColor(job.color) : "#1F2937"
+					backgroundColor: selectedJobId === job.id ? (job.color || "#E5E7EB") : (job.color ? job.color + "33" : "#E5E7EB"), 
+					color: selectedJobId === job.id ? getContrastingTextColor(job.color) : (job.color ? getContrastingTextColor(job.color) : "#1F2937")
 				}}>
 										{job.job_name}
 									</button>
