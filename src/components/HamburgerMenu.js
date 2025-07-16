@@ -93,7 +93,7 @@ const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, 
 			</button>
 
 			{isOpen && (
-				<div className="absolute right-0 mt-2 w-48 bg-cream-white dark:bg-charcoal-gray rounded-md shadow-lg py-1 z-50 transition-all duration-300 ease-out transform origin-top-right scale-100">
+				<div className="absolute right-0 mt-2 w-48 bg-cream-white dark:bg-charcoal-gray rounded-md shadow-lg py-1 z-100 transition-all duration-300 ease-out transform origin-top-right scale-100">
 					{session && userProfilePic && (
 						<div className="p-4 flex flex-col items-center border-b border-gray-200 dark:border-gray-700">
 							<img src={userProfilePic} alt="User Profile" className="w-16 h-16 rounded-full mb-2 border-2 border-mint-green" />

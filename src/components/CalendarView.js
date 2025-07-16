@@ -103,7 +103,7 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 				<div className="absolute -top-1.5 right-1 w-full h-full flex flex-col items-center justify-start pt-1 sm:pt-2 sm:space-y-1">
 					{totalHours > 0 && <div className={`text-[0.5rem] sm:text-xs text-white bg-coral-pink rounded-sm w-6 h-3 sm:w-10 sm:h-4 relative left-2 flex items-center justify-center font-semibold`}>{totalHours.toFixed(1)}h</div>}
 					{dailyRecords.length > 0 && (
-						<div className={`flex relative top-3 left-3 h-2.5 w-2.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-coral-pink-light text-[0.5rem] sm:text-xs sm:top-5 sm:left-4 font-bold text-pink-500 dark:bg-gray-500 dark:text-mint-green`}>{dailyRecords.length}</div>
+						<div className={`flex relative top-3 left-3 h-2.5 w-2.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-coral-pink-light text-[0.5rem] sm:text-xs sm:top-5 sm:left-4 font-bold text-pink-500 dark:bg-gray-500 dark:text-mint-green z-10`}>{dailyRecords.length}</div>
 					)}
 				</div>
 			)
@@ -128,7 +128,7 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 '월급 확인' 버튼을 눌러 월별 근무 보고서를 확인하세요.`
 
 	return (
-		<div className="p-4">
+		<div className="p-4 relative z-0">
 			<Calendar
 				onChange={handleDateChange}
 				value={date}

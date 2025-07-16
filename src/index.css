@@ -6,202 +6,317 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+	font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 }
 
 /* Custom styles for react-calendar */
 .react-calendar-custom {
-  width: 100%;
-  max-width: 600px; /* Adjust as needed */
-  line-height: 1.125em;
-  margin: auto; /* Center the calendar on larger screens */
+	width: 100%;
+	max-width: 600px; /* Adjust as needed */
+	line-height: 1.125em;
+	margin: auto; /* Center the calendar on larger screens */
 }
 
 /* Navigation container */
 .react-calendar__navigation {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 1em;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 1em;
 }
 
 /* Navigation buttons */
 .react-calendar__navigation button {
-  min-width: 44px;
-  background: none;
-  color: #2D3142; /* dark-navy (light mode) */
+	min-width: 44px;
+	background: none;
+	color: #2d3142; /* dark-navy (light mode) */
 }
 
 .dark .react-calendar__navigation button {
-  color: #FFF; /* white (dark mode) */
+	color: #fff; /* white (dark mode) */
 }
 
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-  background-color: #e6e6e6;
+	background-color: #e6e6e6;
 }
 
 .dark .react-calendar__navigation button:enabled:hover,
 .dark .react-calendar__navigation button:enabled:focus {
-  background-color: #4A5568; /* dark mode hover */
+	background-color: #4a5568; /* dark mode hover */
 }
 
 .react-calendar__navigation button[disabled] {
-  background-color: #f0f0f0;
+	background-color: #f0f0f0;
 }
 
 /* Weekday names */
 .react-calendar__month-view__weekdays__weekday {
-  padding: 0.5em;
-  text-align: center;
-  font-weight: bold;
-  font-size: 0.75em;
-  color: #6B7280; /* medium-gray (light mode) */
+	padding: 0.5em;
+	text-align: center;
+	font-weight: bold;
+	font-size: 0.75em;
+	color: #6b7280; /* medium-gray (light mode) */
 }
 
 .dark .react-calendar__month-view__weekdays__weekday {
-  color: #A1A6B2; /* light-gray (dark mode) */
+	color: #a1a6b2; /* light-gray (dark mode) */
 }
 
 /* Day tiles */
 .react-calendar__month-view__days__day {
-  padding: 0.5em;
-  text-align: center;
+	padding: 0.5em;
+	text-align: center;
 }
 
 .react-calendar__tile {
-  position: relative;
-  max-width: 100%;
-  text-align: center;
-  background: none;
-  color: #2D3142; /* dark-navy (light mode text) */
-  aspect-ratio: 1 / 1; /* 1:1 비율 유지 */
-  padding: 5px; /* 내부 콘텐츠를 위한 패딩 */
-  box-sizing: border-box; /* 패딩을 포함하여 크기 계산 */
-  display: flex; /* Flexbox 적용 */
-  align-items: center; /* 수직 중앙 정렬 */
-  justify-content: center; /* 수평 중앙 정렬 */
+	position: relative;
+	max-width: 100%;
+	text-align: center;
+	background: none;
+	color: #2d3142; /* dark-navy (light mode text) */
+	aspect-ratio: 1 / 1; /* 1:1 비율 유지 */
+	padding: 5px; /* 내부 콘텐츠를 위한 패딩 */
+	box-sizing: border-box; /* 패딩을 포함하여 크기 계산 */
+	display: flex; /* Flexbox 적용 */
+	align-items: center; /* 수직 중앙 정렬 */
+	justify-content: center; /* 수평 중앙 정렬 */
 }
 
 .react-calendar__tile abbr {
-  display: flex; /* abbr 자체를 flex 컨테이너로 */
-  align-items: center; /* 수직 중앙 정렬 */
-  justify-content: center; /* 수평 중앙 정렬 */
-  width: 100%; /* 부모 너비에 맞춤 */
-  height: 100%; /* 부모 높이에 맞춤 */
+	display: flex; /* abbr 자체를 flex 컨테이너로 */
+	align-items: center; /* 수직 중앙 정렬 */
+	justify-content: center; /* 수평 중앙 정렬 */
+	width: 100%; /* 부모 너비에 맞춤 */
+	height: 100%; /* 부모 높이에 맞춤 */
 }
 
 .dark .react-calendar__tile {
-  color: #FFF; /* white (dark mode text) */
+	color: #fff; /* white (dark mode text) */
 }
 
 .react-calendar__tile:disabled {
-  background-color: #f0f0f0;
+	background-color: #f0f0f0;
 }
 
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
-  background-color: #e6e6e6;
+	background-color: #e6e6e6;
 }
 
 .dark .react-calendar__tile:enabled:hover,
 .dark .react-calendar__tile:enabled:focus {
-  background-color: #4A5568; /* charcoal-gray-light */
-  color: #FFF; /* white */
+	background-color: #4a5568; /* charcoal-gray-light */
+	color: #fff; /* white */
 }
 
 .react-calendar__tile--now {
-  background: #4ED6B8; /* mint-green */
-  color: #2D3142; /* dark-navy for contrast */
+	background: #4ed6b8; /* mint-green */
+	color: #2d3142; /* dark-navy for contrast */
 }
 
 .dark .react-calendar__tile--now {
-  background: #3CA08A; /* mint-green-dark */
-  color: #FFF;
+	background: #3ca08a; /* mint-green-dark */
+	color: #fff;
 }
 
 .react-calendar__tile--now:enabled:hover,
 .react-calendar__tile--now:enabled:focus {
-  background: #3CA08A; /* mint-green-dark */
-  color: #2D3142; /* dark-navy for contrast */
+	background: #3ca08a; /* mint-green-dark */
+	color: #2d3142; /* dark-navy for contrast */
 }
 
 .dark .react-calendar__tile--now:enabled:hover,
 .dark .react-calendar__tile--now:enabled:focus {
-  background: #4ED6B8; /* mint-green */
-  color: #FFF;
+	background: #4ed6b8; /* mint-green */
+	color: #fff;
 }
 
 .react-calendar__tile--active {
-  background: #006edc;
-  color: white;
+	background: #006edc;
+	color: white;
 }
 
 .dark .react-calendar__tile--active {
-  background: #6B7280; /* medium-gray */
-  color: #FFF;
+	background: #6b7280; /* medium-gray */
+	color: #fff;
 }
 
 .react-calendar__tile--active:enabled:hover,
 .react-calendar__tile--active:enabled:focus {
-  background: #1087ff;
+	background: #1087ff;
 }
 
 .react-calendar--selectRange .react-calendar__tile--hover {
-  background-color: #e6e6e6;
+	background-color: #e6e6e6;
 }
 
 .react-calendar__tile--range {
-  background: #f8f8fa;
-  color: #000000;
+	background: #f8f8fa;
+	color: #000000;
 }
 
 .react-calendar__tile--rangeStart {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
 }
 
 .react-calendar__tile--rangeEnd {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
 }
 
 .react-calendar__tile--rangeBothSides {
-  border-radius: 0;
+	border-radius: 0;
 }
 
 .react-calendar__tile--rangeStart:enabled:hover,
 .react-calendar__tile--rangeStart:enabled:focus,
 .react-calendar__tile--rangeEnd:enabled:hover,
 .react-calendar__tile--rangeEnd:enabled:focus {
-  background-color: #e6e6e6;
+	background-color: #e6e6e6;
 }
 
 .payday-tile {
-  position: relative;
+	position: relative;
 }
 
 /* 월급날 아이콘 크기 조정 및 숫자 숨기기 */
 .payday-tile abbr {
-  display: none; /* 날짜 숫자 완전히 숨기기 */
+	display: none; /* 날짜 숫자 완전히 숨기기 */
 }
 
 .payday-tile::after {
-  content: "💰";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); /* 중앙 정렬 */
-  font-size: 1.5em; /* 아이콘 크기 조정 */
-  line-height: 1; /* 아이콘 자체의 라인 높이 조정 */
+	content: "💰";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	font-size: 1.5em;
+	line-height: 1;
+	z-index: 1; /* 뱃지(z-10)보다 낮은 z-index */
 }
 
 .react-calendar__month-view__days__day--neighboringMonth {
-  opacity: 0.7;
-  filter: blur(1px);
+	opacity: 0.7;
+	filter: blur(1px);
 }
 
 /* Custom styles for modal-open */
 .modal-open {
-  overflow: hidden;
+	overflow: hidden;
+}
+
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+	width: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: #f1f1f1;
+}
+
+.dark ::-webkit-scrollbar-track {
+	background: #2d3142;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #888;
+	border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+	background: #555;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #555;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+	background: #777;
+}
+
+/* Custom styles for HamburgerMenu */
+.hamburger-menu {
+	position: fixed;
+	top: 1rem;
+	left: 1rem;
+	z-index: 1000;
+}
+
+.menu-content {
+	position: fixed;
+	top: 0;
+	left: -250px;
+	width: 250px;
+	height: 100%;
+	background-color: #fff;
+	transition: left 0.3s ease-in-out;
+	z-index: 1000;
+}
+
+.dark .menu-content {
+	background-color: #2d3142;
+}
+
+.menu-content.open {
+	left: 0;
+}
+
+.menu-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 999;
+}
+
+/* Custom styles for ConfirmModal */
+.confirm-modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 2000;
+}
+
+.confirm-modal-content {
+	background: white;
+	padding: 20px;
+	border-radius: 8px;
+	text-align: center;
+	z-index: 2001;
+}
+
+.dark .confirm-modal-content {
+	background-color: #2d3142;
+	color: white;
+}
+
+/* Custom styles for ToastNotification */
+.toast-notification {
+	position: fixed;
+	bottom: 20px;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 10px 20px;
+	border-radius: 8px;
+	color: white;
+	z-index: 3000;
+	opacity: 0;
+	transition: opacity 0.5s, bottom 0.5s;
+}
+
+.toast-notification.show {
+	opacity: 1;
+	bottom: 40px;
 }
