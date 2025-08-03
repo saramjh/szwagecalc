@@ -87,7 +87,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 	}, [])
 
 	const totalDailyWage = useMemo(() => {
-		return dailyRecords.reduce((total, record) => total + record.daily_wage, 0)
+		return dailyRecords.reduce((total, record) => total + (record.daily_wage || 0), 0)
 	}, [dailyRecords])
 
 	const handleAddRecord = () => {
@@ -157,12 +157,12 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 												{record.jobs.job_name}
 											</span>
 										)}
-										<p className="text-lg font-bold text-dark-navy dark:text-white">+{record.daily_wage.toLocaleString()}원</p>
+										<p className="text-lg font-bold text-dark-navy dark:text-white">+{(record.daily_wage || 0).toLocaleString()}원</p>
 										<p className="text-sm text-medium-gray dark:text-light-gray">
-											{record.start_time.slice(0, 5)} ~ {record.end_time.slice(0, 5)}
+											{record.start_time?.slice(0, 5) || '--:--'} ~ {record.end_time?.slice(0, 5) || '--:--'}
 										</p>
 										<p className="text-sm text-medium-gray dark:text-light-gray">({formatDuration(record.start_time, record.end_time)})</p>
-										{record.meal_allowance > 0 && <p className="text-sm text-medium-gray dark:text-light-gray">식대: {record.meal_allowance.toLocaleString()}원</p>}
+										{(record.meal_allowance || 0) > 0 && <p className="text-sm text-medium-gray dark:text-light-gray">식대: {(record.meal_allowance || 0).toLocaleString()}원</p>}
 										{record.notes && <p className="text-sm text-medium-gray dark:text-light-gray">비고: {record.notes}</p>}
 									</div>
 									{/* 버튼 섹션 */}
@@ -180,7 +180,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 					</div>
 
 					<div className="mt-6 flex flex-col sm:flex-row justify-between items-center p-4 bg-cream-white dark:bg-charcoal-gray border-t border-gray-200 dark:border-gray-700 rounded-b-2xl -mx-6 -mb-6">
-						{totalDailyWage > 0 && <p className="text-lg font-semibold text-mint-green dark:text-mint-green-light mb-4 sm:mb-0">총 일급: {totalDailyWage.toLocaleString()}원</p>}
+						{totalDailyWage > 0 && <p className="text-lg font-semibold text-mint-green dark:text-mint-green-light mb-4 sm:mb-0">총 일급: {(totalDailyWage || 0).toLocaleString()}원</p>}
 						<div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
 							<button
 								onClick={handleAddRecord}

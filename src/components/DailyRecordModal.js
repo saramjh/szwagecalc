@@ -27,6 +27,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 	const [hourlyRateForDate, setHourlyRateForDate] = useState(0)
 	const [timeError, setTimeError] = useState(false)
 	const [selectedJobId, setSelectedJobId] = useState(null) // 선택된 직업 ID 상태
+	const [wageType, setWageType] = useState("hourly") // 급여 방식: "hourly" 또는 "daily"
+	const [fixedDailyWage, setFixedDailyWage] = useState(0) // 일급제 직접 입력 금액
 
 	const [showModal, setShowModal] = useState(false) // 모달의 실제 렌더링 여부
 	const [animateModal, setAnimateModal] = useState(false) // 애니메이션 클래스 적용 여부
@@ -39,6 +41,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		setDailyWage(0)
 		setRecordId(null)
 		setTimeError(false)
+		setWageType("hourly")
+		setFixedDailyWage(0)
 		if (jobs.length > 0) {
 			setSelectedJobId(jobs[0].id) // 초기화 시 첫 번째 직업으로 설정
 		}
@@ -52,11 +56,15 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 			if (recordToEdit) {
 				setRecordId(recordToEdit.id)
 				setSelectedJobId(recordToEdit.job_id)
-				setStartTime(recordToEdit.start_time)
-				setEndTime(recordToEdit.end_time)
-				setMealAllowance(recordToEdit.meal_allowance)
-				setNotes(recordToEdit.notes)
-				setDailyWage(recordToEdit.daily_wage)
+				setStartTime(recordToEdit.start_time || "")
+				setEndTime(recordToEdit.end_time || "")
+				setMealAllowance(recordToEdit.meal_allowance || 0)
+				setNotes(recordToEdit.notes || "")
+				setDailyWage(recordToEdit.daily_wage || 0)
+				setWageType(recordToEdit.wage_type || "hourly")
+				if (recordToEdit.wage_type === "daily") {
+					setFixedDailyWage(recordToEdit.daily_wage || 0)
+				}
 			} else {
 				resetForm()
 			}
@@ -108,67 +116,98 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 
 	// 시간 또는 시급이 변경될 때 일급을 계산하는 useEffect
 	useEffect(() => {
-		if (startTime && endTime && hourlyRateForDate !== 0) {
-			const startMoment = moment(startTime, "HH:mm")
-			const endMoment = moment(endTime, "HH:mm")
+		if (wageType === "hourly") {
+			// 시급제: 시간 기반 계산
+			if (startTime && endTime && hourlyRateForDate !== 0) {
+				const startMoment = moment(startTime, "HH:mm")
+				const endMoment = moment(endTime, "HH:mm")
 
-			if (endMoment.isBefore(startMoment)) {
-				setTimeError(true)
+				if (endMoment.isBefore(startMoment)) {
+					setTimeError(true)
+					setDailyWage(0)
+					return
+				}
+				setTimeError(false)
+
+				const duration = moment.duration(endMoment.diff(startMoment))
+				const hours = duration.asHours()
+				const calculatedWage = Math.round(hours * hourlyRateForDate) + mealAllowance
+				setDailyWage(calculatedWage)
+			} else {
 				setDailyWage(0)
-				return
 			}
+		} else if (wageType === "daily") {
+			// 일급제: 고정 일급 + 식대
 			setTimeError(false)
-
-			const duration = moment.duration(endMoment.diff(startMoment))
-			const hours = duration.asHours()
-			const calculatedWage = Math.round(hours * hourlyRateForDate) + mealAllowance
-			setDailyWage(calculatedWage)
-		} else {
-			setDailyWage(0)
+			setDailyWage(fixedDailyWage + mealAllowance)
 		}
-	}, [startTime, endTime, hourlyRateForDate, mealAllowance])
+	}, [wageType, startTime, endTime, hourlyRateForDate, mealAllowance, fixedDailyWage])
 
 	const handleSave = async () => {
-		if (!session || !selectedJobId || !selectedDate || !startTime || !endTime) {
-			showToast("시간을 입력해주세요.", "error")
+		if (!session || !selectedJobId || !selectedDate) {
+			showToast("필수 정보를 입력해주세요.", "error")
 			return
 		}
 
-		// 시급 유효성 검사: 시급이 0이면 저장 방지 및 안내
-		if (hourlyRateForDate === 0) {
-			showToast("해당 직업의 시급을 설정해주세요.", "error")
-			return // 저장 방지
+		// 급여 방식별 유효성 검사
+		if (wageType === "hourly") {
+			// 시급제 유효성 검사
+			if (!startTime || !endTime) {
+				showToast("시간을 입력해주세요.", "error")
+				return
+			}
+			if (hourlyRateForDate === 0) {
+				showToast("해당 직업의 시급을 설정해주세요.", "error")
+				return
+			}
+			// 시간 유효성 검사
+			const startMoment = moment(startTime, "HH:mm")
+			const endMoment = moment(endTime, "HH:mm")
+			if (endMoment.isBefore(startMoment)) {
+				showToast("퇴근 시간을 다시 확인해주세요.", "error")
+				return
+			}
+		} else if (wageType === "daily") {
+			// 일급제 유효성 검사
+			if (fixedDailyWage <= 0) {
+				showToast("일급을 입력해주세요.", "error")
+				return
+			}
 		}
 
-		// 시급 유효성 검사: 시급이 0이면 저장 방지 및 안내
-		if (hourlyRateForDate === 0) {
-			showToast("해당 직업의 시급을 설정해주세요.", "error")
-			return // 저장 방지
-		}
-
-		// 시간 유효성 검사
-		const startMoment = moment(startTime, "HH:mm")
-		const endMoment = moment(endTime, "HH:mm")
-
-		if (endMoment.isBefore(startMoment)) {
-			showToast("퇴근 시간을 다시 확인해주세요.", "error")
-			return
-		}
-
-		// 일급 계산 (hourlyRateForDate 사용)
-		const duration = moment.duration(endMoment.diff(startMoment))
-		const hours = duration.asHours()
-		const calculatedDailyWage = Math.round(hours * hourlyRateForDate) + mealAllowance
-
-		const newRecord = {
+		// 급여 방식별 저장 데이터 준비
+		let newRecord = {
 			user_id: session.user.id,
 			job_id: selectedJobId,
 			date: moment(selectedDate).format("YYYY-MM-DD"),
-			start_time: startTime,
-			end_time: endTime,
 			meal_allowance: mealAllowance,
 			notes: notes,
-			daily_wage: calculatedDailyWage,
+			wage_type: wageType,
+			work_description: notes,
+		}
+
+		if (wageType === "hourly") {
+			// 시급제: 시간 + 계산된 일급
+			const startMoment = moment(startTime, "HH:mm")
+			const endMoment = moment(endTime, "HH:mm")
+			const duration = moment.duration(endMoment.diff(startMoment))
+			const hours = duration.asHours()
+			const calculatedDailyWage = Math.round(hours * hourlyRateForDate) + mealAllowance
+			
+			newRecord = {
+				...newRecord,
+				start_time: startTime,
+				end_time: endTime,
+				daily_wage: calculatedDailyWage,
+			}
+		} else if (wageType === "daily") {
+			// 일급제: 고정 일급 + 식대 (시간 null)
+			newRecord = {
+				...newRecord,
+				start_time: null,
+				end_time: null,
+				daily_wage: fixedDailyWage + mealAllowance,
+			}
 		}
 
 		try {
@@ -255,6 +294,37 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							)}
 						</div>
 					</div>
+
+					{/* 급여 방식 선택 */}
+					<div>
+						<label className="block text-sm font-medium text-medium-gray dark:text-light-gray mb-2">급여 방식</label>
+						<div className="flex gap-2">
+							<button
+								onClick={() => setWageType("hourly")}
+								className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+									wageType === "hourly" 
+										? "bg-mint-green text-white" 
+										: "bg-gray-200 text-dark-navy dark:bg-gray-700 dark:text-white"
+								}`}
+							>
+								시급제
+							</button>
+							<button
+								onClick={() => setWageType("daily")}
+								className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+									wageType === "daily" 
+										? "bg-mint-green text-white" 
+										: "bg-gray-200 text-dark-navy dark:bg-gray-700 dark:text-white"
+								}`}
+							>
+								일급제
+							</button>
+						</div>
+					</div>
+
+					{/* 시급제 선택시 UI */}
+					{wageType === "hourly" && (
+						<>
 					<div>
 						<label htmlFor="hourlyRateDisplay" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
 							적용 시급
@@ -305,7 +375,27 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 						</div>
 					</div>
 					{timeError && <p className="text-red-500 text-xs mt-1">퇴근 시간은 출근 시간보다 늦어야 해요.</p>}
-					<div></div>
+						</>
+					)}
+
+					{/* 일급제 선택시 UI */}
+					{wageType === "daily" && (
+						<div>
+							<label htmlFor="fixedDailyWage" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
+								일급 (원)
+							</label>
+							<input
+								type="number"
+								id="fixedDailyWage"
+								value={fixedDailyWage || ""}
+								onChange={(e) => setFixedDailyWage(Math.max(0, parseInt(e.target.value) || 0))}
+								placeholder="예: 150000"
+								className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+							/>
+						</div>
+					)}
+
+					{/* 공통 입력 필드: 식대 */}
 					<div>
 						<label htmlFor="mealAllowance" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
 							식대 (원)
@@ -313,7 +403,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 						<input
 							type="number"
 							id="mealAllowance"
-							value={mealAllowance}
+							value={mealAllowance || ""}
 							onChange={(e) => setMealAllowance(Math.max(0, parseInt(e.target.value) || 0))}
 							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
 						/>
@@ -325,7 +415,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 						<textarea
 							id="notes"
 							rows="2"
-							value={notes}
+							value={notes || ""}
 							onChange={(e) => setNotes(e.target.value)}
 							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"></textarea>
 					</div>

@@ -176,11 +176,11 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 					</div>
 					<div className="flex justify-between items-center mb-2">
 						<p className="text-dark-navy dark:text-white text-sm font-semibold">총 식대</p>
-						<p className="text-dark-navy dark:text-white text-base">{totalMealAllowance.toLocaleString()}원</p>
+						<p className="text-dark-navy dark:text-white text-base">{(totalMealAllowance || 0).toLocaleString()}원</p>
 					</div>
 					<div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
 						<p className="text-dark-navy dark:text-white text-lg font-bold">총 수입</p>
-												<p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap">{totalGrossIncome.toLocaleString()}원</p>
+												<p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap">{(totalGrossIncome || 0).toLocaleString()}원</p>
 					</div>
 				</div>
 
@@ -198,7 +198,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
                     {moment(record.date).format('M월 D일 (ddd)')}
                   </p>
                   <p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap flex-shrink-0">
-                    +{record.daily_wage.toLocaleString()}원
+                    +{(record.daily_wage || 0).toLocaleString()}원
                   </p>
                 </div>
 
@@ -207,13 +207,13 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
                   {/* Start ~ End Time and Work Duration */}
                   {(record.start_time && record.end_time) && (
                     <p>
-                      {record.start_time.slice(0, 5)} ~ {record.end_time.slice(0, 5)}
+                      {record.start_time?.slice(0, 5) || '--:--'} ~ {record.end_time?.slice(0, 5) || '--:--'}
                       <span className="ml-2">({formatDuration(record.start_time, record.end_time)})</span>
                     </p>
                   )}
                   {/* Meal Allowance (only if > 0) */}
-                  {record.meal_allowance > 0 && (
-                    <p>식대: {record.meal_allowance.toLocaleString()}원</p>
+                  {(record.meal_allowance || 0) > 0 && (
+                    <p>식대: {(record.meal_allowance || 0).toLocaleString()}원</p>
                   )}
                 </div>
 
