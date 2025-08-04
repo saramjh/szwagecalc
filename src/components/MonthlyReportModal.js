@@ -2,17 +2,9 @@ import React, { useState, useEffect, useCallback } from "react"
 import moment from "moment"
 import "moment/locale/ko" // 한국어 로케일 임포트
 import { supabase } from "../supabaseClient"
+import { getJobChipStyle } from "../constants/JobColors"
 
 moment.locale('ko'); // moment.js 로케일 설정
-
-const getContrastingTextColor = (hexColor) => {
-	if (!hexColor) return "#000000";
-	const r = parseInt(hexColor.slice(1, 3), 16);
-	const g = parseInt(hexColor.slice(3, 5), 16);
-	const b = parseInt(hexColor.slice(5, 7), 16);
-	const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-	return (yiq >= 128) ? '#000000' : '#FFFFFF';
-};
 
 const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) => {
 	const [monthlyRecords, setMonthlyRecords] = useState([])
@@ -138,7 +130,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 	if (!showModal) return null
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
 			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedMonth).format("YYYY년 M월")} 월급 보고서</h2>
@@ -157,11 +149,8 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 							<button
 								key={job.id}
 								onClick={() => setSelectedJobFilterId(job.id)}
-								className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200`}
-								style={{
-									backgroundColor: selectedJobFilterId === job.id ? (job.color || "#E5E7EB") : (job.color ? job.color + "33" : "#E5E7EB"),
-									color: selectedJobFilterId === job.id ? getContrastingTextColor(job.color) : (job.color ? getContrastingTextColor(job.color) : "#1F2937"),
-								}}
+								className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 transform`}
+								style={getJobChipStyle(job, selectedJobFilterId === job.id)}
 							>
 								{job.job_name}
 							</button>
@@ -222,10 +211,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
                   <div>
                     <span
                       className="inline-block px-2 py-1 rounded-full text-xs font-semibold mt-1"
-                      style={{ 
-                        backgroundColor: record.jobs?.color || "#E5E7EB",
-                        color: record.jobs?.color ? getContrastingTextColor(record.jobs.color) : "#1F2937"
-                      }}
+                      style={getJobChipStyle(record.jobs, true)}
                     >
                       {record.jobs.job_name}
                     </span>

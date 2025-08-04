@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { supabase } from "../supabaseClient"
+import { getJobChipStyle } from "../constants/JobColors"
 import moment from "moment"
 
 const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jobs }) => {
@@ -72,7 +73,7 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
 	if (!showModal) return null
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
 			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md mx-4 transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0" : "translate-y-10"}`}>
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">시급 설정</h2>
@@ -92,11 +93,8 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
 									<button
 										key={job.id}
 										onClick={() => setSelectedJobId(job.id)}
-										className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200`}
-										style={{
-											backgroundColor: selectedJobId === job.id ? job.color : job.color ? job.color + "33" : "#e5e7eb", // 선택된 경우 직업 색상, 아니면 직업 색상에 투명도 20% (33) 또는 기본 회색
-											color: selectedJobId === job.id ? "white" : "#1a202c", // 선택된 경우 흰색, 아니면 어두운 색
-										}}>
+										className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 transform`}
+										style={getJobChipStyle(job, selectedJobId === job.id)}>
 										{job.job_name}
 									</button>
 								))

@@ -202,13 +202,30 @@ const AppContent = () => {
 
 	return (
 		<>
-			<div className="App bg-cream-white dark:bg-deep-navy min-h-screen flex flex-col items-center justify-center p-4 pt-16">
-				{session && (
-					<div className="absolute top-4 left-4 z-50 flex items-center space-x-2 cursor-pointer" onClick={handleGoHome}>
-						<img src={process.env.PUBLIC_URL + "/logo192.png"} alt="시급이요 로고" className="w-8 h-8" />
-						<h1 className="text-dark-navy dark:text-white text-xl font-bold">시급이요</h1>
+			{/* 🏗️ 이토스 UX/UI: 통합 헤더 구조 */}
+			{session && (
+				<header className="fixed top-0 left-0 right-0 z-layer-nav bg-transparent pointer-events-none">
+					<div className="flex justify-between items-center p-4 pointer-events-auto">
+						{/* 로고 & 타이틀 */}
+						<div className="flex items-center space-x-2 cursor-pointer hover:scale-105 transition-transform duration-200" onClick={handleGoHome}>
+							<img src={process.env.PUBLIC_URL + "/logo192.png"} alt="시급이요 로고" className="w-8 h-8" />
+							<h1 className="text-dark-navy dark:text-white text-xl font-bold">시급이요</h1>
+						</div>
+						
+						{/* 햄버거 메뉴 */}
+						<HamburgerMenu 
+							session={session} 
+							onLogout={handleLogout} 
+							username={username} 
+							onOpenJobManagementModal={() => setIsJobManagementModalOpen(true)} 
+							deferredPrompt={deferredPrompt} 
+							onInstallPWA={handleInstallPWA} 
+						/>
 					</div>
-				)}
+				</header>
+			)}
+
+			<div className="App bg-cream-white dark:bg-deep-navy min-h-screen flex flex-col items-center justify-center p-4 pt-16">
 				{!session ? (
 					<div className="flex flex-col items-center bg-cream-white dark:bg-charcoal-gray p-8 rounded-xl shadow-2xl max-w-md mx-auto my-8">
 						<div className="flex items-center justify-center mb-6">
@@ -248,11 +265,7 @@ const AppContent = () => {
 					</>
 				)}
 			</div>
-			{session && (
-				<div className="absolute top-4 right-4 z-0">
-					<HamburgerMenu session={session} onLogout={handleLogout} username={username} onOpenJobManagementModal={() => setIsJobManagementModalOpen(true)} deferredPrompt={deferredPrompt} onInstallPWA={handleInstallPWA} />
-				</div>
-			)}
+
 		</>
 	)
 }

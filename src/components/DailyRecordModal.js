@@ -5,15 +5,7 @@ import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
-
-const getContrastingTextColor = (hexColor) => {
-	if (!hexColor) return "#000000"; // 기본값으로 검은색 반환
-	const r = parseInt(hexColor.slice(1, 3), 16);
-	const g = parseInt(hexColor.slice(3, 5), 16);
-	const b = parseInt(hexColor.slice(5, 7), 16);
-	const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-	return (yiq >= 128) ? '#000000' : '#FFFFFF';
-};
+import { getJobChipStyle } from "../constants/JobColors"
 
 const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, recordToEdit }) => {
 	const showToast = useToast()
@@ -173,6 +165,18 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				showToast("일급을 입력해주세요.", "error")
 				return
 			}
+			// 시간 입력 검사 (일급제에서도 근무시간 기록)
+			if (!startTime || !endTime) {
+				showToast("근무시간을 입력해주세요.", "error")
+				return
+			}
+			// 시간 유효성 검사
+			const startMoment = moment(startTime, "HH:mm")
+			const endMoment = moment(endTime, "HH:mm")
+			if (endMoment.isBefore(startMoment)) {
+				showToast("퇴근 시간을 다시 확인해주세요.", "error")
+				return
+			}
 		}
 
 		// 급여 방식별 저장 데이터 준비
@@ -201,11 +205,11 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				daily_wage: calculatedDailyWage,
 			}
 		} else if (wageType === "daily") {
-			// 일급제: 고정 일급 + 식대 (시간 null)
+			// 일급제: 고정 일급 + 식대 (시간도 기록)
 			newRecord = {
 				...newRecord,
-				start_time: null,
-				end_time: null,
+				start_time: startTime,
+				end_time: endTime,
 				daily_wage: fixedDailyWage + mealAllowance,
 			}
 		}
@@ -264,7 +268,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 	}[size]
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} overflow-y-auto p-4`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} overflow-y-auto p-4 z-layer-modal`}>
 			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full ${modalSizeClass} transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"} my-auto`}>
 				<div className="flex justify-between items-start mb-4">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{recordToEdit ? "근무 기록 편집" : "새 근무 기록"}</h2>
@@ -283,11 +287,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 									<button
 										key={job.id}
 										onClick={() => setSelectedJobId(job.id)}
-										className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200`}
-										style={{ 
-					backgroundColor: selectedJobId === job.id ? (job.color || "#E5E7EB") : (job.color ? job.color + "33" : "#E5E7EB"), 
-					color: selectedJobId === job.id ? getContrastingTextColor(job.color) : (job.color ? getContrastingTextColor(job.color) : "#1F2937")
-				}}>
+										className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 transform`}
+										style={getJobChipStyle(job, selectedJobId === job.id)}>
 										{job.job_name}
 									</button>
 								))
@@ -322,9 +323,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 						</div>
 					</div>
 
-					{/* 시급제 선택시 UI */}
+					{/* 급여 정보 (방식별) */}
 					{wageType === "hourly" && (
-						<>
 					<div>
 						<label htmlFor="hourlyRateDisplay" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
 							적용 시급
@@ -338,6 +338,25 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
      bg-gray-100 dark:bg-gray-700 text-dark-navy dark:text-white sm:text-sm"
 						/>
 					</div>
+					)}
+
+					{wageType === "daily" && (
+						<div>
+							<label htmlFor="fixedDailyWage" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
+								일급 (원)
+							</label>
+							<input
+								type="number"
+								id="fixedDailyWage"
+								value={fixedDailyWage || ""}
+								onChange={(e) => setFixedDailyWage(Math.max(0, parseInt(e.target.value) || 0))}
+								placeholder="예: 150000"
+								className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+							/>
+						</div>
+					)}
+
+					{/* 근무 시간 (공통) */}
 					<div className="flex gap-4">
 						<div className="flex-1">
 							<label htmlFor="startTime" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
@@ -375,25 +394,6 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 						</div>
 					</div>
 					{timeError && <p className="text-red-500 text-xs mt-1">퇴근 시간은 출근 시간보다 늦어야 해요.</p>}
-						</>
-					)}
-
-					{/* 일급제 선택시 UI */}
-					{wageType === "daily" && (
-						<div>
-							<label htmlFor="fixedDailyWage" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
-								일급 (원)
-							</label>
-							<input
-								type="number"
-								id="fixedDailyWage"
-								value={fixedDailyWage || ""}
-								onChange={(e) => setFixedDailyWage(Math.max(0, parseInt(e.target.value) || 0))}
-								placeholder="예: 150000"
-								className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
-							/>
-						</div>
-					)}
 
 					{/* 공통 입력 필드: 식대 */}
 					<div>

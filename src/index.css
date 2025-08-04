@@ -316,6 +316,52 @@ body {
 	transition: opacity 0.5s, bottom 0.5s;
 }
 
+/* 🏗️ 이토스 UX/UI: 체계적 z-index 계층 구조 */
+
+/* Layer 1: 기본 콘텐츠 */
+.z-layer-base {
+	z-index: 1 !important;
+}
+
+/* Layer 2: 네비게이션 (헤더, 햄버거) */  
+.z-layer-nav {
+	z-index: 10 !important;
+}
+
+/* Layer 3: 드롭다운, 툴팁 */
+.z-layer-dropdown {
+	z-index: 100 !important;
+}
+
+/* Layer 4: 모달, 오버레이 (최우선) */
+.z-layer-modal {
+	z-index: 10000 !important;
+}
+
+/* Layer 5: 토스트, 알림 (최상위) */
+.z-layer-toast {
+	z-index: 20000 !important;
+}
+
+/* 기존 헤더 요소 강제 하위 계층 */
+.hamburger-menu,
+.menu-content {
+	z-index: 10 !important;
+}
+
+.menu-overlay {
+	z-index: 9 !important;
+}
+
+/* 🎯 이토스 UX/UI: 모달 열릴 때 헤더 완전 제거 */
+.modal-open header {
+	transform: translateY(-100%) !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+	visibility: hidden !important;
+	transition: all 0.3s ease-out;
+}
+
 .toast-notification.show {
 	opacity: 1;
 	bottom: 40px;

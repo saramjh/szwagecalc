@@ -16,7 +16,7 @@ const ToastNotification = ({ message, type }) => {
   }
 
   return (
-    <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-center z-50 transition-all duration-300 ease-out ${bgColorClass}`}>
+    	<div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-center z-layer-toast transition-all duration-300 ease-out ${bgColorClass}`}>
       {message}
     </div>
   );

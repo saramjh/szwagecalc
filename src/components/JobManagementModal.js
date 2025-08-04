@@ -4,16 +4,13 @@ import { supabase } from "../supabaseClient"
 import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
 import { PencilIcon, Trash2Icon, PlusIcon } from "lucide-react"
+import { JOB_COLORS } from "../constants/JobColors"
 
-const colorPresets = [
-	{ name: "Red", value: "#ffadad" },
-	{ name: "Orange", value: "#ffd6a5" },
-	{ name: "Yellow", value: "#fdffb6" },
-	{ name: "Green", value: "#caffbf" },
-	{ name: "Blue", value: "#9bf6ff" },
-	{ name: "Purple", value: "#bdb2ff" },
-	{ name: "Gray", value: "#eaeaea" },
-]
+// 🎨 이토스 UX/UI: 변별력 높은 토스 브랜드 색상 시스템
+const colorPresets = JOB_COLORS.map(color => ({
+	name: color.name,
+	value: color.value
+}))
 
 const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 	const showToast = useToast()
@@ -161,7 +158,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 	if (!showModal) return null
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
 			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-6 w-full max-w-md mx-4 transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0" : "translate-y-10"}`}>
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">
