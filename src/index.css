@@ -5,6 +5,126 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============= 시급이요 브랜드/시맨틱 컬러 (라이트 모드) ============= */
+:root {
+  /* Primary - 라벤더 퍼플 */
+  --sigeubiyc-purple-50: #F5F3FF;
+  --sigeubiyc-purple-100: #EDE9FE;
+  --sigeubiyc-purple-500: #8B5CF6;
+  --sigeubiyc-purple-600: #7C3AED;
+  --sigeubiyc-purple-700: #6D28D9;
+
+  /* Success - 그린 */
+  --sigeubiyc-green-50: #F0FDF4;
+  --sigeubiyc-green-500: #22C55E;
+  --sigeubiyc-green-600: #16A34A;
+
+  /* Warning - 오렌지 */
+  --sigeubiyc-orange-50: #FFF7ED;
+  --sigeubiyc-orange-500: #FB923C;
+  --sigeubiyc-orange-600: #F97316;
+
+  /* Error - 레드 */
+  --sigeubiyc-red-50: #FEF2F2;
+  --sigeubiyc-red-500: #EF4444;
+  --sigeubiyc-red-600: #DC2626;
+
+  /* Neutral - 그레이 */
+  --sigeubiyc-gray-50: #FAFAFA;
+  --sigeubiyc-gray-100: #F4F4F5;
+  --sigeubiyc-gray-200: #E4E4E7;
+  --sigeubiyc-gray-400: #A1A1AA;
+  --sigeubiyc-gray-600: #52525B;
+  --sigeubiyc-gray-900: #18181B;
+
+  /* 시맨틱 컬러 */
+  --bg-primary: var(--sigeubiyc-gray-50);
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: var(--sigeubiyc-gray-100);
+  --bg-hover: var(--sigeubiyc-purple-50);
+  --bg-pressed: var(--sigeubiyc-purple-100);
+
+  --text-primary: var(--sigeubiyc-gray-900);
+  --text-secondary: var(--sigeubiyc-gray-600);
+  --text-tertiary: var(--sigeubiyc-gray-400);
+  --text-disabled: #C1C1C9;
+  --text-inverse: #FFFFFF;
+
+  --accent-primary: var(--sigeubiyc-purple-500);
+  --accent-hover: var(--sigeubiyc-purple-600);
+  --accent-active: var(--sigeubiyc-purple-700);
+  --accent-bg: var(--sigeubiyc-purple-50);
+  --accent-text: #FFFFFF;
+
+  --success-primary: var(--sigeubiyc-green-500);
+  --success-hover: var(--sigeubiyc-green-600);
+  --success-bg: var(--sigeubiyc-green-50);
+  --success-text: #15803D;
+  --success-accent: #22C55E;
+
+  --warning-primary: var(--sigeubiyc-orange-600);
+  --warning-hover: #EA580C;
+  --warning-bg: var(--sigeubiyc-orange-50);
+  --warning-text: #C2410C;
+  --warning-accent: var(--sigeubiyc-orange-500);
+
+  --error-primary: var(--sigeubiyc-red-500);
+  --error-hover: var(--sigeubiyc-red-600);
+  --error-bg: var(--sigeubiyc-red-50);
+  --error-text: #DC2626;
+  --error-accent: #EF4444;
+
+  --info-primary: #8B5CF6;
+  --info-bg: rgba(139, 92, 246, 0.1);
+  --info-text: #7C3AED;
+  --info-accent: #A78BFA;
+
+  --border-primary: var(--sigeubiyc-gray-200);
+  --border-secondary: #D4D4D8;
+  --border-focus: var(--sigeubiyc-purple-500);
+  --border-hover: var(--sigeubiyc-purple-300);
+}
+
+/* ============= 색상 유틸 연결 (컴포넌트 클래스 ↔ 토큰 변수) ============= */
+/* 텍스트 */
+.text-dark-navy { color: var(--text-primary) !important; }
+.text-medium-gray { color: var(--text-secondary) !important; }
+.text-light-gray { color: var(--text-tertiary) !important; }
+.text-mint-green { color: var(--success-primary) !important; }
+.text-mint-green-light { color: var(--success-accent) !important; }
+.text-coral-pink { color: var(--error-primary) !important; }
+.text-red-500 { color: var(--error-primary) !important; }
+
+/* 배경 */
+.bg-cream-white { background-color: var(--bg-secondary) !important; }
+.bg-mint-green { background-color: var(--success-primary) !important; }
+.bg-mint-green-dark { background-color: var(--success-hover) !important; }
+.bg-gray-200 { background-color: var(--sigeubiyc-gray-200) !important; }
+.bg-white { background-color: var(--bg-secondary) !important; }
+.hover\:bg-red-100:hover { background-color: var(--error-bg) !important; }
+
+/* 테두리 */
+.border-gray-200 { border-color: var(--border-primary) !important; }
+.border-gray-300 { border-color: var(--border-secondary) !important; }
+.border-mint-green { border-color: var(--success-primary) !important; }
+.border-red-500 { border-color: var(--error-primary) !important; }
+
+/* 상태/호버/포커스 유틸 */
+.hover\:bg-mint-green-dark:hover { background-color: var(--success-hover) !important; }
+.hover\:bg-gray-100:hover { background-color: var(--bg-tertiary) !important; }
+.dark .hover\:bg-gray-700:hover { background-color: #374151 !important; }
+.focus\:ring-mint-green:focus { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25) !important; }
+.focus\:border-mint-green:focus { border-color: var(--success-primary) !important; }
+
+/* 다크 모드 대응 */
+.dark .text-white { color: #FFFFFF !important; }
+.dark .text-light-gray { color: #A1A1AA !important; }
+.dark .text-mint-green-light { color: var(--success-primary) !important; }
+.dark .bg-charcoal-gray { background-color: #2d3142 !important; }
+.dark .bg-gray-800 { background-color: #1f2937 !important; }
+.dark .border-gray-700 { border-color: #374151 !important; }
+.dark .hover\:bg-red-900:hover { background-color: rgba(220, 38, 38, 0.25) !important; }
+
 body {
 	font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 }
@@ -27,9 +147,9 @@ body {
 
 /* Navigation buttons */
 .react-calendar__navigation button {
-	min-width: 44px;
-	background: none;
-	color: #2d3142; /* dark-navy (light mode) */
+    min-width: 44px;
+    background: none;
+    color: var(--text-primary);
 }
 
 .dark .react-calendar__navigation button {
@@ -38,7 +158,7 @@ body {
 
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-	background-color: #e6e6e6;
+    background-color: var(--bg-hover);
 }
 
 .dark .react-calendar__navigation button:enabled:hover,
@@ -47,7 +167,7 @@ body {
 }
 
 .react-calendar__navigation button[disabled] {
-	background-color: #f0f0f0;
+    background-color: var(--bg-tertiary);
 }
 
 /* Weekday names */
@@ -56,7 +176,7 @@ body {
 	text-align: center;
 	font-weight: bold;
 	font-size: 0.75em;
-	color: #6b7280; /* medium-gray (light mode) */
+    color: var(--text-secondary);
 }
 
 .dark .react-calendar__month-view__weekdays__weekday {
@@ -74,7 +194,7 @@ body {
 	max-width: 100%;
 	text-align: center;
 	background: none;
-	color: #2d3142; /* dark-navy (light mode text) */
+    color: var(--text-primary);
 	aspect-ratio: 1 / 1; /* 1:1 비율 유지 */
 	padding: 5px; /* 내부 콘텐츠를 위한 패딩 */
 	box-sizing: border-box; /* 패딩을 포함하여 크기 계산 */
@@ -101,7 +221,7 @@ body {
 
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
-	background-color: #e6e6e6;
+    background-color: var(--bg-hover);
 }
 
 .dark .react-calendar__tile:enabled:hover,
@@ -111,8 +231,8 @@ body {
 }
 
 .react-calendar__tile--now {
-	background: #4ed6b8; /* mint-green */
-	color: #2d3142; /* dark-navy for contrast */
+    background: var(--success-bg);
+    color: var(--success-text);
 }
 
 .dark .react-calendar__tile--now {
@@ -133,8 +253,8 @@ body {
 }
 
 .react-calendar__tile--active {
-	background: #006edc;
-	color: white;
+    background: var(--accent-primary);
+    color: var(--accent-text);
 }
 
 .dark .react-calendar__tile--active {
@@ -152,8 +272,8 @@ body {
 }
 
 .react-calendar__tile--range {
-	background: #f8f8fa;
-	color: #000000;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
 .react-calendar__tile--rangeStart {
@@ -252,7 +372,7 @@ body {
 	left: -250px;
 	width: 250px;
 	height: 100%;
-	background-color: #fff;
+    background-color: var(--bg-secondary);
 	transition: left 0.3s ease-in-out;
 	z-index: 1000;
 }
@@ -290,7 +410,7 @@ body {
 }
 
 .confirm-modal-content {
-	background: white;
+    background: var(--bg-secondary);
 	padding: 20px;
 	border-radius: 8px;
 	text-align: center;
@@ -310,7 +430,7 @@ body {
 	transform: translateX(-50%);
 	padding: 10px 20px;
 	border-radius: 8px;
-	color: white;
+    color: var(--text-inverse);
 	z-index: 3000;
 	opacity: 0;
 	transition: opacity 0.5s, bottom 0.5s;

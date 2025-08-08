@@ -22,10 +22,10 @@
 		"web-vitals": "^2.1.4"
 	},
 	"scripts": {
-		"start": "BROWSER=none react-scripts start",
-		"build": "react-scripts build",
-		"test": "react-scripts test",
-		"eject": "react-scripts eject",
+    "start": "BROWSER=none craco start",
+    "build": "craco build",
+    "test": "craco test",
+    "eject": "react-scripts eject",
 		"tailwind:init": "npx tailwindcss init -p",
 		"predeploy": "PUBLIC_URL=/ npm run build",
 		"deploy": "gh-pages -d build --dotfiles"
@@ -49,6 +49,7 @@
 		]
 	},
 	"devDependencies": {
+		"@craco/craco": "^7.1.0",
 		"gh-pages": "^6.3.0"
 	}
 }
