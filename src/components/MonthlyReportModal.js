@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react"
-import moment from "moment"
-import "moment/locale/ko" // 한국어 로케일 임포트
+import dayjs from "dayjs"
+import "dayjs/locale/ko"
 import { supabase } from "../supabaseClient"
 import { getJobChipStyle } from "../constants/JobColors"
+import { parseHHmm } from "../utils/time"
 
-moment.locale('ko'); // moment.js 로케일 설정
+dayjs.locale('ko')
 
 const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) => {
 	const [monthlyRecords, setMonthlyRecords] = useState([])
@@ -40,19 +41,20 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 		let totalHours = 0
 		let totalMeal = 0
 
-		records.forEach((record) => {
+        records.forEach((record) => {
 			totalIncome += record.daily_wage || 0
 			totalMeal += record.meal_allowance || 0
 
-			if (record.start_time && record.end_time) {
-				const start = moment(record.start_time, "HH:mm")
-				const end = moment(record.end_time, "HH:mm")
-				let duration = moment.duration(end.diff(start))
-				if (end.isBefore(start)) {
-					duration = moment.duration(end.add(1, "day").diff(start))
-				}
-				totalHours += duration.asHours()
-			}
+          if (record.start_time && record.end_time) {
+                const start = parseHHmm(record.start_time)
+                let end = parseHHmm(record.end_time)
+                if (start && end) {
+                    if (end.isBefore(start)) {
+                        end = end.add(1, "day")
+                    }
+                    totalHours += end.diff(start, "minute") / 60
+                }
+          }
 		})
 
 		setTotalGrossIncome(totalIncome);
@@ -62,17 +64,17 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 
   const formatDuration = (start_time, end_time) => {
     if (!start_time || !end_time) return '0시간 0분';
-
-    const start = moment(start_time, "HH:mm");
-    const end = moment(end_time, "HH:mm");
-    let duration = moment.duration(end.diff(start));
+    const start = parseHHmm(start_time);
+    let end = parseHHmm(end_time);
+    if (!start || !end) return '0시간 0분';
 
     if (end.isBefore(start)) {
-        duration = moment.duration(end.add(1, "day").diff(start));
+        end = end.add(1, "day");
     }
 
-    const hours = Math.floor(duration.asHours());
-    const minutes = duration.minutes();
+    const minutesTotal = end.diff(start, "minute");
+    const hours = Math.floor(minutesTotal / 60);
+    const minutes = minutesTotal % 60;
 
     let formatted = '';
     if (hours > 0) {
@@ -84,7 +86,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 };
 
   const formatTotalHours = (totalHours) => {
-    if (totalHours === 0) return '0시간 0분';
+    if (!Number.isFinite(totalHours) || totalHours === 0) return '0시간 0분';
 
     const hours = Math.floor(totalHours);
     const minutes = Math.round((totalHours - hours) * 60);
@@ -101,8 +103,8 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
   const fetchMonthlyRecords = useCallback(async () => {
 		if (!session) return
 
-		const startOfMonth = moment(selectedMonth).startOf("month").format("YYYY-MM-DD")
-		const endOfMonth = moment(selectedMonth).endOf("month").format("YYYY-MM-DD")
+    const startOfMonth = dayjs(selectedMonth).startOf("month").format("YYYY-MM-DD")
+    const endOfMonth = dayjs(selectedMonth).endOf("month").format("YYYY-MM-DD")
 
 		let query = supabase.from("work_records").select("*, jobs(job_name, color)").eq("user_id", session.user.id).gte("date", startOfMonth).lte("date", endOfMonth)
 
@@ -133,7 +135,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
 			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
 				<div className="flex justify-between items-center mb-4">
-					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedMonth).format("YYYY년 M월")} 월급 보고서</h2>
+                    <h2 className="text-xl font-bold text-dark-navy dark:text-white">{dayjs(selectedMonth).format("YYYY년 M월")} 월급 보고서</h2>
 					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
 						&times;
 					</button>
@@ -184,7 +186,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-sm font-medium text-dark-navy dark:text-white">
                     {/* 날짜 형식 변경: YYYY년 M월 D일 (ddd) -> M월 D일 (ddd) */}
-                    {moment(record.date).format('M월 D일 (ddd)')}
+                    {dayjs(record.date).format('M월 D일 (ddd)')}
                   </p>
                   <p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap flex-shrink-0">
                     +{(record.daily_wage || 0).toLocaleString()}원

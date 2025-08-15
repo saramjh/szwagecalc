@@ -216,7 +216,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 								id="jobName"
 								value={newJobName}
 								onChange={(e) => setNewJobName(e.target.value)}
-								className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
 								placeholder="예: 카페 알바"
 							/>
 						</div>
@@ -229,7 +229,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 								rows="2"
 								value={newJobDescription}
 								onChange={(e) => setNewJobDescription(e.target.value)}
-								className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
 								placeholder="예: 주말 근무, 시급 12000원"></textarea>
 						</div>
 						<div>
@@ -241,7 +241,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 								id="payday"
 								value={newPayday}
 								onChange={handlePaydayChange}
-								className={`mt-1 block w-full px-3 py-2 border ${paydayError ? "border-red-500" : "border-gray-300"} rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white`}
+                                className={`mt-1 block w-full px-3 py-2 border ${paydayError ? "border-red-500" : "border-gray-300"} rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green text-sm bg-cream-white dark:bg-charcoal-gray text-dark-navy dark:text-white`}
 								placeholder="예: 25"
 								min="1"
 								max="31"

@@ -486,3 +486,82 @@ body {
 	opacity: 1;
 	bottom: 40px;
 }
+
+/* === Calendar visual tokens === */
+.heat-0 { background-color: transparent; }
+/* Heatmap fills entire cell, not leaving a bottom gap */
+.heat-1 { background: linear-gradient(to bottom, rgba(16,185,129,0.10), rgba(16,185,129,0.10)); }
+.heat-2 { background: linear-gradient(to bottom, rgba(16,185,129,0.16), rgba(16,185,129,0.16)); }
+.heat-3 { background: linear-gradient(to bottom, rgba(16,185,129,0.22), rgba(16,185,129,0.22)); }
+.heat-4 { background: linear-gradient(to bottom, rgba(16,185,129,0.30), rgba(16,185,129,0.30)); }
+.heat-5 { background: linear-gradient(to bottom, rgba(16,185,129,0.38), rgba(16,185,129,0.38)); }
+.payday-ring { box-shadow: 0 0 0 2px rgba(16,185,129,1) inset; border-radius: 0.5rem; }
+.today-ring { box-shadow: 0 0 0 1px rgba(15,23,42,0.9) inset; border-radius: 0.5rem; }
+
+/* Calendar cell stroke drawn inside without affecting layout (avoid gutter overlap) */
+.cell-stroke { border: none !important; outline: 1px solid var(--border-primary); outline-offset: -1px; box-sizing: border-box; }
+.dark .cell-stroke { outline-color: #374151; }
+
+/* Calendar layout helpers */
+.calendar-grid { gap: 1px; }
+.calendar-cell { position: relative; aspect-ratio: 1 / 1.25; min-width: 0; container-type: inline-size; }
+.calendar-cell-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  overflow: hidden; /* keep visuals inside cell */
+}
+.calendar-badge { position: absolute; top: 2px; left: 4px; right: 4px; display: flex; justify-content: center; pointer-events: none; z-index: 10; }
+.calendar-badge > span { max-width: 100%; transform: scale(1); transform-origin: center top; }
+
+/* Auto-scale badge when text would overflow cell on very small screens */
+@media (max-width: 360px) {
+  .calendar-badge > span { transform: scale(0.92); }
+}
+
+/* Professional badge system with container query scaling */
+.badge-pill {
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1em;
+  padding: 0 0.65em; /* reduced horizontal padding; no vertical padding */
+  height: 0.75rem; /* reduced vertical size */
+  border-radius: 9999px;
+  background-color: var(--success-primary);
+  color: #fff;
+  line-height: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  font-size: 11px; /* fallback */
+  font-size: clamp(8px, 2.4cqw, 10px);
+}
+.badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background-color: #1f2937; /* gray-800 */
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8em;
+}
+.dark .badge-count { background-color: #6b7280; }
+.badge-text { font-weight: 600; font-size: 0.9em; }
+
+@container (max-width: 44px) {
+  .badge-pill { height: 0.75rem; padding: 0 0.65em; gap: 0.18em; }
+  .badge-count { width: 1.5em; height: 1.5em; font-size: 0.75em; }
+  .badge-text { font-size: 0.85em; }
+}
+@container (max-width: 38px) {
+  .badge-pill { height: 0.75rem; padding: 0 0.65em; }
+  .badge-count { width: 1.5em; height: 1.5em; }
+}
+
+@media (prefers-contrast: more) {
+  .badge-pill { box-shadow: none; outline: 1px solid #fff; }
+}
+.calendar-day { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 0; }

@@ -31,6 +31,13 @@ module.exports = {
       if (webpackConfig && webpackConfig.module && Array.isArray(webpackConfig.module.rules)) {
         webpackConfig.module.rules = visitRules(webpackConfig.module.rules);
       }
+      // 트리 셰이킹 최적화 옵션 명시
+      if (!webpackConfig.optimization) {
+        webpackConfig.optimization = {};
+      }
+      webpackConfig.optimization.usedExports = true;
+      webpackConfig.optimization.sideEffects = true;
+      webpackConfig.optimization.concatenateModules = true;
       // 개발 소스맵 비활성화(경고 최소화 필요 시)
       webpackConfig.devtool = false;
       // 소스맵 관련 경고 무시

@@ -84,6 +84,15 @@ const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, 
 		setIsOpen(false) // 메뉴 닫기
 	}
 
+  const handleExportCSV = async () => {
+    try {
+      if (!session) return
+      // 지연 로딩로 최소 침습 구현: 캘린더에서 최신 데이터를 fetch하므로 간단 안내
+      window.dispatchEvent(new CustomEvent("export-csv"))
+      setIsOpen(false)
+    } catch (_) {}
+  }
+
 	return (
 		<div className="relative" ref={menuRef}>
 			<button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-md text-dark-navy dark:text-white hover:bg-gray-200 dark:hover:bg-charcoal-gray focus:outline-none focus:ring-2 focus:ring-mint-green transition-all duration-200 ease-in-out">
@@ -114,6 +123,9 @@ const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, 
 					<button onClick={handleFeedbackClick} className="block w-full text-left px-4 py-2 text-dark-navy dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
 						피드백 보내기
 					</button>
+              <button onClick={handleExportCSV} className="block w-full text-left px-4 py-2 text-dark-navy dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                CSV 내보내기
+              </button>
 					{deferredPrompt && (
 						<button
 							onClick={() => {

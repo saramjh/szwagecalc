@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react"
-import moment from "moment"
+import dayjs from "dayjs"
+import { parseHHmm } from "../utils/time"
 import { supabase } from "../supabaseClient"
 import DailyRecordModal from "./DailyRecordModal"
 import { useConfirm } from "../contexts/ConfirmContext"
@@ -10,16 +11,17 @@ import { getJobChipStyle } from "../constants/JobColors"
 const formatDuration = (start_time, end_time) => {
 	if (!start_time || !end_time) return "0시간 0분"
 
-	const start = moment(start_time, "HH:mm")
-	const end = moment(end_time, "HH:mm")
-	let duration = moment.duration(end.diff(start))
+    const start = parseHHmm(start_time)
+    let end = parseHHmm(end_time)
+    if (!start || !end) return "0시간 0분"
 
 	if (end.isBefore(start)) {
-		duration = moment.duration(end.add(1, "day").diff(start))
+        end = end.add(1, "day")
 	}
 
-	const hours = Math.floor(duration.asHours())
-	const minutes = duration.minutes()
+    const minutesTotal = end.diff(start, "minute")
+    const hours = Math.floor(minutesTotal / 60)
+    const minutes = minutesTotal % 60
 
 	let formatted = ""
 	if (hours > 0) {
@@ -43,7 +45,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 	const fetchDailyRecords = useCallback(async () => {
 		if (!session || !selectedDate) return
 
-		const formattedDate = moment(selectedDate).format("YYYY-MM-DD")
+        const formattedDate = dayjs(selectedDate).format("YYYY-MM-DD")
 		const { data, error } = await supabase
 			.from("work_records")
 			.select("*, jobs(job_name, color)") // job_name과 color도 함께 가져오도록 수정
@@ -102,7 +104,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 				console.error("Error deleting record:", error)
 				showToast("삭제하지 못했어요", "error")
 			} else {
-				console.log("Record deleted:", recordId)
+                
 				showToast("삭제했어요", "success")
 				fetchDailyRecords() // 목록 새로고침
 			}
@@ -113,6 +115,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 		setIsDailyRecordModalOpen(false)
 		setSelectedRecordForEdit(null)
 		fetchDailyRecords() // 기록 저장/삭제 후 목록 새로고침
+		try { window.dispatchEvent(new Event('work-records-changed')) } catch (_) {}
 	}
 
 	if (!showModal) return null
@@ -123,7 +126,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 				<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
 					<div className="flex justify-between items-start mb-4">
 						<div>
-							<h2 className="text-xl font-bold text-dark-navy dark:text-white">{moment(selectedDate).format("YYYY년 M월 D일 (ddd)")}</h2>
+                            <h2 className="text-xl font-bold text-dark-navy dark:text-white">{dayjs(selectedDate).format("YYYY년 M월 D일 (ddd)")}</h2>
 						</div>
 						<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
 							&times;
@@ -168,15 +171,15 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 						)}
 					</div>
 
-					<div className="mt-6 flex flex-col sm:flex-row justify-between items-center p-4 bg-cream-white dark:bg-charcoal-gray border-t border-gray-200 dark:border-gray-700 rounded-b-2xl -mx-6 -mb-6">
-						{totalDailyWage > 0 && <p className="text-lg font-semibold text-mint-green dark:text-mint-green-light mb-4 sm:mb-0">총 일급: {(totalDailyWage || 0).toLocaleString()}원</p>}
-						<div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div className="mt-6 flex flex-col justify-between items-center p-4 bg-cream-white dark:bg-charcoal-gray border-t border-gray-200 dark:border-gray-700 rounded-b-2xl -mx-6 -mb-6 space-y-3">
+                        {totalDailyWage > 0 && <p className="text-lg font-semibold text-mint-green dark:text-mint-green-light mb-4">총 일급: {(totalDailyWage || 0).toLocaleString()}원</p>}
+                        <div className="flex flex-col gap-3 w-full">
 							<button
 								onClick={handleAddRecord}
-								className="px-3 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 w-full sm:w-auto">
+                                className="px-3 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 w-full">
 								<PlusIcon size={25} className="font-black" />
 							</button>
-							<button onClick={onClose} className="px-3 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 w-full sm:w-auto">
+                            <button onClick={onClose} className="px-3 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 w-full">
 								닫기
 							</button>
 						</div>

@@ -33,18 +33,43 @@ export const JOB_COLORS = [
     textDark: 'var(--text-inverse)',
     inactive: 'rgba(239, 68, 68, 0.25)',
   },
+  // 추가 색상 3종 (헥스 사용)
+  {
+    id: 'blue',
+    name: '블루',
+    value: '#2563EB', // blue-600
+    textLight: '#FFFFFF',
+    textDark: '#FFFFFF',
+    inactive: 'rgba(37, 99, 235, 0.25)',
+  },
+  {
+    id: 'fuchsia',
+    name: '퓨시아',
+    value: '#C026D3', // fuchsia-600 (magenta)
+    textLight: '#FFFFFF',
+    textDark: '#FFFFFF',
+    inactive: 'rgba(192, 38, 211, 0.25)',
+  },
+  {
+    id: 'coffee-brown',
+    name: '커피 브라운',
+    value: '#8B5E3C',
+    textLight: '#FFFFFF',
+    textDark: '#FFFFFF',
+    inactive: 'rgba(139, 94, 60, 0.25)',
+  },
 ];
 
 // 기본 색상 (첫 번째 색상)
-export const DEFAULT_JOB_COLOR = JOB_COLORS[0];
+const DEFAULT_JOB_COLOR = JOB_COLORS[0];
 
 // 색상 값으로 색상 객체 찾기
-export const getJobColorByValue = (colorValue) => {
+const getJobColorByValue = (colorValue) => {
   return JOB_COLORS.find(color => color.value === colorValue) || DEFAULT_JOB_COLOR;
 };
 
 // 라이트/다크 모드에 따른 텍스트 색상 계산
-export const getContrastingTextColor = (backgroundColor, isDarkMode = false) => {
+const getContrastingTextColor = (backgroundColor, isDarkMode = false) => {
   // CSS 변수 사용 시에는 토큰 매핑 우선
   const match = JOB_COLORS.find(c => c.value === backgroundColor);
   if (match) return isDarkMode ? match.textDark : match.textLight;

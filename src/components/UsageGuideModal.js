@@ -54,9 +54,9 @@ const UsageGuideModal = ({ isOpen, onClose, manualContent }) => {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult) => {
         if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the A2HS prompt');
+          
         } else {
-          console.log('User dismissed the A2HS prompt');
+          
         }
         setDeferredPrompt(null); // 프롬프트 사용 후 초기화
       });

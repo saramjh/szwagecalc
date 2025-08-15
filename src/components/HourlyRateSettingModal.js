@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react"
 import { supabase } from "../supabaseClient"
 import { getJobChipStyle } from "../constants/JobColors"
-import moment from "moment"
+import dayjs from "dayjs"
 
 const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jobs }) => {
 	const [hourlyRate, setHourlyRate] = useState(0)
 	const [selectedJobId, setSelectedJobId] = useState(null)
-	const [effectiveDate, setEffectiveDate] = useState(moment().format("YYYY-MM-DD"))
+    const [effectiveDate, setEffectiveDate] = useState(dayjs().format("YYYY-MM-DD"))
 
 	const [showModal, setShowModal] = useState(false) // 모달의 실제 렌더링 여부
 	const [animateModal, setAnimateModal] = useState(false) // 애니메이션 클래스 적용 여부
@@ -39,13 +39,13 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
 			if (error) {
 				console.error("Error fetching current hourly rate:", error)
 				setHourlyRate(0)
-				setEffectiveDate(moment().format("YYYY-MM-DD"))
+                setEffectiveDate(dayjs().format("YYYY-MM-DD"))
 			} else if (data && data.length > 0) {
 				setHourlyRate(data[0].hourly_rate)
 				setEffectiveDate(data[0].effective_date)
 			} else {
 				setHourlyRate(0)
-				setEffectiveDate(moment().format("YYYY-MM-DD"))
+                setEffectiveDate(dayjs().format("YYYY-MM-DD"))
 			}
 		}
 
@@ -59,8 +59,8 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
 			setSelectedJobId(jobs[0].id)
 		}
 		if (!isOpen) {
-			setSelectedJobId(null)
-			setEffectiveDate(moment().format("YYYY-MM-DD"))
+            setSelectedJobId(null)
+            setEffectiveDate(dayjs().format("YYYY-MM-DD"))
 		}
 	}, [isOpen, jobs, selectedJobId])
 
@@ -110,7 +110,7 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
 							id="effectiveDate"
 							value={effectiveDate}
 							onChange={(e) => setEffectiveDate(e.target.value)}
-							className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-light-bg dark:bg-dark-gray-200 text-light-text dark:text-dark-text"
+                            className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md focus:outline-none focus:ring-primary focus:border-primary text-sm bg-light-bg dark:bg-dark-gray-200 text-light-text dark:text-dark-text"
 						/>
 					</div>
 					<div>
@@ -122,7 +122,7 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
 							id="hourlyRate"
 							value={hourlyRate}
 							onChange={(e) => setHourlyRate(e.target.value)}
-							className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-light-bg dark:bg-dark-gray-200 text-light-text dark:text-dark-text"
+                            className="mt-1 block w-full px-3 py-2 border border-light-gray-300 rounded-md shadow-md focus:outline-none focus:ring-primary focus:border-primary text-sm bg-light-bg dark:bg-dark-gray-200 text-light-text dark:text-dark-text"
 							placeholder="예: 10000"
 						/>
 					</div>

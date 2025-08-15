@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, Suspense, lazy } from "react"
 import CalendarView from "./components/CalendarView"
-import HourlyRateSettingModal from "./components/HourlyRateSettingModal"
-import HamburgerMenu from "./components/HamburgerMenu" // HamburgerMenu 임포트
-import JobManagementModal from "./components/JobManagementModal" // JobManagementModal 임포트
+import HamburgerMenu from "./components/HamburgerMenu"
 import { supabase } from "./supabaseClient"
-import moment from "moment"
+import dayjs from "dayjs"
 import { ToastProvider, useToast } from "./contexts/ToastContext"
 import { ConfirmProvider } from "./contexts/ConfirmContext"
 
-// This is a dummy comment to trigger a new commit
+const HourlyRateSettingModal = lazy(() => import("./components/HourlyRateSettingModal"))
+const JobManagementModal = lazy(() => import("./components/JobManagementModal"))
+
+ 
 
 const AppContent = () => {
 	const [isHourlyRateModalOpen, setIsHourlyRateModalOpen] = useState(false)
@@ -40,15 +41,7 @@ const AppContent = () => {
 		}
 	}, [session])
 
-	const fetchHourlyRate = useCallback(async () => {
-		if (!session) return // 세션이 없으면 시급을 가져오지 않음
-
-		// 이 함수는 이제 App.js에서 직접 hourlyRate 상태를 업데이트하지 않습니다.
-		// 대신, HourlyRateSettingModal에서 시급을 저장한 후 fetchJobs를 호출하여
-		// 최신 시급 정보가 반영된 직업 목록을 가져오도록 합니다.
-		// CalendarView나 DailyRecordModal 등에서 필요한 시급은 해당 컴포넌트 내에서
-		// job_id와 날짜를 기반으로 조회하게 됩니다.
-	}, [session])
+    // fetchHourlyRate는 더 이상 사용되지 않습니다.
 
 	const checkAndMigrateJobs = useCallback(async () => {
 		if (!session) return
@@ -62,7 +55,7 @@ const AppContent = () => {
 
 		if (jobsData.length === 0) {
 			// 직업이 하나도 없으면 기본 직업 생성
-			console.log("No jobs found. Creating a default job...")
+            
 			const { data: newJob, error: insertJobError } = await supabase
 				.from("jobs")
 				.insert([{ user_id: session.user.id, job_name: "기본 직업" }])
@@ -74,24 +67,24 @@ const AppContent = () => {
 				return
 			}
 			const defaultJobId = newJob.id
-			console.log("Default job created with ID:", defaultJobId)
+            
 
 			// 기존 hourly_rate_history 마이그레이션
-			console.log("Migrating existing hourly_rate_history...")
+            
 			const { error: updateRateError } = await supabase.from("hourly_rate_history").update({ job_id: defaultJobId }).is("job_id", null).eq("user_id", session.user.id)
 			if (updateRateError) {
 				console.error("Error migrating hourly_rate_history:", updateRateError)
 			} else {
-				console.log("Hourly rate history migrated.")
+                
 			}
 
 			// 기존 work_records 마이그레이션
-			console.log("Migrating existing work_records...")
+            
 			const { error: updateWorkError } = await supabase.from("work_records").update({ job_id: defaultJobId }).is("job_id", null).eq("user_id", session.user.id)
 			if (updateWorkError) {
 				console.error("Error migrating work_records:", updateWorkError)
 			} else {
-				console.log("Work records migrated.")
+                
 			}
 		}
 	}, [session])
@@ -126,14 +119,54 @@ const AppContent = () => {
 		return () => subscription.unsubscribe()
 	}, [])
 
+  // CSV export listener: 현재 월 work_records를 조회해 CSV 생성
+  useEffect(() => {
+    const handler = async () => {
+      if (!session) return
+      const startOfMonth = dayjs().startOf("month").format("YYYY-MM-DD")
+      const endOfMonth = dayjs().endOf("month").format("YYYY-MM-DD")
+      const { data, error } = await supabase
+        .from("work_records")
+        .select("id,date,start_time,end_time,daily_wage,meal_allowance,notes,jobs(job_name)")
+        .eq("user_id", session.user.id)
+        .gte("date", startOfMonth)
+        .lte("date", endOfMonth)
+        .order("date", { ascending: true })
+      if (error) return
+      const rows = [
+        ["date","job_name","start_time","end_time","daily_wage","meal_allowance","notes"],
+        ...(data || []).map(r => [
+          r.date,
+          r.jobs?.job_name || "",
+          r.start_time || "",
+          r.end_time || "",
+          (r.daily_wage || 0).toString(),
+          (r.meal_allowance || 0).toString(),
+          (r.notes || "").replaceAll("\n"," ")
+        ])
+      ]
+      const csv = rows.map(cols => cols.map((c) => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n")
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `work_records_${dayjs().format("YYYYMM")}.csv`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    }
+    window.addEventListener("export-csv", handler)
+    return () => window.removeEventListener("export-csv", handler)
+  }, [session])
+
 	useEffect(() => {
-		if (session) {
-			fetchHourlyRate()
-			fetchProfile()
-			checkAndMigrateJobs() // 로그인 시 직업 확인 및 마이그레이션
-			fetchJobs() // 직업 목록 가져오기
-		}
-	}, [session, fetchHourlyRate, fetchProfile, checkAndMigrateJobs, fetchJobs])
+        if (session) {
+            fetchProfile()
+            checkAndMigrateJobs() // 로그인 시 직업 확인 및 마이그레이션
+            fetchJobs() // 직업 목록 가져오기
+        }
+    }, [session, fetchProfile, checkAndMigrateJobs, fetchJobs])
 
 	const saveHourlyRate = async (jobId, newRate, effectiveDate) => {
 		if (!session) return
@@ -147,7 +180,7 @@ const AppContent = () => {
 		}
 
 		// 2. 새로운 시급의 effective_date 이전에 유효했던 마지막 시급 기록을 찾아 end_date를 업데이트
-		const previousDate = moment(effectiveDate).subtract(1, "days").format("YYYY-MM-DD")
+        const previousDate = dayjs(effectiveDate).subtract(1, "day").format("YYYY-MM-DD")
 
 		const { data: previousRates, error: fetchError } = await supabase.from("hourly_rate_history").select("id").eq("user_id", session.user.id).eq("job_id", jobId).lte("effective_date", previousDate).is("end_date", null)
 
@@ -169,7 +202,7 @@ const AppContent = () => {
 			console.error("Error inserting new hourly rate:", insertError)
 			showToast("저장하지 못했어요", "error")
 		} else {
-			console.log("New hourly rate saved successfully.")
+            
 			showToast("시급을 저장했어요", "success")
 			fetchJobs() // 시급 저장 후 직업 목록을 다시 가져와 최신 시급 정보 반영
 		}
@@ -190,9 +223,8 @@ const AppContent = () => {
 	const handleInstallPWA = async () => {
 		if (deferredPrompt) {
 			deferredPrompt.prompt()
-			const { outcome } = await deferredPrompt.userChoice
-			console.log(`User response to the install prompt: ${outcome}`)
-			setDeferredPrompt(null) // 프롬프트 사용 후 초기화
+            await deferredPrompt.userChoice
+            setDeferredPrompt(null) // 프롬프트 사용 후 초기화
 		}
 	}
 
@@ -203,9 +235,9 @@ const AppContent = () => {
 	return (
 		<>
 			{/* 🏗️ 이토스 UX/UI: 통합 헤더 구조 */}
-			{session && (
-				<header className="fixed top-0 left-0 right-0 z-layer-nav bg-transparent pointer-events-none">
-					<div className="flex justify-between items-center p-4 pointer-events-auto">
+            {session && (
+                <header className="fixed top-0 left-0 right-0 z-layer-nav bg-transparent pointer-events-none">
+                    <div className="flex justify-between items-center px-3 py-4 pointer-events-auto max-w-[390px] w-full mx-auto">
 						{/* 로고 & 타이틀 */}
 						<div className="flex items-center space-x-2 cursor-pointer hover:scale-105 transition-transform duration-200" onClick={handleGoHome}>
 							<img src={process.env.PUBLIC_URL + "/logo192.png"} alt="시급이요 로고" className="w-8 h-8" />
@@ -225,7 +257,7 @@ const AppContent = () => {
 				</header>
 			)}
 
-			<div className="App bg-cream-white dark:bg-deep-navy min-h-screen flex flex-col items-center justify-center p-4 pt-16">
+            <div className="App bg-cream-white dark:bg-deep-navy min-h-screen flex flex-col items-center justify-center px-3 py-4 pt-16 max-w-[390px] w-full mx-auto">
 				{!session ? (
 					<div className="flex flex-col items-center bg-cream-white dark:bg-charcoal-gray p-8 rounded-xl shadow-2xl max-w-md mx-auto my-8">
 						<div className="flex items-center justify-center mb-6">
@@ -248,20 +280,23 @@ const AppContent = () => {
 					</div>
 				) : (
 					<>
-						<CalendarView onOpenHourlyRateModal={() => setIsHourlyRateModalOpen(true)} session={session} jobs={jobs} />
-						<HourlyRateSettingModal
+                        <CalendarView onOpenHourlyRateModal={() => setIsHourlyRateModalOpen(true)} session={session} jobs={jobs} />
+                        <Suspense fallback={null}>
+                        <HourlyRateSettingModal
 							isOpen={isHourlyRateModalOpen}
 							onClose={() => {
 								setIsHourlyRateModalOpen(false)
-								fetchHourlyRate() // 모달이 닫힐 때 시급 정보를 다시 가져옴
-								fetchJobs() // 직업 정보도 다시 가져올 수 있음 (필요 시)
+                                fetchJobs() // 최신 직업/시급 반영
 							}}
 							onSaveHourlyRate={saveHourlyRate}
 							session={session}
 							jobs={jobs}
 							fetchJobs={fetchJobs}
-						/>
-						<JobManagementModal isOpen={isJobManagementModalOpen} onClose={() => setIsJobManagementModalOpen(false)} session={session} jobs={jobs} fetchJobs={fetchJobs} />
+                        />
+                        </Suspense>
+                        <Suspense fallback={null}>
+                        <JobManagementModal isOpen={isJobManagementModalOpen} onClose={() => setIsJobManagementModalOpen(false)} session={session} jobs={jobs} fetchJobs={fetchJobs} />
+                        </Suspense>
 					</>
 				)}
 			</div>

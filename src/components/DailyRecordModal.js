@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react"
-import moment from "moment"
+import dayjs from "dayjs"
+import { parseHHmm } from "../utils/time"
 import { supabase } from "../supabaseClient" // Supabase 클라이언트 임포트
 import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
@@ -7,7 +8,7 @@ import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { getJobChipStyle } from "../constants/JobColors"
 
-const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, recordToEdit }) => {
+const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, recordToEdit, size = "medium", prefill }) => {
 	const showToast = useToast()
 	const showConfirm = useConfirm()
 	const [startTime, setStartTime] = useState("")
@@ -57,16 +58,23 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				if (recordToEdit.wage_type === "daily") {
 					setFixedDailyWage(recordToEdit.daily_wage || 0)
 				}
-			} else {
-				resetForm()
-			}
+      } else {
+        resetForm()
+        // 프리필 값이 있으면 적용
+        if (prefill) {
+          if (prefill.jobId) setSelectedJobId(prefill.jobId)
+          if (prefill.start) setStartTime(prefill.start)
+          if (prefill.end) setEndTime(prefill.end)
+          if (prefill.wageType) setWageType(prefill.wageType)
+        }
+      }
 		} else {
 			setAnimateModal(false) // 애니메이션 역재생 시작
 			setTimeout(() => setShowModal(false), 300) // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
 			document.body.classList.remove("modal-open") // 모달이 닫힐 때 body 스크롤 잠금 해제
 			resetForm()
 		}
-	}, [isOpen, recordToEdit, resetForm])
+	}, [isOpen, recordToEdit, resetForm, prefill])
 
 	// 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
 	useEffect(() => {
@@ -88,8 +96,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				.select("hourly_rate")
 				.eq("user_id", session.user.id)
 				.eq("job_id", selectedJobId)
-				.lte("effective_date", moment(selectedDate).format("YYYY-MM-DD"))
-				.or(`end_date.gte.${moment(selectedDate).format("YYYY-MM-DD")},end_date.is.null`)
+                .lte("effective_date", dayjs(selectedDate).format("YYYY-MM-DD"))
+                .or(`end_date.gte.${dayjs(selectedDate).format("YYYY-MM-DD")},end_date.is.null`)
 				.order("effective_date", { ascending: false })
 				.limit(1)
 
@@ -111,18 +119,20 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		if (wageType === "hourly") {
 			// 시급제: 시간 기반 계산
 			if (startTime && endTime && hourlyRateForDate !== 0) {
-				const startMoment = moment(startTime, "HH:mm")
-				const endMoment = moment(endTime, "HH:mm")
-
-				if (endMoment.isBefore(startMoment)) {
-					setTimeError(true)
-					setDailyWage(0)
-					return
-				}
+                const startMoment = parseHHmm(startTime)
+                let endMoment = parseHHmm(endTime)
+                if (!startMoment || !endMoment) {
+                    setDailyWage(0)
+                    return
+                }
+                if (endMoment.isBefore(startMoment)) {
+                    setTimeError(true)
+                    setDailyWage(0)
+                    return
+                }
 				setTimeError(false)
 
-				const duration = moment.duration(endMoment.diff(startMoment))
-				const hours = duration.asHours()
+                const hours = endMoment.diff(startMoment, "minute") / 60
 				const calculatedWage = Math.round(hours * hourlyRateForDate) + mealAllowance
 				setDailyWage(calculatedWage)
 			} else {
@@ -153,8 +163,12 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				return
 			}
 			// 시간 유효성 검사
-			const startMoment = moment(startTime, "HH:mm")
-			const endMoment = moment(endTime, "HH:mm")
+            const startMoment = parseHHmm(startTime)
+            const endMoment = parseHHmm(endTime)
+            if (!startMoment || !endMoment) {
+                showToast("시간 형식을 확인해주세요.", "error")
+                return
+            }
 			if (endMoment.isBefore(startMoment)) {
 				showToast("퇴근 시간을 다시 확인해주세요.", "error")
 				return
@@ -171,8 +185,12 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				return
 			}
 			// 시간 유효성 검사
-			const startMoment = moment(startTime, "HH:mm")
-			const endMoment = moment(endTime, "HH:mm")
+            const startMoment = parseHHmm(startTime)
+            const endMoment = parseHHmm(endTime)
+            if (!startMoment || !endMoment) {
+                showToast("시간 형식을 확인해주세요.", "error")
+                return
+            }
 			if (endMoment.isBefore(startMoment)) {
 				showToast("퇴근 시간을 다시 확인해주세요.", "error")
 				return
@@ -183,7 +201,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		let newRecord = {
 			user_id: session.user.id,
 			job_id: selectedJobId,
-			date: moment(selectedDate).format("YYYY-MM-DD"),
+            date: dayjs(selectedDate).format("YYYY-MM-DD"),
 			meal_allowance: mealAllowance,
 			notes: notes,
 			wage_type: wageType,
@@ -192,10 +210,9 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 
 		if (wageType === "hourly") {
 			// 시급제: 시간 + 계산된 일급
-			const startMoment = moment(startTime, "HH:mm")
-			const endMoment = moment(endTime, "HH:mm")
-			const duration = moment.duration(endMoment.diff(startMoment))
-			const hours = duration.asHours()
+            const startMoment = parseHHmm(startTime)
+            const endMoment = parseHHmm(endTime)
+            const hours = endMoment.diff(startMoment, "minute") / 60
 			const calculatedDailyWage = Math.round(hours * hourlyRateForDate) + mealAllowance
 			
 			newRecord = {
@@ -215,7 +232,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		}
 
 		try {
-			if (recordId) {
+            if (recordId) {
 				// 기존 기록 업데이트
 				const { error } = await supabase.from("work_records").update(newRecord).eq("id", recordId)
 				if (error) throw error
@@ -226,8 +243,10 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				if (error) throw error
 				showToast("저장했어요", "success")
 			}
-			onClose()
-			resetForm()
+            // Broadcast change for screens not subscribed or throttled
+            try { window.dispatchEvent(new Event('work-records-changed')) } catch (_) {}
+            onClose()
+            resetForm()
 		} catch (error) {
 			console.error("근무 기록 저장 오류:", error)
 			showToast("저장하지 못했어요", "error")
@@ -258,14 +277,13 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		})
 	}
 
-	if (!showModal) return null
-	const size = "medium"
-	const modalSizeClass = {
-		small: "sm:max-w-md",
-		medium: "sm:max-w-xl",
-		large: "sm:max-w-3xl",
-		full: "sm:max-w-full",
-	}[size]
+    if (!showModal) return null
+    const modalSizeClass = {
+        small: "max-w-md",
+        medium: "max-w-xl",
+        large: "max-w-3xl",
+        full: "max-w-full",
+    }[size]
 
 	return (
 		<div className={`fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} overflow-y-auto p-4 z-layer-modal`}>
@@ -362,10 +380,15 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							<label htmlFor="startTime" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
 								출근 시간
 							</label>
-							<DatePicker
+                            <DatePicker
 								id="startTime"
-								selected={startTime ? moment(startTime, "HH:mm").toDate() : null}
-								onChange={(date) => setStartTime(moment(date).format("HH:mm"))}
+                                selected={/^\d{2}:\d{2}$/.test(startTime) ? (parseHHmm(startTime)?.toDate?.() || null) : null}
+                                onChange={(date) => {
+                                    if (!date) { setStartTime(""); return }
+                                    const d = dayjs(date)
+                                    if (!d.isValid()) { setStartTime(""); return }
+                                    setStartTime(d.format("HH:mm"))
+                                }}
 								showTimeSelect
 								showTimeSelectOnly
 								timeIntervals={15}
@@ -379,10 +402,15 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							<label htmlFor="endTime" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
 								퇴근 시간
 							</label>
-							<DatePicker
+                            <DatePicker
 								id="endTime"
-								selected={endTime ? moment(endTime, "HH:mm").toDate() : null}
-								onChange={(date) => setEndTime(moment(date).format("HH:mm"))}
+                                selected={/^\d{2}:\d{2}$/.test(endTime) ? (parseHHmm(endTime)?.toDate?.() || null) : null}
+                                onChange={(date) => {
+                                    if (!date) { setEndTime(""); return }
+                                    const d = dayjs(date)
+                                    if (!d.isValid()) { setEndTime(""); return }
+                                    setEndTime(d.format("HH:mm"))
+                                }}
 								showTimeSelect
 								showTimeSelectOnly
 								timeIntervals={15}
@@ -423,25 +451,25 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 
 				<div className="mt-6 text-right text-lg font-semibold text-mint-green">예상 일급: {dailyWage.toLocaleString()}원</div>
 
-				<div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between sm:items-center">
+                <div className="mt-6 flex flex-col-reverse gap-3">
 					{recordId && (
-						<button onClick={handleDelete} className="w-full sm:w-auto px-6 py-3 text-white bg-coral-pink rounded-full font-medium hover:bg-coral-pink-dark focus:outline-none focus:ring-2 focus:ring-coral-pink focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
+                        <button onClick={handleDelete} className="w-full px-6 py-3 text-white bg-coral-pink rounded-full font-medium hover:bg-coral-pink-dark focus:outline-none focus:ring-2 focus:ring-coral-pink focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
 							삭제
 						</button>
 					)}
-					<div className="flex flex-col gap-3 sm:flex-row sm:ml-auto">
-						<button onClick={onClose} className="w-full sm:w-auto px-3 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
+                    <div className="flex flex-col gap-3">
+                        <button onClick={onClose} className="w-full px-3 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105">
 							취소
 						</button>
 						<button
 							onClick={resetForm}
-							className="w-full sm:w-auto px-3 py-2 bg-gray-200 text-dark-navy rounded-full font-medium hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-opacity-50 transition-all duration-200 
+                            className="w-full px-3 py-2 bg-gray-200 text-dark-navy rounded-full font-medium hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-opacity-50 transition-all duration-200 
      ease-in-out transform hover:scale-105 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
 							초기화
 						</button>
 						<button
 							onClick={handleSave}
-							className="w-full sm:w-auto px-3 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 
+                            className="w-full px-3 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 
      ease-in-out transform hover:scale-105">
 							저장
 						</button>
