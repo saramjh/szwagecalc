@@ -216,8 +216,45 @@ const AppContent = () => {
 	}
 
 	const handleLogout = async () => {
-		const { error } = await supabase.auth.signOut()
-		if (error) console.error("Error logging out:", error.message)
+		try {
+			// 로그아웃 진행 표시
+			showToast("로그아웃 중...", "info")
+			
+			// 로컬 상태 먼저 정리
+			setSession(null)
+			setUsername(null)
+			setJobs([])
+			
+			// Supabase 로그아웃 시도
+			const { error } = await supabase.auth.signOut()
+			
+			if (error) {
+				console.warn("Supabase logout warning:", error.message)
+				// 에러가 있어도 로컬 정리는 완료되었으므로 계속 진행
+			}
+			
+			// 로컬 스토리지 정리
+			localStorage.removeItem('supabase.auth.token')
+			localStorage.removeItem('sb-llvtylnqjemgsnvbfxch-auth-token')
+			
+			// 성공 알림 후 새로고침
+			showToast("안전하게 로그아웃되었습니다", "success")
+			
+			setTimeout(() => {
+				window.location.reload()
+			}, 1000)
+			
+		} catch (err) {
+			console.warn("Logout process error:", err.message)
+			// 에러가 발생해도 강제 로그아웃 진행
+			showToast("로그아웃 완료", "success")
+			setSession(null)
+			setUsername(null)
+			setJobs([])
+			setTimeout(() => {
+				window.location.reload()
+			}, 1000)
+		}
 	}
 
 	const handleInstallPWA = async () => {
