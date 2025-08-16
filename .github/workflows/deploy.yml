@@ -32,6 +32,8 @@ jobs:
       - name: Build React app
         run: npm run build
         env:
+          # GitHub Pages 배포를 위한 PUBLIC_URL 설정
+          PUBLIC_URL: /szwagecalc
           # GitHub Secrets에서 Supabase 환경 변수 주입
           REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}

@@ -90,10 +90,8 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 	}
 
 	const handleEditRecord = (record) => {
-		console.log('handleEditRecord called with record:', record)
 		setSelectedRecordForEdit(record) // 기존 기록 편집 모드
 		setIsDailyRecordModalOpen(true)
-		console.log('Modal should open with selectedRecordForEdit:', record)
 	}
 
 	const handleDeleteRecord = async (recordId) => {
