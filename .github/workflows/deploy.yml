@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - master # master 브랜치에 푸시될 때마다 워크플로우 실행
+  workflow_dispatch: # 수동 실행 가능
 
+# GitHub Pages를 위한 필수 권한
 permissions:
-  contents: read
+  contents: write # gh-pages 브랜치 쓰기 권한
   pages: write
   id-token: write
 
@@ -23,6 +25,14 @@ jobs:
         with:
           node-version: '20' # Node.js 버전 지정 (프로젝트에 맞는 버전으로 조정 가능)
 
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
         run: npm ci # 의존성 설치 (npm ci는 package-lock.json에 따라 정확히 설치)
 
@@ -36,7 +46,11 @@ jobs:
           REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4 # 최신 버전 사용
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
+          force_orphan: true # 깔끔한 배포 이력
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy ${{ github.sha }}'

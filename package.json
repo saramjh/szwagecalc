@@ -29,8 +29,8 @@
     "test": "craco test",
     "eject": "react-scripts eject",
 		"tailwind:init": "npx tailwindcss init -p",
-		"predeploy": "PUBLIC_URL=/szwagecalc npm run build",
-		"deploy": "gh-pages -d build --dotfiles"
+		"build:prod": "PUBLIC_URL=/szwagecalc npm run build",
+		"deploy:manual": "npm run build:prod && gh-pages -d build --dotfiles"
 	},
 	"eslintConfig": {
 		"extends": [
