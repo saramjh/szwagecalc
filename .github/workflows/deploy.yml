@@ -5,9 +5,17 @@ on:
     branches:
       - master # master 브랜치에 푸시될 때마다 워크플로우 실행
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest # Ubuntu 최신 버전에서 실행
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout code
@@ -28,9 +36,11 @@ jobs:
           REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3 # GitHub Pages 배포 액션 사용
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }} # GitHub에서 제공하는 기본 토큰
-          publish_dir: ./build # 빌드된 파일이 있는 디렉토리
-          # cname: your-custom-domain.com # 커스텀 도메인을 사용하는 경우 주석 해제
+          path: ./build
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
