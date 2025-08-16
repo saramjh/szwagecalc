@@ -5,7 +5,7 @@
 	"sideEffects": [
 		"*.css"
 	],
-	"homepage": "https://hrwage.run.place",
+	"homepage": "https://saramjh.github.io/szwagecalc",
 	"dependencies": {
 		"@supabase/supabase-js": "^2.50.3",
 		"@testing-library/dom": "^10.4.0",

@@ -257,26 +257,79 @@ const AppContent = () => {
 				</header>
 			)}
 
-            <div className="App bg-cream-white dark:bg-deep-navy min-h-screen flex flex-col items-center justify-center px-3 py-4 pt-16 max-w-[390px] w-full mx-auto">
+            <div className="App bg-gradient-to-b from-cream-white to-gray-50 dark:from-deep-navy dark:to-charcoal-gray min-h-screen flex flex-col items-center justify-center px-4 py-6 pt-16 max-w-[390px] w-full mx-auto overflow-hidden">
 				{!session ? (
-					<div className="flex flex-col items-center bg-cream-white dark:bg-charcoal-gray p-8 rounded-xl shadow-2xl max-w-md mx-auto my-8">
-						<div className="flex items-center justify-center mb-6">
-							<img src={process.env.PUBLIC_URL + "/logo192.png"} alt="시급이요 로고" className="w-12 h-12 mr-3" />
-							<h1 className="text-dark-navy dark:text-white text-4xl font-bold">시급이요</h1>
+					<div className="w-full max-w-sm mx-auto">
+						{/* 🌟 Hero Section with Animation */}
+						<div className="text-center mb-12 animate-fade-in-up">
+							<div className="relative mb-8">
+								<div className="absolute inset-0 bg-gradient-to-r from-mint-green/20 to-brand-purple/20 rounded-full blur-xl animate-pulse-slow"></div>
+								<img 
+									src={process.env.PUBLIC_URL + "/logo192.png"} 
+									alt="시급이요 로고" 
+									className="w-20 h-20 mx-auto relative animate-bounce-gentle drop-shadow-lg" 
+								/>
+							</div>
+							<h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-mint-green to-brand-purple mb-4 animate-shimmer">
+								시급이요
+							</h1>
+							<p className="text-gray-600 dark:text-gray-300 text-lg font-medium leading-relaxed">
+								내 시급, 근무기록, 수입을<br />
+								<span className="text-mint-green font-bold">한눈에 관리하세요</span>
+							</p>
 						</div>
-						<p className="bg-gray-100 dark:bg-gray-700 text-dark-navy dark:text-white p-6 rounded-xl shadow-lg text-lg font-semibold mb-8 text-center flex flex-col items-center gap-2">
-							<span>내 시급</span>
-							<span>내 근무 기록</span>
-							<span>내 수입을 한눈에!</span>
-						</p>
 
-						<button
-							onClick={handleGoogleLogin}
-							className="px-6 py-3 bg-mint-green text-white rounded-full text-lg font-semibold shadow-md
-										hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 mt-8 flex items-center justify-center space-x-2">
-							Google 로그인
-						</button>
-						<p className="text-light-gray dark:text-white text-xs mt-4 text-center">로그인하여 개인화된 서비스를 이용하세요.</p>
+						{/* 🎯 Feature Cards */}
+						<div className="space-y-4 mb-12">
+							<div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 transform hover:scale-[1.02] transition-all duration-300 animate-slide-in-left">
+								<div className="flex items-center space-x-4">
+									<div className="w-12 h-12 bg-gradient-to-br from-mint-green to-green-400 rounded-xl flex items-center justify-center">
+										<span className="text-white text-xl">💰</span>
+									</div>
+									<div>
+										<h3 className="font-bold text-gray-900 dark:text-white text-lg">스마트 급여 계산</h3>
+										<p className="text-gray-500 dark:text-gray-400 text-sm">시급부터 월급까지 자동 계산</p>
+									</div>
+								</div>
+							</div>
+							
+							<div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 transform hover:scale-[1.02] transition-all duration-300 animate-slide-in-right" style={{ animationDelay: '0.2s' }}>
+								<div className="flex items-center space-x-4">
+									<div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+										<span className="text-white text-xl">📊</span>
+									</div>
+									<div>
+										<h3 className="font-bold text-gray-900 dark:text-white text-lg">근무 기록 관리</h3>
+										<p className="text-gray-500 dark:text-gray-400 text-sm">출퇴근 시간을 쉽고 빠르게</p>
+									</div>
+								</div>
+							</div>
+							
+							<div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 transform hover:scale-[1.02] transition-all duration-300 animate-slide-in-left" style={{ animationDelay: '0.4s' }}>
+								<div className="flex items-center space-x-4">
+									<div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+										<span className="text-white text-xl">📈</span>
+									</div>
+									<div>
+										<h3 className="font-bold text-gray-900 dark:text-white text-lg">수입 인사이트</h3>
+										<p className="text-gray-500 dark:text-gray-400 text-sm">월별 통계와 트렌드 분석</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						{/* 🚀 CTA Button */}
+						<div className="space-y-4 animate-slide-in-up" style={{ animationDelay: '0.6s' }}>
+							<button
+								onClick={handleGoogleLogin}
+								className="w-full bg-gradient-to-r from-mint-green to-green-500 text-white py-4 px-6 rounded-2xl text-lg font-bold shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center space-x-3 group">
+								<span className="text-2xl group-hover:scale-110 transition-transform duration-200">🚀</span>
+								<span>Google로 시작하기</span>
+							</button>
+							<p className="text-center text-gray-400 dark:text-gray-500 text-sm">
+								로그인하고 나만의 급여 대시보드를 만들어보세요
+							</p>
+						</div>
 					</div>
 				) : (
 					<>

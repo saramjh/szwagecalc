@@ -36,21 +36,30 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		setTimeError(false)
 		setWageType("hourly")
 		setFixedDailyWage(0)
-		if (jobs.length > 0) {
-			setSelectedJobId(jobs[0].id) // 초기화 시 첫 번째 직업으로 설정
+		setSelectedJobId(null)
+	}, [])
+
+	// jobs가 변경될 때만 첫 번째 job으로 설정
+	useEffect(() => {
+		if (jobs.length > 0 && !selectedJobId) {
+			setSelectedJobId(jobs[0].id)
 		}
-	}, [jobs])
+	}, [jobs, selectedJobId])
 
 	useEffect(() => {
+
 		if (isOpen) {
 			setShowModal(true) // 모달을 DOM에 렌더링 시작
 			setTimeout(() => setAnimateModal(true), 10) // 약간의 지연 후 애니메이션 시작
 			document.body.classList.add("modal-open") // 모달이 열릴 때 body 스크롤 잠금
+			
 			if (recordToEdit) {
+				// 수정 모드: 기존 레코드 데이터로 폼 초기화
+
 				setRecordId(recordToEdit.id)
 				setSelectedJobId(recordToEdit.job_id)
-				setStartTime(recordToEdit.start_time || "")
-				setEndTime(recordToEdit.end_time || "")
+				setStartTime(recordToEdit.start_time ? recordToEdit.start_time.slice(0, 5) : "")
+				setEndTime(recordToEdit.end_time ? recordToEdit.end_time.slice(0, 5) : "")
 				setMealAllowance(recordToEdit.meal_allowance || 0)
 				setNotes(recordToEdit.notes || "")
 				setDailyWage(recordToEdit.daily_wage || 0)
@@ -58,23 +67,38 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				if (recordToEdit.wage_type === "daily") {
 					setFixedDailyWage(recordToEdit.daily_wage || 0)
 				}
-      } else {
-        resetForm()
-        // 프리필 값이 있으면 적용
-        if (prefill) {
-          if (prefill.jobId) setSelectedJobId(prefill.jobId)
-          if (prefill.start) setStartTime(prefill.start)
-          if (prefill.end) setEndTime(prefill.end)
-          if (prefill.wageType) setWageType(prefill.wageType)
-        }
-      }
+
+			} else {
+				// 새 레코드 생성 모드: 폼 초기화 후 프리필 적용
+
+				resetForm()
+				if (jobs.length > 0) {
+					setSelectedJobId(jobs[0].id) // 초기화 시 첫 번째 직업으로 설정
+				}
+				// 프리필 값이 있으면 적용
+				if (prefill) {
+					if (prefill.jobId) setSelectedJobId(prefill.jobId)
+					if (prefill.start) setStartTime(prefill.start)
+					if (prefill.end) setEndTime(prefill.end)
+					if (prefill.wageType) setWageType(prefill.wageType)
+				}
+			}
 		} else {
 			setAnimateModal(false) // 애니메이션 역재생 시작
 			setTimeout(() => setShowModal(false), 300) // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
 			document.body.classList.remove("modal-open") // 모달이 닫힐 때 body 스크롤 잠금 해제
-			resetForm()
 		}
-	}, [isOpen, recordToEdit, resetForm, prefill])
+	}, [isOpen, recordToEdit, prefill, jobs, resetForm])
+
+	// 모달이 닫힐 때 폼 리셋 (별도 useEffect로 분리)
+	useEffect(() => {
+		if (!isOpen) {
+			setTimeout(() => {
+
+				resetForm()
+			}, 350)
+		}
+	}, [isOpen, resetForm])
 
 	// 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
 	useEffect(() => {
@@ -382,7 +406,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							</label>
                             <DatePicker
 								id="startTime"
-                                selected={/^\d{2}:\d{2}$/.test(startTime) ? (parseHHmm(startTime)?.toDate?.() || null) : null}
+                                selected={/^\d{2}:\d{2}$/.test(startTime) ? (parseHHmm(startTime)?.toDate() || null) : null}
                                 onChange={(date) => {
                                     if (!date) { setStartTime(""); return }
                                     const d = dayjs(date)
@@ -404,7 +428,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							</label>
                             <DatePicker
 								id="endTime"
-                                selected={/^\d{2}:\d{2}$/.test(endTime) ? (parseHHmm(endTime)?.toDate?.() || null) : null}
+                                selected={/^\d{2}:\d{2}$/.test(endTime) ? (parseHHmm(endTime)?.toDate() || null) : null}
                                 onChange={(date) => {
                                     if (!date) { setEndTime(""); return }
                                     const d = dayjs(date)
