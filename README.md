@@ -2,13 +2,24 @@
 
 **내 시급, 내 근무 기록, 내 수입을 한눈에!**
 
-![image](https://github.com/user-attachments/assets/ce7d6bf4-cae0-411e-b675-255c8b4ee8a5)
-![image](https://github.com/user-attachments/assets/af8752d2-9829-4bd3-8438-7229f5272469)
-![image](https://github.com/user-attachments/assets/e95c391b-4ce3-45f9-a490-1cfd9c4162a6)
-![image](https://github.com/user-attachments/assets/e19afacd-9ded-474f-bb03-07f84a5cc651)
-![image](https://github.com/user-attachments/assets/e869d6d8-cb38-4339-b1b1-576382df6866)
-![image](https://github.com/user-attachments/assets/a675a758-8a2a-490f-9c56-a9653440192f)
-![image](https://github.com/user-attachments/assets/f9d00e60-ce1e-42d2-97bf-687eb223e595)
+<img width="400" height="1275" alt="image" src="https://github.com/user-attachments/assets/2395f1a6-9efe-4a21-8e1b-469aeff730f2" />
+<img width="400" height="704" alt="image" src="https://github.com/user-attachments/assets/84e540fe-df43-4156-96d4-b6ef0020bdf7" />
+<img width="400" height="954" alt="image" src="https://github.com/user-attachments/assets/f6703e58-b2bd-4828-aaed-b1888073f2dc" />
+<img width="400" height="1044" alt="image" src="https://github.com/user-attachments/assets/d17832b6-a1c5-4a62-9d09-def293b3ac72" />
+<img width="400" height="955" alt="image" src="https://github.com/user-attachments/assets/6db3f2a0-abf2-4e78-a102-3a58d1b23bcc" />
+<img width="400" height="955" alt="image" src="https://github.com/user-attachments/assets/e8e4b0cf-7a5f-4690-b1f6-cbf8bdb4860d" />
+<img width="400" height="949" alt="image" src="https://github.com/user-attachments/assets/a1f899f7-9b47-49a8-8024-2a1e980d8370" />
+<img width="400" height="955" alt="image" src="https://github.com/user-attachments/assets/3c41f5a4-608f-4d59-bf31-d63042919df8" />
+<img width="400" height="952" alt="image" src="https://github.com/user-attachments/assets/b40bb4d5-86d1-4b9d-bcc9-0e0672fb78a7" />
+<img width="400" height="952" alt="image" src="https://github.com/user-attachments/assets/1a9b6de3-269b-49af-b827-d7f1cb872b0d" />
+<img width="400" height="955" alt="image" src="https://github.com/user-attachments/assets/57c2ae81-c9df-4d1f-9716-d99138a87e0b" />
+<img width="400" height="955" alt="image" src="https://github.com/user-attachments/assets/f83dd685-5694-4cfc-b90a-464e0880298c" />
+<img width="400" height="955" alt="image" src="https://github.com/user-attachments/assets/990b9a05-9724-481e-8362-e4134b0aaf49" />
+<img width="400" height="1682" alt="image" src="https://github.com/user-attachments/assets/80de2a5c-465e-4e7e-b929-4bca21d2a1f3" />
+<img width="400" height="922" alt="image" src="https://github.com/user-attachments/assets/e19e9a33-8407-4ac0-a9d5-7af00e7b57ff" />
+<img width="400" height="947" alt="image" src="https://github.com/user-attachments/assets/9d5d2efb-8d11-4e1e-9709-6bd937b74b8f" />
+
+
 
 시급이요(szwagecalc)는 여러 아르바이트의 급여를 가장 편리하게 계산하고 관리할 수 있도록 돕는 웹 애플리케이션입니다. 복잡한 엑셀 시트나 수기 계산 없이, 직관적인 UI로 당신의 소중한 시간을 아껴보세요.
 
