@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from "react"
-import dayjs from "dayjs"
+import dayjs from "../utils/dayjsUtils"
+// 🚀 트리셰이킹 최적화: 필요한 아이콘만 import
+import { BarChart3, Target, DollarSign, Calculator } from "lucide-react"
 import { parseHHmm } from "../utils/time"
 import { supabase } from "../supabaseClient"
 import { computeMonthlySummary, findNextPayday } from "../utils/insights"
@@ -12,6 +14,7 @@ const InteractiveTour = lazy(() => import("./InteractiveTour"))
 const DailyRecordModal = lazy(() => import("./DailyRecordModal"))
 const WeeklyAllowanceCard = lazy(() => import("./WeeklyAllowanceCard"))
 const WeeklySummaryBar = lazy(() => import("./WeeklySummaryBar"))
+const AnalyticsModal = lazy(() => import("./AnalyticsModal"))
 
 const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 	const [date, setDate] = useState(new Date())
@@ -22,11 +25,11 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 	const [selectedMonthForMonthlyModal, setSelectedMonthForMonthlyModal] = useState(new Date())
 	const [isUsageGuideModalOpen, setIsUsageGuideModalOpen] = useState(false)
 	const [isInteractiveGuideOpen, setIsInteractiveGuideOpen] = useState(false)
+	const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false)
 	
 
 	const [isTourActive, setIsTourActive] = useState(false)
 	const [currentTourStep, setCurrentTourStep] = useState(0)
-	const [forceHamburgerOpen, setForceHamburgerOpen] = useState(false)
 	const [hasCheckedReport, setHasCheckedReport] = useState(() => {
 		return localStorage.getItem('guide-progress-checkedReport') === 'true'
 	})
@@ -188,7 +191,6 @@ useEffect(() => {
 
 	const handleDailyRecordListModalClose = () => {
 		setIsDailyRecordListModalOpen(false)
-		setSelectedDateForDailyModal(null)
 		fetchWorkRecords()
 	}
 
@@ -258,14 +260,12 @@ useEffect(() => {
 			setIsInteractiveGuideOpen(false)
 			setIsTourActive(true)
 			setCurrentTourStep(0)
-			setForceHamburgerOpen(true) // 첫 번째 단계가 햄버거 메뉴이므로 열기
 		}
 	}
 
 	const handleTourComplete = () => {
 		setIsTourActive(false)
 		setCurrentTourStep(0)
-		setForceHamburgerOpen(false) // 투어 완료 시 햄버거 메뉴 닫기
 		// 투어 완료 후 가이드 다시 열기
 		setIsInteractiveGuideOpen(true)
 	}
@@ -273,13 +273,10 @@ useEffect(() => {
 	const handleTourSkip = () => {
 		setIsTourActive(false)
 		setCurrentTourStep(0)
-		setForceHamburgerOpen(false) // 투어 건너뛰기 시 햄버거 메뉴 닫기
 	}
 
 	const handleTourStepChange = (step) => {
 		setCurrentTourStep(step)
-		// 첫 번째 단계(직업 설정)에서만 햄버거 메뉴 열기
-		setForceHamburgerOpen(step === 0)
 	}
 
 	// 시급 설정 모달 열기 래퍼
@@ -407,7 +404,7 @@ useEffect(() => {
                         data-tour={isToday ? "calendar-date" : undefined}
                         className={`calendar-cell-inner cell-stroke hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors heat-${heat} ${
                             paydayJobs.length > 0 ? "payday-ring" : ""
-                        } ${isToday ? "today-ring" : ""}`}
+                        } ${isToday ? "today-ring today-pulse" : ""}`}
                     >
                         <div className={`calendar-day text-xs sm:text-sm font-semibold ${dow === 0 ? 'text-coral-pink' : dow === 6 ? 'text-mint-green-light' : 'text-dark-navy dark:text-white'}`}>
                             {dayNum}
@@ -487,6 +484,12 @@ useEffect(() => {
                 {(() => {
                   const anchor = selectedDateForDailyModal || date
                   const start = dayjs(anchor).startOf("week")
+                  const end = start.endOf("week")
+                  
+                  // 주차 정보 계산
+                  const weekRange = `${start.format('M/D')} - ${end.format('M/D')}`
+                  const isCurrentWeek = dayjs().isBetween(start, end, 'day', '[]')
+                  
                   // 날짜별 합계 맵 (YYYY-MM-DD → sum)
                   const totalsByDate = (workRecords || []).reduce((map, r) => {
                     const key = dayjs(r.date).format("YYYY-MM-DD")
@@ -496,8 +499,25 @@ useEffect(() => {
                   const dayKeys = Array.from({ length: 7 }).map((_, i) => start.add(i, "day").format("YYYY-MM-DD"))
                   const incomes = dayKeys.map((k) => totalsByDate[k] || 0)
                   const max = Math.max(...incomes, 1)
+                  const weekTotal = incomes.reduce((sum, income) => sum + income, 0)
+                  
 					return (
-                        <div ref={chartRef} className="mt-4 pt-1 p-2 bg-white dark:bg-gray-700 rounded-lg shadow dark:shadow-lg select-none">
+                        <div className="mt-4">
+                            {/* 🏷️ 주차 소제목 */}
+                            <div className="flex items-center justify-between mb-2 px-1">
+                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                                    <BarChart3 className="w-4 h-4 mr-1.5 text-mint-green" />
+                                    {weekRange} 수입 현황
+                                    {isCurrentWeek && (
+                                        <span className="ml-2 text-xs bg-mint-green text-white px-2 py-0.5 rounded-full">이번 주</span> 
+                                    )}
+                                </h4>
+                                <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {weekTotal.toLocaleString()}원
+                                </div>
+                            </div>
+                          
+                        <div ref={chartRef} className="bg-white dark:bg-gray-700 rounded-lg shadow dark:shadow-lg select-none p-2">
 							{/* 막대 영역: 고정 높이 + 그리드 배경 */}
 							<div className="relative h-20 rounded-md">
 								{/* 가이드 그리드 (25% 간격) */}
@@ -556,11 +576,12 @@ useEffect(() => {
 								))}
 							</div>
 						</div>
+                        </div>
 					)
                 })()}
             </div>
             
-            {/* 🎯 Etos 디자인: 주간별 주휴수당 요약 */}
+              {/* 🎯 Etos 디자인: 주간별 주휴수당 요약 */}
             <div className="mt-6 mb-6">
               <Suspense fallback={<div className="w-full h-20 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"></div>}>
                 <WeeklySummaryBar 
@@ -577,23 +598,33 @@ useEffect(() => {
 					data-tour="hourly-rate"
                     className="w-full px-3 py-2.5 bg-lemon-yellow dark:bg-lemon-yellow-dark text-dark-navy dark:text-gray-900 rounded-full text-base font-medium shadow-md dark:shadow-lg
                    hover:bg-lemon-yellow dark:hover:bg-lemon-yellow focus:outline-none focus:ring-2 focus:ring-lemon-yellow dark:focus:ring-lemon-yellow-dark focus:ring-opacity-50
-                   transition-all duration-300 ease-in-out transform hover:scale-105">
-					시급 설정
+                   transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2">
+					<DollarSign className="w-4 h-4" />
+					<span>시급 설정</span>
 				</button>
 				<button
 					onClick={handleMonthlyModalOpen}
 					data-tour="monthly-report"
                     className="w-full px-3 py-2.5 bg-mint-green dark:bg-mint-green-dark text-white rounded-full text-base font-medium shadow-md dark:shadow-lg
                    hover:bg-mint-green dark:hover:bg-mint-green focus:outline-none focus:ring-2 focus:ring-mint-green dark:focus:ring-mint-green-dark focus:ring-opacity-50
-                   transition-all duration-300 ease-in-out transform hover:scale-105">
-					월급 확인
+                   transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2">
+					<Calculator className="w-4 h-4" />
+					<span>월급 확인</span>
+				</button>
+				<button
+					onClick={() => setIsAnalyticsModalOpen(true)}
+                    className="w-full px-3 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 text-white rounded-full text-base font-medium shadow-md dark:shadow-lg
+                   hover:shadow-lg dark:hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-600 focus:ring-opacity-50
+                   transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2">
+					<BarChart3 className="w-4 h-4" />
+					<span>통계 분석</span>
 				</button>
 				<button
 					onClick={handleOpenInteractiveGuide}
                     className="w-full px-3 py-2.5 bg-gradient-to-r from-mint-green to-emerald-500 dark:from-mint-green-dark dark:to-emerald-600 text-white rounded-full text-base font-medium shadow-md dark:shadow-lg
                    hover:shadow-lg dark:hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-mint-green dark:focus:ring-mint-green-dark focus:ring-opacity-50
                    transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2">
-					<span>✨</span>
+					<Target className="w-4 h-4" />
 					<span>가이드</span>
 				</button>
 			</div>
@@ -602,6 +633,9 @@ useEffect(() => {
             </Suspense>
             <Suspense fallback={null}>
                 <MonthlyReportModal selectedMonth={selectedMonthForMonthlyModal} isOpen={isMonthlyModalOpen} onClose={handleMonthlyModalClose} session={session} jobs={jobs} />
+            </Suspense>
+            <Suspense fallback={null}>
+                <AnalyticsModal isOpen={isAnalyticsModalOpen} onClose={() => setIsAnalyticsModalOpen(false)} workRecords={workRecords} jobs={jobs} session={session} />
             </Suspense>
             <Suspense fallback={null}>
                 <UsageGuideModal isOpen={isUsageGuideModalOpen} onClose={handleCloseUsageGuideModal} manualContent={usageManualContent} />

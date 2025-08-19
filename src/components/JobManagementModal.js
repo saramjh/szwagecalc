@@ -4,7 +4,8 @@ import { supabase } from "../supabaseClient"
 import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
 // 🚀 트리셰이킹 최적화: 개별 import
-import { PencilIcon, Trash2Icon, PlusIcon } from "lucide-react"
+// 🚀 트리셰이킹 최적화: 필요한 아이콘만 import
+import { PencilIcon, Trash2Icon, PlusIcon, Target, Calendar, CheckCircle, XCircle } from "lucide-react"
 import { JOB_COLORS } from "../constants/JobColors"
 import BreakTimePolicyManager from "./BreakTimePolicyManager"
 import { DEFAULT_BREAK_POLICIES, clearBreakTimeCache } from "../utils/breakTime"
@@ -220,21 +221,108 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 						{jobs.length === 0 ? (
 							<p className="text-medium-gray dark:text-light-gray text-center py-4">등록된 직업이 없습니다. 새 직업을 추가해보세요!</p>
 						) : (
-							<div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md p-2">
+							<div className="max-h-72 overflow-y-auto space-y-3 pr-1">
 								{jobs.map((job, index) => (
-									<div key={job.id} className="flex items-center py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0 rounded-md">
-										<div className="w-1.5 h-12 rounded-full mr-3 flex-shrink-0" style={{ backgroundColor: job.color || "transparent" }}></div>
-										<div onClick={() => handleEditClick(job)} className="flex-grow cursor-pointer">
-											<div className="font-bold text-lg text-dark-navy dark:text-white">{job.job_name}</div>
-											{job.payday && <p className="text-sm text-medium-gray dark:text-light-gray mt-0.5">월급일: 매월 {job.payday}일</p>}
+									<div key={job.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md dark:hover:shadow-lg transition-all duration-200 overflow-hidden">
+										{/* 🎨 이토스 디자인: 카드 헤더 */}
+										<div className="p-4 border-b border-gray-100 dark:border-gray-700">
+											<div className="flex items-center justify-between">
+												<div className="flex items-center space-x-3 flex-1 min-w-0">
+													{/* 컬러 인디케이터 */}
+													<div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: job.color || "#6B7280" }}></div>
+													
+													{/* 직업 정보 */}
+													<div className="flex-1 min-w-0">
+														<h3 className="font-bold text-base text-dark-navy dark:text-white truncate break-keep">
+															{job.job_name}
+														</h3>
+														{job.description && (
+															<p className="text-sm text-gray-600 dark:text-gray-400 truncate break-keep mt-0.5">
+																{job.description}
+															</p>
+														)}
+													</div>
+												</div>
+												
+												{/* 액션 버튼 */}
+												<div className="flex items-center space-x-1 flex-shrink-0">
+													<button 
+														onClick={() => handleEditClick(job)} 
+														className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200" 
+														aria-label="수정"
+													>
+														<PencilIcon size={16} />
+													</button>
+													<button 
+														onClick={() => handleDeleteJob(job.id)} 
+														className={`p-2 rounded-lg transition-all duration-200 ${
+															index === 0 
+																? "opacity-50 cursor-not-allowed text-gray-300 dark:text-gray-600" 
+																: "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
+														}`} 
+														disabled={index === 0} 
+														aria-label="삭제"
+													>
+														<Trash2Icon size={16} />
+													</button>
+												</div>
+											</div>
 										</div>
-										<div className="flex flex-col space-y-2 ml-4 flex-shrink-0">
-											<button onClick={() => handleEditClick(job)} className="p-2 rounded-full text-medium-gray dark:text-light-gray hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200" aria-label="수정">
-												<PencilIcon size={20} />
-											</button>
-											<button onClick={() => handleDeleteJob(job.id)} className={`p-2 rounded-full text-coral-pink hover:bg-red-100 dark:hover:bg-red-900 transition-colors duration-200 ${index === 0 ? "opacity-50 cursor-not-allowed" : ""}`} disabled={index === 0} aria-label="삭제">
-												<Trash2Icon size={20} />
-											</button>
+										
+										{/* 🎨 이토스 디자인: 카드 본문 - 세부 정보 */}
+										<div className="p-4 space-y-3">
+											{/* 월급일 정보 */}
+											{job.payday && (
+												<div className="flex items-center space-x-2">
+													<Calendar className="w-4 h-4 text-blue-500 flex-shrink-0" />
+													<span className="text-sm text-gray-700 dark:text-gray-300 break-keep">
+														매월 {job.payday}일 급여
+													</span>
+												</div>
+											)}
+											
+											{/* 정책 상태 뱃지들 */}
+											<div className="flex flex-wrap gap-2">
+												{/* 휴게시간 정책 */}
+												<div className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+													job.break_time_enabled 
+														? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+														: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+												}`}>
+													{job.break_time_enabled ? (
+														<CheckCircle className="w-3 h-3" />
+													) : (
+														<XCircle className="w-3 h-3" />
+													)}
+													<span className="break-keep">휴게시간</span>
+													{job.break_time_enabled && (
+														<span className="break-keep">
+															({job.break_time_paid ? '유급' : '무급'})
+														</span>
+													)}
+												</div>
+												
+												{/* 주휴수당 정책 */}
+												<div className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+													job.weekly_allowance_enabled 
+														? 'bg-mint-green/10 dark:bg-mint-green/20 text-mint-green-dark dark:text-mint-green border border-mint-green/30'
+														: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+												}`}>
+													{job.weekly_allowance_enabled ? (
+														<Target className="w-3 h-3" />
+													) : (
+														<XCircle className="w-3 h-3" />
+													)}
+													<span className="break-keep">주휴수당</span>
+													{job.weekly_allowance_enabled && (
+														<span className="break-keep">
+															({job.weekly_allowance_min_hours || 15}h+)
+														</span>
+													)}
+												</div>
+											</div>
+											
+
 										</div>
 									</div>
 								))}

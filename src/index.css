@@ -20,12 +20,44 @@
     overflow-wrap: anywhere;
   }
   
+  /* 🌟 오늘 날짜 펄스 애니메이션 */
+  .today-pulse {
+    animation: today-pulse 2s ease-in-out infinite;
+  }
+  
   @keyframes tour-pulse {
     0%, 100% {
       box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3), 0 0 0 8px rgba(16, 185, 129, 0.1);
     }
     50% {
       box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.4), 0 0 0 12px rgba(16, 185, 129, 0.15);
+    }
+  }
+  
+  @keyframes today-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.9) inset, 0 0 0 3px rgba(16, 185, 129, 0.3);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.9) inset, 0 0 0 5px rgba(16, 185, 129, 0.5);
+      transform: scale(1.02);
+    }
+  }
+  
+  /* 다크모드 오늘 펄스 */
+  .dark .today-pulse {
+    animation: today-pulse-dark 2s ease-in-out infinite;
+  }
+  
+  @keyframes today-pulse-dark {
+    0%, 100% {
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.8) inset, 0 0 0 3px rgba(60, 160, 138, 0.4);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.8) inset, 0 0 0 5px rgba(60, 160, 138, 0.6);
+      transform: scale(1.02);
     }
   }
 }
@@ -556,10 +588,25 @@ body {
 .dark .bg-opacity-70 { background-color: rgba(0, 0, 0, 0.7) !important; }
 
 /* 앱 배경 그라데이션 */
-.dark .from-cream-white { --tw-gradient-from: #000000; }
-.dark .to-gray-50 { --tw-gradient-to: #2C313C; }
-.dark .from-deep-navy { --tw-gradient-from: #000000; }
-.dark .to-charcoal-gray { --tw-gradient-to: #2C313C; }
+.dark .from-cream-white { --tw-gradient-from: #000000 !important; }
+.dark .to-gray-50 { --tw-gradient-to: #2C313C !important; }
+.dark .from-deep-navy { --tw-gradient-from: #000000 !important; }
+.dark .to-charcoal-gray { --tw-gradient-to: #2C313C !important; }
+
+/* 🌙 앱 메인 배경 강제 적용 */
+.dark .App.bg-gradient-to-b {
+  background: linear-gradient(to bottom, #000000, #2C313C) !important;
+}
+
+/* 🌙 body 배경도 다크모드로 강제 설정 */
+.dark body {
+  background-color: #000000 !important;
+}
+
+/* 🌙 html도 다크모드로 강제 설정 */
+.dark {
+  background-color: #000000 !important;
+}
 
 .payday-ring { box-shadow: 0 0 0 2px rgba(16,185,129,1) inset; border-radius: 0.5rem; }
 .dark .payday-ring { box-shadow: 0 0 0 2px rgba(60,160,138,1) inset; border-radius: 0.5rem; }

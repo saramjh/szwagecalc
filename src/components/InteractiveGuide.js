@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { ChevronRightIcon, CheckCircleIcon, PlayIcon, BookOpenIcon, SparklesIcon } from "lucide-react"
+import { ChevronRightIcon, CheckCircleIcon, PlayIcon, BookOpenIcon, SparklesIcon, DollarSign, BarChart3, Target } from "lucide-react"
 
 const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {}, onStartTour }) => {
 	const [showModal, setShowModal] = useState(false)
@@ -39,7 +39,7 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 			description: '정확한 급여 계산을 위한 시급 입력',
 			completed: userProgress.hasHourlyRate,
 			action: '시급 설정',
-			icon: '💰',
+			icon: DollarSign,
 			time: '30초',
 			benefit: '언제든 시급이 바뀌면 기록을 남길 수 있어요'
 		},
@@ -59,7 +59,7 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 			description: '이번 달 얼마나 벌었는지 확인해보세요',
 			completed: userProgress.checkedReport,
 			action: '월급 보기',
-			icon: '📊',
+			icon: BarChart3,
 			time: '10초',
 			benefit: '주휴수당까지 정확하게 계산해드려요'
 		}
@@ -77,7 +77,7 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 			id: 'weekly-allowance',
 			title: '주휴수당 계산',
 			description: '주 15시간 이상 근무하면 주휴수당을 자동으로 계산해드려요',
-			icon: '🎯',
+			icon: Target,
 			tips: ['주 15시간 이상 근무 시 지급', '무단결근 시 주휴수당 차감', '직업별 개별 계산']
 		},
 		{
@@ -107,8 +107,9 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 			content: '시스템 설정에 따라 자동으로 다크모드가 적용돼요'
 		},
 		{
-			title: '🎯 가이드 투어',
-			content: '언제든 이 가이드에서 "투어 다시 체험하기" 버튼으로 기능 설명을 다시 볼 수 있어요'
+			title: '가이드 투어',
+			content: '언제든 이 가이드에서 "투어 다시 체험하기" 버튼으로 기능 설명을 다시 볼 수 있어요',
+			icon: Target
 		}
 	]
 
@@ -217,7 +218,11 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 												? 'bg-green-100 dark:bg-green-800/50' 
 												: 'bg-mint-green bg-opacity-10 dark:bg-mint-green-dark dark:bg-opacity-20'
 										}`}>
-											{step.completed ? '✅' : step.icon}
+											{step.completed ? (
+												<CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
+											) : (
+												<step.icon className="w-4 h-4 sm:w-5 sm:h-5 text-mint-green dark:text-mint-green-dark" />
+											)}
 										</div>
 										
 										<div className="flex-1 min-w-0">
@@ -263,8 +268,8 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 										className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors duration-200"
 									>
 										<div className="flex items-center space-x-4">
-											<div className="w-12 h-12 bg-mint-green bg-opacity-10 dark:bg-mint-green-dark dark:bg-opacity-20 rounded-xl flex items-center justify-center text-2xl">
-												{feature.icon}
+											<div className="w-12 h-12 bg-mint-green bg-opacity-10 dark:bg-mint-green-dark dark:bg-opacity-20 rounded-xl flex items-center justify-center">
+												<feature.icon className="w-6 h-6 text-mint-green dark:text-mint-green-dark" />
 											</div>
 											<div className="flex-1 min-w-0">
 												<h3 className="font-semibold text-dark-navy dark:text-white break-keep">{feature.title}</h3>

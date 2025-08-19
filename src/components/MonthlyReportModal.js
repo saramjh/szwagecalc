@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react"
 import dayjs from "dayjs"
 import "dayjs/locale/ko"
+import { Target, FileText, TrendingDown, Clock } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { getJobChipStyle } from "../constants/JobColors"
 import { parseHHmm } from "../utils/time"
@@ -358,7 +359,10 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 					
 					return jobBreakdowns.length > 0 && (
 						<div className="mb-6">
-							<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3">💸 직업별 휴게시간 차감 내역</h3>
+							<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3 flex items-center">
+								<TrendingDown className="w-5 h-5 mr-2 text-orange-500" />
+								직업별 휴게시간 차감 내역
+							</h3>
 							<div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 space-y-3">
 								{jobBreakdowns.map(breakdown => (
 									<div key={breakdown.jobName} className="flex justify-between items-center">
@@ -395,7 +399,10 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 				{/* 🎯 Etos 디자인: 주휴수당 요약 */}
 				{weeklyAllowanceSummary.totalAllowance > 0 && (
 					<div className="mb-6">
-						<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3">💰 주휴수당 요약</h3>
+						<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3 flex items-center">
+							<Target className="w-5 h-5 mr-2 text-mint-green" />
+							주휴수당 요약
+						</h3>
 						<div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 space-y-3">
 							{/* 직업별 주휴수당 */}
 							{weeklyAllowanceSummary.jobAllowances.map(jobAllowance => (
@@ -436,7 +443,10 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 					</div>
 				)}
 
-				<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3">📋 일별 상세 내역</h3>
+				<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3 flex items-center">
+					<FileText className="w-5 h-5 mr-2 text-mint-green" />
+					일별 상세 내역
+				</h3>
 				<div className="max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-md p-2">
 					{monthlyRecords.length === 0 ? (
 						<p className="text-medium-gray dark:text-light-gray text-center py-4">기록된 내역이 없습니다.</p>
@@ -467,11 +477,11 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 									return (
 										<div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
 											<div className="flex justify-between items-center text-xs">
-												<div className="flex items-center gap-2">
-													<span className="text-blue-600 dark:text-blue-400">⏰</span>
-													<span className="text-blue-700 dark:text-blue-300">
-														휴게시간 {formatBreakTime(workAndBreakTime.breakTime.breakMinutes)}
-													</span>
+																							<div className="flex items-center gap-2">
+												<Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+												<span className="text-blue-700 dark:text-blue-300">
+													휴게시간 {formatBreakTime(workAndBreakTime.breakTime.breakMinutes)}
+												</span>
 													{actualHourlyRate > 0 && (
 														<span className="text-gray-500 dark:text-gray-400">
 															(시급 {actualHourlyRate.toLocaleString()}원)

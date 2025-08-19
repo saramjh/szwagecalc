@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react"
 import dayjs from "dayjs"
+import { DollarSign } from "lucide-react"
 import { parseHHmm } from "../utils/time"
 import { supabase } from "../supabaseClient" // Supabase 클라이언트 임포트
 import { useToast } from "../contexts/ToastContext"
@@ -552,7 +553,10 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							<div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700">
 								{breakTimeInfo.isPaid ? (
 									<div className="flex justify-between items-center text-xs">
-										<span className="text-green-600 dark:text-green-400">💰 휴게시간 급여 포함</span>
+										<span className="text-green-600 dark:text-green-400 flex items-center">
+											<DollarSign className="w-3 h-3 mr-1" />
+											휴게시간 급여 포함
+										</span>
 										<span className="text-green-600 dark:text-green-400 font-medium">
 											+{breakTimeWageDiff.breakTimePaid.toLocaleString()}원
 										</span>

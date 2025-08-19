@@ -4,6 +4,11 @@ import './index.css';
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
+// 🌙 즉시 다크모드 강제 적용 (가장 빠른 시점)
+document.documentElement.classList.add("dark")
+localStorage.setItem("theme", "dark")
+console.log("🌙 index.js에서 강제 다크모드 적용됨")
+
 // React 17 스타일 렌더링으로 임시 변경
 ReactDOM.render(<App />, document.getElementById('root'));
 

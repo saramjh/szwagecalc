@@ -1,5 +1,6 @@
 import React from "react"
 import { getCurrentWeekProgress, formatWeekRange } from "../utils/weeklyAllowance"
+import { Calendar, AlertTriangle } from "lucide-react"
 import dayjs from "dayjs"
 
 const WeeklyAllowanceCard = ({ workRecords, jobs, selectedDate = new Date() }) => {
@@ -29,10 +30,11 @@ const WeeklyAllowanceCard = ({ workRecords, jobs, selectedDate = new Date() }) =
   return (
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
       <div className="flex items-center justify-between mb-3">
-        <div>
-          <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">📅 주휴수당</h3>
+      <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100 flex items-center">
+            <Calendar className="w-4 h-4 mr-2" />
+            주휴수당
+          </h3>
           <p className="text-sm text-blue-700 dark:text-blue-300">{currentWeek}</p>
-        </div>
         <div className="text-right">
           {hasEligibleJobs ? (
             <div className="flex items-center gap-1">
@@ -67,9 +69,10 @@ const WeeklyAllowanceCard = ({ workRecords, jobs, selectedDate = new Date() }) =
                     {job.job_name}
                   </span>
                   {progress.hasUnexcusedAbsence && (
-                    <span className="text-xs bg-red-100 text-red-800 px-1.5 py-0.5 rounded-full dark:bg-red-900/30 dark:text-red-400">
-                      ⚠️ 결근
-                    </span>
+                    <span className="text-xs bg-red-100 text-red-800 px-1.5 py-0.5 rounded-full dark:bg-red-900/30 dark:text-red-400 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    결근
+                  </span>
                   )}
                 </div>
                 <div className="text-right">

@@ -46,6 +46,10 @@ module.exports = {
       webpackConfig.optimization.concatenateModules = true;
       webpackConfig.optimization.innerGraph = true;
       
+      // 🚀 강화된 트리셰이킹 설정
+      webpackConfig.optimization.providedExports = true;
+      webpackConfig.optimization.mangleExports = 'size';
+      
       // 청크 분할 최적화 (프로덕션만)
       webpackConfig.optimization.splitChunks = {
         chunks: 'all',

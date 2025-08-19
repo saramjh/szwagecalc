@@ -2,6 +2,8 @@ import React, { useState } from "react"
 import dayjs from "dayjs"
 import isoWeek from "dayjs/plugin/isoWeek"
 import isBetween from "dayjs/plugin/isBetween"
+// 🚀 트리셰이킹 최적화: 필요한 아이콘만 import  
+import { DollarSign, ChevronDown, ChevronUp, Zap, AlertTriangle, CheckCircle, RotateCcw, Pause } from "lucide-react"
 import { getWeeklyRecords, calculateWeeklyAllowance, formatWeekRange } from "../utils/weeklyAllowance"
 
 // dayjs 플러그인 확장
@@ -105,7 +107,7 @@ const WeeklySummaryBar = ({ selectedDate, workRecords, jobs }) => {
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">💰</span>
+              <DollarSign className="w-5 h-5 text-mint-green flex-shrink-0" />
               <span className="text-base font-semibold text-dark-navy dark:text-white">
                 {currentMonth.format('M월')} 주휴수당
               </span>
@@ -127,7 +129,7 @@ const WeeklySummaryBar = ({ selectedDate, workRecords, jobs }) => {
               {/* 이번 주 진행률 표시 */}
               {currentWeekData && !currentWeekData.hasAbsence && currentWeekData.totalHours > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-blue-600 dark:text-blue-400">⚡</span>
+                  <span className="text-xs text-blue-600 dark:text-blue-400">                  <Zap className="w-3 h-3 text-blue-600 dark:text-blue-400" /></span>
                   <span className="text-xs text-gray-600 dark:text-gray-400">
                     이번 주 {currentWeekData.progress.toFixed(0)}% 
                     ({currentWeekData.totalHours.toFixed(1)}h/{currentWeekData.minHours}h)
@@ -145,7 +147,7 @@ const WeeklySummaryBar = ({ selectedDate, workRecords, jobs }) => {
               
               {currentWeekData?.hasAbsence && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-red-500">⚠️</span>
+                  <span className="text-xs text-red-500">                  <AlertTriangle className="w-3 h-3 text-red-500" /></span>
                   <span className="text-xs text-red-600 dark:text-red-400">
                     이번 주 무단결근으로 지급 불가
                   </span>
@@ -159,16 +161,11 @@ const WeeklySummaryBar = ({ selectedDate, workRecords, jobs }) => {
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {isExpanded ? '닫기' : '상세보기'}
             </span>
-            <svg 
-              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                isExpanded ? 'rotate-180' : ''
-              }`}
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-400 transition-transform duration-200" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400 transition-transform duration-200" />
+            )}
           </div>
         </div>
       </button>
@@ -206,7 +203,10 @@ const WeeklySummaryBar = ({ selectedDate, workRecords, jobs }) => {
                 return (
                   <div key={index} className="flex items-center justify-between py-2 text-gray-400 dark:text-gray-600">
                     <span className="text-sm">{week.label}</span>
-                    <span className="text-xs">⏸️ 대기 중</span>
+                    <span className="text-xs flex items-center gap-1">
+                      <Pause className="w-3 h-3" />
+                      대기 중
+                    </span>
                   </div>
                 )
               }
@@ -232,21 +232,21 @@ const WeeklySummaryBar = ({ selectedDate, workRecords, jobs }) => {
                     <div className="text-right">
                       {hasUnexcusedAbsence ? (
                         <div className="flex items-center gap-1">
-                          <span className="text-xs">⚠️</span>
+                          <span className="text-xs">                          <AlertTriangle className="w-3 h-3 text-red-600 dark:text-red-400" /></span>
                           <span className="text-sm font-semibold text-red-600 dark:text-red-400">
                             지급 불가
                           </span>
                         </div>
                       ) : hasEligible ? (
                         <div className="flex items-center gap-1">
-                          <span className="text-xs">✅</span>
+                          <span className="text-xs">                          <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" /></span>
                           <span className="text-sm font-semibold text-green-600 dark:text-green-400">
                             +{totalAllowance.toLocaleString()}원
                           </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1">
-                          <span className="text-xs">🔄</span>
+                          <span className="text-xs">                          <RotateCcw className="w-3 h-3 text-orange-600 dark:text-orange-400" /></span>
                           <span className="text-sm text-orange-600 dark:text-orange-400 font-medium">
                             진행 중
                           </span>

@@ -144,6 +144,22 @@ export const weekUtils = {
     const weekStart = dayjs(date).startOf('isoWeek')
     const weekEnd = dayjs(date).endOf('isoWeek')
     return now.isBetween(weekStart, weekEnd, 'day', '[]')
+  },
+
+  // 해당 월의 몇 번째 주인지 계산
+  getWeekOfMonth(date) {
+    const targetDate = dayjs(date)
+    const firstDayOfMonth = targetDate.startOf('month')
+    
+    // 해당 월 1일이 포함된 주의 시작일
+    const firstWeekOfMonth = firstDayOfMonth.startOf('isoWeek')
+    
+    // 현재 날짜가 포함된 주의 시작일
+    const currentWeekStart = targetDate.startOf('isoWeek')
+    
+    // 주 차이 계산 + 1 (1주차부터 시작)
+    const weeksDiff = currentWeekStart.diff(firstWeekOfMonth, 'week')
+    return weeksDiff + 1
   }
 }
 

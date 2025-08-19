@@ -29,6 +29,15 @@
 - **🧠 과거 시급까지 똑똑하게 계산**
 
   - 시급이 변경되어도 걱정 마세요. '적용 시작일' 기준의 정확한 시급을 찾아 급여를 자동으로 계산해주는 스마트함을 갖췄습니다.
+  - 시급뿐 아니라, 일급도 기록할 수 있습니다.
+
+- **⏱️ 스마트 휴게시간 정책**
+
+  - 직업별로 무급/유급 휴게시간 정책을 설정하고, 근무 시간에 따라 자동으로 휴게시간을 적용하여 정확한 급여를 계산합니다.
+
+- **💰 주휴수당 자동 계산**
+
+  - 주 15시간 이상 근무 시 주휴수당을 자동으로 계산하여 놓치기 쉬운 수당까지 완벽하게 관리합니다.
 
 - **📅 달력으로 한눈에 보는 근무 기록**
 
@@ -38,6 +47,18 @@
 
   - 매월 총 근무 시간, 예상 수입 등을 포함한 상세 리포트를 제공하여 재정 관리를 돕습니다.
 
+- **📈 데이터 시각화 & 분석**
+
+  - 수입 트렌드, 생산성 분석, 스마트 인사이트를 통해 나의 근무 패턴을 한눈에 파악할 수 있습니다.
+
+- **🌙 다크모드 지원**
+
+  - 눈의 피로를 줄이는 다크모드를 지원하여 밤늦은 근무 기록도 편안하게 관리할 수 있습니다.
+
+- **🎯 인터랙티브 가이드**
+
+  - 처음 사용하는 사용자도 쉽게 따라할 수 있는 단계별 가이드와 투어 기능을 제공합니다.
+
 - **📱 앱처럼 설치해서 사용**
   - PWA(Progressive Web App)를 지원하여, 앱처럼 홈 화면에 추가하고 오프라인에서도 사용할 수 있습니다.
 
@@ -45,11 +66,13 @@
 
 ### 👨‍💻 **개발 이야기**
 
-이 프로젝트는 시즈를 위해 만들었습니다. 손 메모로 매번 다른 시급과 근무 시간을 엑셀로 정리하고 계산하는 과정은 번거로웠다고 합니다. '좀 더 쉽고 편하게 급여를 관리하도록 도와줄 수 수 없을까?'라는 생각으로 시작되었습니다.
+이 프로젝트는 손으로 시급 다이어리를 작성하던 와이프를 위해 만들었습니다.
+항상 폰 계산기로 시급을 계산하던 수고를 덜고, 휴게시간이나 주휴수당과 같은 법적인 권리도 보장할 수 있도록 프로젝트에 기능을 구현하였습니다.
 
-`시급이요`는 사용자가 최소한의 노력으로 최대의 편의를 누릴 수 있도록 **직관적인 사용자 경험(UX)**에 초점을 맞춰 개발되었습니다. 복잡한 기능 대신, 아르바이트생에게 꼭 필요한 핵심 기능(직업 관리, 시급 이력, 근무 기록, 월별 정산)을 담아냈습니다.
+`시급이요`는 이용자가 최소한의 노력으로 최대의 편의를 누릴 수 있도록 **직관적인 사용자 경험(UX)**에 초점을 맞춰 개발되었습니다.
+복잡한 기능 대신, 아르바이트생에게 꼭 필요한 핵심 기능들을 담아냈습니다.
 
-React와 Supabase를 기반으로 빠르게 프로토타입을 구현했으며, 사용자의 피드백을 반영하여 지속적으로 개선하고 있습니다. 이 작은 도구가 당신의 소중한 땀의 결실을 관리하는 데 유용한 비서가 되기를 바랍니다.
+React와 Supabase를 기반으로 빠르게 구현했으며, 사용자의 피드백을 반영하여 지속적으로 개선하고 있습니다. 이 작은 도구가 당신의 소중한 땀의 결실을 관리하는 데 유용한 도구가 되기를 바랍니다.
 
 ---
 
@@ -87,9 +110,11 @@ React와 Supabase를 기반으로 빠르게 프로토타입을 구현했으며, 
 
 ### 🛠️ **기술 스택**
 
-- **프론트엔드**: React, Tailwind CSS
-- **백엔드**: Supabase
+- **프론트엔드**: React, Tailwind CSS, Lucide Icons
+- **백엔드**: Supabase (Database, Auth, Real-time)
+- **빌드도구**: Craco, PostCSS
 - **배포**: GitHub Pages
+- **아키텍처**: PWA (Progressive Web App)
 
 ---
 
@@ -151,72 +176,156 @@ npm run deploy
 
 애플리케이션에서 사용하는 주요 데이터베이스 테이블 스키마는 다음과 같습니다.
 
-#### `jobs`
+#### `jobs` (직업 정보)
 
 - `id`: `uuid` (PK)
 - `user_id`: `uuid` (FK, `auth.users.id`)
-- `job_name`: `text`
-- `description`: `text` (nullable)
-- `created_at`: `timestamptz`
-- `is_deleted`: `boolean` (default: `FALSE`)
+- `job_name`: `text` (직업명)
+- `description`: `text` (설명, nullable)
+- `created_at`: `timestamptz` (생성일시)
+- `payday`: `integer` (월급일)
+- `color`: `text` (표시 색상)
+- `is_deleted`: `boolean` (소프트 삭제, default: `FALSE`)
+- `sort_order`: `integer` (정렬 순서, default: `0`)
+- `last_used_at`: `timestamptz` (마지막 사용일시)
+- `usage_count`: `integer` (사용 횟수, default: `0`)
+- **휴게시간 정책:**
+  - `break_time_enabled`: `boolean` (휴게시간 사용 여부, default: `TRUE`)
+  - `break_time_paid`: `boolean` (유급 휴게시간 여부, default: `FALSE`)
+  - `break_time_policies`: `jsonb` (휴게시간 정책 JSON)
+- **주휴수당 정책:**
+  - `weekly_allowance_enabled`: `boolean` (주휴수당 사용 여부, default: `TRUE`)
+  - `weekly_allowance_min_hours`: `numeric` (최소 근무 시간, default: `15.00`)
 
-#### `hourly_rate_history`
+#### `hourly_rate_history` (시급 이력)
 
-- `id`: `bigint` (PK)
+- `id`: `uuid` (PK)
 - `user_id`: `uuid` (FK, `auth.users.id`)
 - `job_id`: `uuid` (FK, `jobs.id`)
-- `hourly_rate`: `numeric`
-- `effective_date`: `date`
-- `end_date`: `date` (nullable)
+- `hourly_rate`: `numeric` (시급)
+- `effective_date`: `date` (적용 시작일)
+- `end_date`: `date` (적용 종료일, nullable)
+- `created_at`: `timestamptz` (생성일시)
 
-#### `work_records`
+#### `work_records` (근무 기록)
 
-- `id`: `bigint` (PK)
+- `id`: `uuid` (PK)
 - `user_id`: `uuid` (FK, `auth.users.id`)
 - `job_id`: `uuid` (FK, `jobs.id`)
-- `date`: `date`
-- `start_time`: `time`
-- `end_time`: `time`
-- `meal_allowance`: `numeric`
-- `notes`: `text` (nullable)
-- `daily_wage`: `numeric`
+- `date`: `date` (근무일)
+- `start_time`: `time` (시작 시간, nullable)
+- `end_time`: `time` (종료 시간, nullable)
+- `meal_allowance`: `numeric` (식대, default: `0`)
+- `notes`: `text` (메모, nullable)
+- `daily_wage`: `numeric` (일급, default: `0`)
+- `wage_type`: `text` (급여 유형: 'hourly' | 'daily', default: `'hourly'`)
+- `work_description`: `text` (근무 내용, nullable)
+- `is_unexcused_absence`: `boolean` (무단결근 여부, default: `FALSE`)
 
-#### `profiles`
+#### `profiles` (사용자 프로필)
 
-- `user_id`: `uuid` (PK, FK, `auth.users.id`)
-- `username`: `text`
+- `id`: `uuid` (PK)
+- `user_id`: `uuid` (FK, `auth.users.id`, unique)
+- `username`: `text` (사용자명)
+- `hourly_rate`: `numeric` (기본 시급, nullable)
 
-### 6. 주요 해결 과제
+#### 백업 테이블들
 
-개발 과정에서 해결한 주요 기술적 과제 및 버그 수정 목록입니다.
+안전한 데이터 보존을 위해 다음 백업 테이블들이 운영됩니다:
+- `jobs_backup`, `jobs_safety_backup`
+- `hourly_rate_history_backup`, `hourly_rate_history_safety_backup`
+- `work_records_backup`, `work_records_safety_backup`
+- `profiles_safety_backup`
+
+### 6. 최신 개발 내역 (2024년 버전)
+
+#### 🚀 **주요 신기능**
+
+- **⏰ 휴게시간 정책 시스템**
+  - [x] 직업별 무급/유급 휴게시간 정책 설정
+  - [x] 근무 시간 구간별 자동 휴게시간 적용
+  - [x] 실시간 급여 계산에 휴게시간 반영
+  - [x] 기존 근무 기록 일괄 업데이트
+
+- **💰 주휴수당 자동 계산**
+  - [x] 주 15시간 이상 근무 시 주휴수당 자동 적용
+  - [x] 주별 근무 시간 추적 및 수당 계산
+  - [x] 월별 리포트에 주휴수당 반영
+
+- **📊 데이터 분석 대시보드**
+  - [x] 수입 분석: 트렌드, 일/시간당 평균, 요일별 패턴
+  - [x] 생산성 분석: 평균 세션, 최장 연속 근무, 일관성 지표
+  - [x] 스마트 인사이트: 개인화된 근무 패턴 분석
+  - [x] CSV 리포트 내보내기
+
+- **🎯 인터랙티브 사용자 가이드**
+  - [x] 단계별 온보딩 가이드 (빠른 시작, 주요 기능, 유용한 팁)
+  - [x] 진행률 추적 및 설정 완료도 표시
+  - [x] 실시간 투어 기능 (하이라이트 + 툴팁)
+  - [x] 상황별 도움말 시스템
+
+- **🌙 다크모드 최적화**
+  - [x] 완전한 다크모드 UI/UX 구현
+  - [x] 모든 컴포넌트 다크모드 호환성
+  - [x] 자동 테마 감지 및 저장
+
+#### 🛠️ **기술적 개선사항**
+
+- **성능 최적화**
+  - [x] 트리셰이킹으로 번들 크기 최적화
+  - [x] Lucide 아이콘 개별 import
+  - [x] React Hook 의존성 최적화
+  - [x] 데이터베이스 인덱스 추가
+
+- **코드 품질**
+  - [x] ESLint 오류 전면 수정
+  - [x] React 18 호환성 확보
+  - [x] TypeScript 마이그레이션 준비
+  - [x] 컴포넌트 모듈화
+
+- **UI/UX 혁신**
+  - [x] "Etos" 디자인 철학 적용
+  - [x] 모바일 퍼스트 반응형 디자인
+  - [x] 이모지 → Lucide 아이콘 전환
+  - [x] 마이크로 인터랙션 추가
+
+#### 🐛 **해결된 주요 이슈**
+
+- **개발 환경**
+  - [x] React 개발 서버 무한 로딩 해결
+  - [x] Webpack 최적화 설정 충돌 해결
+  - [x] Tailwind CSS 빌드 문제 해결
+  - [x] PostCSS 설정 최적화
+
+- **사용자 경험**
+  - [x] 모바일 텍스트 줄바꿈 자연화
+  - [x] 투어 툴팁 뷰포트 오버플로우 해결
+  - [x] 모달 스크롤 및 크기 최적화
+  - [x] 다크모드 색상 대비 개선
+
+- **데이터 무결성**
+  - [x] 무단결근 로직 위치 변경 (개별 → 목록)
+  - [x] CSV 내보내기 실시간 정책 반영
+  - [x] 설정 진행률 추적 정확성
+  - [x] 차트 텍스트 가독성 향상
+
+#### 📋 **이전 개발 내역**
 
 - **직업 관리 (`JobManagementModal`)**
-
-  - [x] **직업 삭제 시 근무 기록 유지 (소프트 삭제):** 직업을 삭제하더라도 해당 직업과 관련된 근무 기록은 보존되도록 소프트 삭제 방식을 도입했습니다. `jobs` 테이블에 `is_deleted` 컬럼을 추가하고, 직업 삭제 시 이 값을 `TRUE`로 업데이트하며, UI에서는 `is_deleted`가 `FALSE`인 직업만 표시하도록 변경했습니다.
-  - [x] **직업 설명 저장 오류 해결:** `description` 필드가 정상적으로 저장 및 로드되도록 수정했습니다.
-  - [x] **모달 유지 기능 추가:** 직업 추가/변경/삭제 후 모달이 닫히지 않고 변경 사항이 반영된 상태로 유지되도록 개선했습니다.
+  - [x] **직업 삭제 시 근무 기록 유지 (소프트 삭제)**
+  - [x] **직업 설명 저장 오류 해결**
+  - [x] **모달 유지 기능 추가**
+  - [x] **상세 정보 카드 UI 개선** (NEW: 설명, 휴게정책, 주휴수당 상태)
 
 - **근무 추가 (`DailyRecordModal`)**
-
-  - [x] **적용 시급 미표시 문제 해결:** 날짜와 직업에 맞는 시급이 UI에 정확히 표시되도록 조회 로직을 개선했습니다.
-  - [x] **시간 미입력 시 UX 개선:** 시간 미입력 상태로 저장 시도 시 사용자에게 명확한 알림을 제공하도록 수정했습니다.
+  - [x] **적용 시급 미표시 문제 해결**
+  - [x] **시간 미입력 시 UX 개선**
 
 - **데이터 동기화**
-
-  - [x] **근무 목록 데이터 비동기화 문제 해결:** 시급 변경 시 `DailyRecordListModal`의 일급 정보가 즉시 재계산 및 반영되도록 상태 관리 로직을 수정했습니다.
+  - [x] **근무 목록 데이터 비동기화 문제 해결**
 
 - **서비스 워커 및 PWA**
-
-  - [x] **서비스 워커 등록 오류 해결:** `precache` 관련 `t is not iterable` 오류 및 404 오류를 해결하여 PWA가 안정적으로 작동하도록 서비스 워커 설정을 수정했습니다.
-
-- **UI/UX 개선**
-  - [x] **모달 메시지 간소화:** 토스(Toss) 스타일을 참고하여 모든 사용자 안내 메시지를 간결하고 직관적으로 개선했습니다.
-  - [x] **컨텍스트 API 오류 해결:** `useToast must be used within a ToastProvider` 런타임 오류를 해결하기 위해 `App.js`의 컴포넌트 구조를 리팩토링했습니다.
-  - [x] **근무 기록 목록 UI 개선:** 근무 기록 편집/삭제 버튼을 우측으로 정렬하여 가독성 및 사용성을 향상했습니다.
-  - [x] **월급 확인 모달 일별 상세 내역 UI 개선:** 토스 스타일을 적용하여 일별 상세 내역을 카드 형태로 표시하고, 일급을 강조하며, 날짜 및 기타 정보의 가독성을 높였습니다.
-  - [x] **월급 확인 모달 요약 정보 카드화:** 총 근무 시간, 총 식대, 총 수입 요약 정보를 카드 형태로 변경하여 시각적 구분을 명확히 했습니다.
-  - [x] **근무 시간 표시 형식 통일:** 총 근무 시간 및 일별 근무 시간 표시를 "시간 분" 형식으로 통일하여 가독성을 높였습니다.
-  - [x] **직업 관리 모달 버튼 아이콘화:** 직업 관리 모달의 수정/삭제 버튼을 아이콘으로 변경하고 상하 배치하여 공간 효율성을 높였습니다.
+  - [x] **서비스 워커 등록 오류 해결**
 
 ---
 
