@@ -1,20 +1,20 @@
 {
   "files": {
-    "main.css": "/static/css/main.cde4d8f3.css",
-    "main.js": "/static/js/main.59ad8e65.js",
-    "static/js/751.403baf12.chunk.js": "/static/js/751.403baf12.chunk.js",
-    "static/js/421.ba31b5c9.chunk.js": "/static/js/421.ba31b5c9.chunk.js",
-    "static/js/908.a564eff0.chunk.js": "/static/js/908.a564eff0.chunk.js",
-    "static/js/685.ef836892.chunk.js": "/static/js/685.ef836892.chunk.js",
+    "main.css": "/static/css/main.5d9bd368.css",
+    "main.js": "/static/js/main.2af4049b.js",
+    "static/js/751.e6a851ce.chunk.js": "/static/js/751.e6a851ce.chunk.js",
+    "static/js/421.8d21c8ae.chunk.js": "/static/js/421.8d21c8ae.chunk.js",
+    "static/js/908.0a57e227.chunk.js": "/static/js/908.0a57e227.chunk.js",
+    "static/js/685.d033259b.chunk.js": "/static/js/685.d033259b.chunk.js",
     "static/js/39.0ad4e7d7.chunk.js": "/static/js/39.0ad4e7d7.chunk.js",
-    "static/js/33.f04730f6.chunk.js": "/static/js/33.f04730f6.chunk.js",
-    "static/js/975.4ace91a9.chunk.js": "/static/js/975.4ace91a9.chunk.js",
-    "static/js/16.9b04a843.chunk.js": "/static/js/16.9b04a843.chunk.js",
+    "static/js/33.3b718f38.chunk.js": "/static/js/33.3b718f38.chunk.js",
+    "static/js/975.d273e0ca.chunk.js": "/static/js/975.d273e0ca.chunk.js",
+    "static/js/16.c98da26a.chunk.js": "/static/js/16.c98da26a.chunk.js",
     "static/js/200.8120c87b.chunk.js": "/static/js/200.8120c87b.chunk.js",
-    "static/js/887.a450c1c2.chunk.js": "/static/js/887.a450c1c2.chunk.js",
-    "static/js/596.abb3f161.chunk.js": "/static/js/596.abb3f161.chunk.js",
+    "static/js/887.3d2ec850.chunk.js": "/static/js/887.3d2ec850.chunk.js",
+    "static/js/596.bb97f79f.chunk.js": "/static/js/596.bb97f79f.chunk.js",
     "react.js": "/static/js/react.fc8fb6d9.js",
-    "lucide.js": "/static/js/lucide.892e42f8.js",
+    "lucide.js": "/static/js/lucide.e6e391e2.js",
     "supabase.js": "/static/js/supabase.f0f96c5e.js",
     "vendors.css": "/static/css/vendors.0abf6d4e.css",
     "vendors.js": "/static/js/vendors.3542affa.js",
@@ -23,11 +23,11 @@
   },
   "entrypoints": [
     "static/js/react.fc8fb6d9.js",
-    "static/js/lucide.892e42f8.js",
+    "static/js/lucide.e6e391e2.js",
     "static/js/supabase.f0f96c5e.js",
     "static/css/vendors.0abf6d4e.css",
     "static/js/vendors.3542affa.js",
-    "static/css/main.cde4d8f3.css",
-    "static/js/main.59ad8e65.js"
+    "static/css/main.5d9bd368.css",
+    "static/js/main.2af4049b.js"
   ]
 }
