@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import dayjs from "dayjs"
 import { parseHHmm } from "../utils/time"
-import { calculateWorkAndBreakTime, formatBreakTime, calculateBreakTimeWageDifference } from "../utils/breakTime"
+import { calculateWorkAndBreakTime, formatBreakTime } from "../utils/breakTime"
+import { useModalManager } from "../utils/modalManager"
 import { supabase } from "../supabaseClient"
 import DailyRecordModal from "./DailyRecordModal"
 import { useConfirm } from "../contexts/ConfirmContext"
@@ -37,6 +38,7 @@ const formatDuration = (start_time, end_time) => {
 const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) => {
 	const showConfirm = useConfirm()
 	const showToast = useToast()
+	const { openModal, closeModal } = useModalManager()
 	const [dailyRecords, setDailyRecords] = useState([])
 	const [isDailyRecordModalOpen, setIsDailyRecordModalOpen] = useState(false)
 	const [selectedRecordForEdit, setSelectedRecordForEdit] = useState(null) // 편집할 기록
@@ -112,7 +114,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 		if (isOpen) {
 			setShowModal(true) // 모달을 DOM에 렌더링 시작
 			setTimeout(() => setAnimateModal(true), 10) // 약간의 지연 후 애니메이션 시작
-			document.body.classList.add("modal-open") // 모달이 열릴 때 body 스크롤 잠금
+			openModal() // 🎯 모달 매니저로 헤더 숨김 관리
 			fetchDailyRecords()
 		} else {
 			setAnimateModal(false) // 애니메이션 역재생 시작
@@ -120,63 +122,20 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 				setShowModal(false) // DOM에서 제거
 				setHourlyRatesMap(new Map()) // 시급 맵 초기화
 			}, 300) // 애니메이션 완료 후
-			document.body.classList.remove("modal-open") // 모달이 닫힐 때 body 스크롤 잠금 해제
+			closeModal() // 🎯 모달 매니저로 헤더 복원 관리
 		}
-	}, [isOpen, fetchDailyRecords])
+	}, [isOpen, fetchDailyRecords, openModal, closeModal])
 
 	// 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
 	useEffect(() => {
 		return () => {
-			document.body.classList.remove("modal-open")
+			closeModal() // 🎯 모달 매니저로 정리
 		}
-	}, [])
+	}, [closeModal])
 
-	// 💰 실제 지급 일급 (휴게시간 차감된 금액)
-	const actualDailyWage = useMemo(() => {
-		return dailyRecords.reduce((total, record) => total + (record.daily_wage || 0), 0)
-	}, [dailyRecords])
 
-	// 💡 기본 예상 일급 (휴게시간 포함 최대 가능 급여)
-	const maxPossibleWage = useMemo(() => {
-		return dailyRecords.reduce((total, record) => {
-			// 일급제는 저장된 값 그대로 사용
-			if (record.wage_type === "daily") {
-				return total + (record.daily_wage || 0)
-			}
-			
-			// 시급제는 총 근무시간 × 시급으로 계산
-			if (record.start_time && record.end_time && record.jobs) {
-				const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
-				
-				// 🎯 실제 설정된 시급 사용
-				const actualHourlyRate = hourlyRatesMap.get(record.id) || 0
-				
-				// 최대 가능 급여 = 총 시간 × 시급
-				const maxWage = Math.round(workAndBreakTime.totalHours * actualHourlyRate) + (record.meal_allowance || 0)
-				return total + maxWage
-			}
-			
-			// 기본값: 저장된 값 사용
-			return total + (record.daily_wage || 0)
-		}, 0)
-	}, [dailyRecords, hourlyRatesMap])
 
-	// 총 휴게시간 계산
-	const totalBreakTime = useMemo(() => {
-		let totalBreakMinutes = 0
-		
-		dailyRecords.forEach(record => {
-			if (record.start_time && record.end_time && record.jobs) {
-				const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
-				totalBreakMinutes += workAndBreakTime.breakTime.breakMinutes
-			}
-		})
-		
-		return totalBreakMinutes
-	}, [dailyRecords])
 
-	// 💸 총 차액 (최대 가능 급여 - 실제 지급 급여)
-	const totalWageLoss = maxPossibleWage - actualDailyWage
 
 	const handleAddRecord = () => {
 		setSelectedRecordForEdit(null) // 새 기록 추가 모드
@@ -212,43 +171,46 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 		try { window.dispatchEvent(new Event('work-records-changed')) } catch (_) {}
 	}
 
-	// 무단결근 처리 함수
-	const handleAbsenceToggle = async (isChecked) => {
-		if (!session || !selectedDate) return
+	// 직업별 무단결근 처리 함수
+	const handleJobAbsenceToggle = async (jobId, isChecked) => {
+		if (!session || !selectedDate || !jobId) return
 		
 		const formattedDate = dayjs(selectedDate).format("YYYY-MM-DD")
+		const selectedJob = jobs.find(job => job.id === jobId)
 		
 		if (isChecked) {
-			// 무단결근 기록 생성
+			// 특정 직업에 대한 무단결근 기록 생성
 			const { error } = await supabase
 				.from("work_records")
 				.insert({
 					user_id: session.user.id,
+					job_id: jobId,
 					date: formattedDate,
 					start_time: null,
 					end_time: null,
 					daily_wage: 0,
-					notes: "무단결근",
+					meal_allowance: 0,
+					notes: `${selectedJob?.job_name || '직업'} 무단결근`,
 					wage_type: "daily",
 					work_description: "무단결근",
-					is_unexcused_absence: true,
-					job_id: null
+					is_unexcused_absence: true
 				})
 
 			if (error) {
 				console.error("Error creating absence record:", error)
 				showToast("무단결근 기록에 실패했어요", "error")
 			} else {
-				showToast("무단결근으로 기록했어요", "success")
+				showToast(`${selectedJob?.job_name || '직업'} 무단결근으로 기록했어요`, "success")
 				fetchDailyRecords()
 				try { window.dispatchEvent(new Event('work-records-changed')) } catch (_) {}
 			}
 		} else {
-			// 무단결근 기록 삭제
+			// 특정 직업의 무단결근 기록 삭제
 			const { error } = await supabase
 				.from("work_records")
 				.delete()
 				.eq("user_id", session.user.id)
+				.eq("job_id", jobId)
 				.eq("date", formattedDate)
 				.eq("is_unexcused_absence", true)
 
@@ -256,7 +218,7 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 				console.error("Error removing absence record:", error)
 				showToast("무단결근 해제에 실패했어요", "error")
 			} else {
-				showToast("무단결근을 해제했어요", "success")
+				showToast(`${selectedJob?.job_name || '직업'} 무단결근을 해제했어요`, "success")
 				fetchDailyRecords()
 				try { window.dispatchEvent(new Event('work-records-changed')) } catch (_) {}
 			}
@@ -267,205 +229,303 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 
 	return (
 		<>
-			<div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
-				<div className={`bg-cream-white dark:bg-gray-900 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/50 p-6 w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
-					<div className="flex justify-between items-start mb-4">
-						<div className="flex-1">
-                            <h2 className="text-xl font-bold text-dark-navy dark:text-white">
-                            	{selectedDate && dayjs(selectedDate).isValid() 
-                            		? dayjs(selectedDate).format("YYYY년 M월 D일 (ddd)") 
-                            		: "날짜 선택"
-                            	}
-                            </h2>
-                            
-                            {/* 무단결근 체크박스 - 근무기록이 없을 때만 표시 */}
-                            {dailyRecords.length === 0 && (
-                            	<div className="mt-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                            		<div className="flex items-start gap-3">
-                            			<div className="flex items-center">
-                            				<input
-                            					type="checkbox"
-                            					id="dayAbsence"
-                            					className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                            					onChange={(e) => handleAbsenceToggle(e.target.checked)}
-                            				/>
-                            			</div>
-                            			<div className="flex-1">
-                            				<label htmlFor="dayAbsence" className="text-sm font-medium text-orange-800 dark:text-orange-200 cursor-pointer">
-                            					⚠️ 무단결근
-                            				</label>
-                            				<p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
-                            					무단결근으로 체크하면 해당 주의 주휴수당이 지급되지 않습니다
-                            				</p>
-                            			</div>
-                            		</div>
-                            	</div>
-                            )}
-						</div>
-						<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105 ml-4">
+			<div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
+				<div className={`bg-cream-white dark:bg-gray-900 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/50 w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
+					{/* 헤더 */}
+					<div className="flex justify-between items-center mb-6">
+						<h2 className="text-xl font-bold text-dark-navy dark:text-white">
+							{selectedDate && dayjs(selectedDate).isValid() 
+								? dayjs(selectedDate).format("YYYY년 M월 D일 (ddd)") 
+								: "날짜 선택"
+							}
+						</h2>
+						<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
 							&times;
 						</button>
 					</div>
+                            
+					{/* 직업별 주휴수당 현황 */}
+					{jobs && jobs.length > 0 && (
+						<div className="mb-6">
+							<h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+								직업별 주휴수당 적용 현황
+							</h3>
+                            		<div className="grid grid-cols-1 gap-2">
+                            			{jobs.map(job => {
+                            				const isAbsent = dailyRecords.some(record => 
+                            					record.job_id === job.id && record.is_unexcused_absence
+                            				)
+                            				const hasNormalRecord = dailyRecords.some(record => 
+                            					record.job_id === job.id && !record.is_unexcused_absence
+                            				)
+                            				
+                            				return (
+                            					<div key={job.id} className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                            						{/* 상단: 직업명과 상태 */}
+                            						<div className="flex items-center justify-between mb-2">
+                            							<div className="flex items-center gap-2 flex-1 min-w-0">
+                            								<div 
+                            									className="w-3 h-3 rounded-full flex-shrink-0"
+                            									style={{ backgroundColor: job.color || '#6B7280' }}
+                            								></div>
+                            								<span className="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">
+                            									{job.job_name}
+                            								</span>
+                            								{hasNormalRecord && (
+                            									<span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full whitespace-nowrap">
+                            										근무
+                            									</span>
+                            								)}
+                            							</div>
+                            						</div>
+                            						
+                            						{/* 하단: 무단결근 체크박스와 주휴수당 상태 */}
+                            						<div className="flex items-center justify-between">
+                            							<div className="flex items-center gap-2">
+                            								{!hasNormalRecord && (
+                            									<label className="flex items-center gap-1.5 cursor-pointer">
+                            										<input
+                            											type="checkbox"
+                            											checked={isAbsent}
+                            											className="w-3.5 h-3.5 text-gray-600 bg-gray-100 border-gray-300 rounded focus:ring-gray-500 dark:focus:ring-gray-600 dark:ring-offset-gray-800 focus:ring-1 dark:bg-gray-700 dark:border-gray-600"
+                            											onChange={(e) => handleJobAbsenceToggle(job.id, e.target.checked)}
+                            										/>
+                            										<span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                            											무단결근
+                            										</span>
+                            									</label>
+                            								)}
+                            							</div>
+                            							
+                            							{/* 주휴수당 상태 */}
+                            							<div className="flex-shrink-0">
+                            								{job.weekly_allowance_enabled ? (
+                            									isAbsent ? (
+                            										<span className="text-xs text-red-500 dark:text-red-400 whitespace-nowrap">주휴수당 ✕</span>
+                            									) : (
+                            										<span className="text-xs text-blue-500 dark:text-blue-400 whitespace-nowrap">주휴수당 ○</span>
+                            									)
+                            								) : (
+                            									<span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">주휴수당 미적용</span>
+                            								)}
+                            							</div>
+                            						</div>
+                            					</div>
+                            				)
+                            			})}
+                            		</div>
+                            		{/* 간단한 안내 메시지 */}
+                            		{jobs.some(job => job.weekly_allowance_enabled) && (
+                            			<p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                            				무단결근 시 해당 직업의 주휴수당이 제외됩니다
+                            			</p>
+							)}
+						</div>
+					)}
 
-					<div className="space-y-4 mb-6 max-h-60 overflow-y-auto">
+					{/* 근무 기록 목록 */}
+					<div className="space-y-6">
 						{dailyRecords.length === 0 ? (
-							<p className="text-medium-gray dark:text-light-gray text-center py-4">기록된 근무가 없습니다. 지금 바로 첫 근무를 추가해보세요!</p>
+							<div className="text-center py-12">
+								<p className="text-medium-gray dark:text-light-gray text-lg">기록된 근무가 없습니다.</p>
+								<p className="text-sm text-medium-gray dark:text-light-gray mt-2">지금 바로 첫 근무를 추가해보세요!</p>
+							</div>
 						) : (
 							dailyRecords.map((record) => (
-								<div key={record.id} className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0 rounded-md">
-									{/* 정보 섹션 */}
-									<div className="flex-grow cursor-pointer p-2 -m-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors duration-150" onClick={() => handleEditRecord(record)}>
-										{record.jobs?.job_name && (
-											<span 
-												className="inline-block px-2 py-1 rounded-full text-xs font-medium self-start mb-1"
-												style={getJobChipStyle(record.jobs, true)}
-											>
-												{record.jobs.job_name}
-											</span>
-										)}
-										{/* 🎯 실시간 급여 재계산 (휴게시간 정책 반영) */}
-										<p className="text-lg font-bold text-dark-navy dark:text-white">
-											+{(() => {
-												// 일급제는 저장된 값 그대로 사용
-												if (record.wage_type === "daily") {
-													return (record.daily_wage || 0).toLocaleString()
-												}
-												
-												// 시급제: 실제 시급으로 휴게시간 정책을 반영하여 재계산
-												if (record.start_time && record.end_time && record.jobs) {
-													const actualHourlyRate = hourlyRatesMap.get(record.id) || 0
-													if (actualHourlyRate > 0) {
-														const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
-														
-														// 급여 대상 시간 계산 (휴게시간 정책 반영)
-														let payableHours = workAndBreakTime.workHours
-														if (workAndBreakTime.breakTime.isPaid) {
-															payableHours = workAndBreakTime.totalHours
-														}
-														
-														const recalculatedWage = Math.round(payableHours * actualHourlyRate) + (record.meal_allowance || 0)
-														return recalculatedWage.toLocaleString()
+								<div key={record.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+									<div className="flex justify-between items-start mb-3">
+										{/* 직업 정보 */}
+										<div className="flex-1">
+											{record.jobs?.job_name && (
+												<span 
+													className="inline-block px-3 py-1 rounded-full text-sm font-medium mb-2"
+													style={getJobChipStyle(record.jobs, true)}
+												>
+													{record.jobs.job_name}
+												</span>
+											)}
+											{/* 일급 표시 */}
+											<div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">
+												+{(() => {
+													// 일급제는 저장된 값 그대로 사용
+													if (record.wage_type === "daily") {
+														return (record.daily_wage || 0).toLocaleString()
 													}
-												}
+													
+													// 시급제: 실제 시급으로 휴게시간 정책을 반영하여 재계산
+													if (record.start_time && record.end_time && record.jobs) {
+														const actualHourlyRate = hourlyRatesMap.get(record.id) || 0
+														if (actualHourlyRate > 0) {
+															const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
+															
+															// 급여 대상 시간 계산 (휴게시간 정책 반영)
+															let payableHours = workAndBreakTime.workHours
+															if (workAndBreakTime.breakTime.isPaid) {
+																payableHours = workAndBreakTime.totalHours
+															}
+															
+															const recalculatedWage = Math.round(payableHours * actualHourlyRate) + (record.meal_allowance || 0)
+															return recalculatedWage.toLocaleString()
+														}
+													}
+													
+													// 기본값: 저장된 값 사용
+													return (record.daily_wage || 0).toLocaleString()
+												})()}원
+											</div>
+											
+											{/* 근무 시간 */}
+											<div className="text-gray-600 dark:text-gray-400 space-y-1">
+												<p className="text-base">
+													{record.start_time?.slice(0, 5) || '--:--'} ~ {record.end_time?.slice(0, 5) || '--:--'}
+												</p>
+												<p className="text-sm">총 {formatDuration(record.start_time, record.end_time)}</p>
 												
-												// 기본값: 저장된 값 사용
-												return (record.daily_wage || 0).toLocaleString()
-											})()}원
-										</p>
-										<p className="text-sm text-medium-gray dark:text-light-gray">
-											{record.start_time?.slice(0, 5) || '--:--'} ~ {record.end_time?.slice(0, 5) || '--:--'}
-										</p>
-										<p className="text-sm text-medium-gray dark:text-light-gray">({formatDuration(record.start_time, record.end_time)})</p>
-										
-										{/* 🎯 Etos 디자인: 휴게시간 정보 - 명확하고 일관성 있는 표시 */}
-										{(() => {
-											if (!record.start_time || !record.end_time || !record.jobs) return null
-											const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
-											const actualHourlyRate = hourlyRatesMap.get(record.id) || 0
-											
-											if (workAndBreakTime.breakTime.breakMinutes === 0) return null
-											
-											const wageDiff = actualHourlyRate > 0 ? calculateBreakTimeWageDifference(
-												record.start_time, record.end_time, record.jobs, actualHourlyRate
-											) : { wageDifference: 0, breakTimePaid: 0 }
-											
-											return (
-												<div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-													{/* 상단: 휴게시간 기본 정보 */}
-													<div className="flex justify-between items-center mb-1">
-														<div className="flex items-center gap-2">
-															<span className="text-blue-600 dark:text-blue-400">⏰</span>
-															<span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-																휴게시간 {formatBreakTime(workAndBreakTime.breakTime.breakMinutes)}
-															</span>
-															<span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-																workAndBreakTime.breakTime.isPaid 
-																	? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-																	: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-															}`}>
-																{workAndBreakTime.breakTime.isPaid ? "유급" : "무급"}
-															</span>
-														</div>
-													</div>
+												{/* 휴게시간 정보 (있을 때만 표시) */}
+												{(() => {
+													if (!record.start_time || !record.end_time || !record.jobs) return null
+													const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
+													if (workAndBreakTime.breakTime.breakMinutes === 0) return null
 													
-													{/* 하단: 시급 정보 및 차액 */}
-													{actualHourlyRate > 0 && (
-														<div className="flex justify-between items-center text-xs">
-															<span className="text-gray-600 dark:text-gray-400">
-																시급 {actualHourlyRate.toLocaleString()}원
+													return (
+														<p className="text-sm text-blue-600 dark:text-blue-400">
+															⏰ 휴게시간 {formatBreakTime(workAndBreakTime.breakTime.breakMinutes)} 
+															<span className={`ml-1 text-xs ${workAndBreakTime.breakTime.isPaid ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+																({workAndBreakTime.breakTime.isPaid ? '유급' : '무급'})
 															</span>
-															<span className={`font-semibold ${
-																workAndBreakTime.breakTime.isPaid 
-																	? "text-green-600 dark:text-green-400" 
-																	: "text-orange-600 dark:text-orange-400"
-															}`}>
-																{workAndBreakTime.breakTime.isPaid 
-																	? `+${wageDiff.breakTimePaid.toLocaleString()}원 포함`
-																	: `-${wageDiff.wageDifference.toLocaleString()}원 차감`
-																}
-															</span>
-														</div>
-													)}
-													
-													{/* 시급 정보가 없는 경우 */}
-													{actualHourlyRate === 0 && (
-														<div className="text-xs text-gray-500 dark:text-gray-400">
-															시급 정보 없음 (차액 계산 불가)
-														</div>
-													)}
-												</div>
-											)
-										})()}
+														</p>
+													)
+												})()}
+											</div>
+										</div>
 										
-										{(record.meal_allowance || 0) > 0 && <p className="text-sm text-medium-gray dark:text-light-gray">식대: {(record.meal_allowance || 0).toLocaleString()}원</p>}
-										{record.notes && <p className="text-sm text-medium-gray dark:text-light-gray">비고: {record.notes}</p>}
+										{/* 액션 버튼 */}
+										<div className="flex space-x-2">
+											<button
+												onClick={() => handleEditRecord(record)}
+												className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+											>
+												<PencilIcon size={16} />
+											</button>
+											<button
+												onClick={() => handleDeleteRecord(record.id)}
+												className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+											>
+												<Trash2Icon size={16} />
+											</button>
+										</div>
 									</div>
-									{/* 버튼 섹션 */}
-									<div className="flex flex-col space-y-2 ml-4">
-										<button onClick={() => handleEditRecord(record)} className="p-2 rounded-full text-medium-gray dark:text-light-gray hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" aria-label="편집">
-											<PencilIcon size={20} />
-										</button>
-										<button onClick={() => handleDeleteRecord(record.id)} className="p-2 rounded-full text-coral-pink hover:bg-red-100 dark:hover:bg-red-900 transition-colors duration-200" aria-label="삭제">
-											<Trash2Icon size={20} />
-										</button>
+										
+									
+									{/* 추가 정보 */}
+									{((record.meal_allowance || 0) > 0 || record.notes) && (
+										<div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 space-y-2">
+											{(record.meal_allowance || 0) > 0 && (
+												<p className="text-sm text-gray-600 dark:text-gray-400">
+													💰 식대: {(record.meal_allowance || 0).toLocaleString()}원
+												</p>
+											)}
+											{record.notes && (
+												<p className="text-sm text-gray-600 dark:text-gray-400">
+													📝 {record.notes}
+												</p>
+											)}
+										</div>
+									)}
 									</div>
-								</div>
 							))
 						)}
 					</div>
 
-                    <div className="mt-6 flex flex-col justify-between items-center p-4 bg-cream-white dark:bg-charcoal-gray border-t border-gray-200 dark:border-gray-700 rounded-b-2xl -mx-6 -mb-6 space-y-3">
-                        {actualDailyWage > 0 && (
-                        	<div className="text-center space-y-1 mb-4">
-                        		{maxPossibleWage > actualDailyWage ? (
-                        			<>
-                        				<p className="text-sm text-gray-600 dark:text-gray-400">기본 예상: {maxPossibleWage.toLocaleString()}원</p>
-                        				<p className="text-lg font-semibold text-mint-green dark:text-mint-green-light">실제 일급: {actualDailyWage.toLocaleString()}원</p>
-                        				<p className="text-sm text-orange-600 dark:text-orange-400">💸 휴게시간 차감: -{totalWageLoss.toLocaleString()}원</p>
-                        			</>
-                        		) : (
-                        			<p className="text-lg font-semibold text-mint-green dark:text-mint-green-light">총 일급: {actualDailyWage.toLocaleString()}원</p>
-                        		)}
-                        		                        {totalBreakTime > 0 && (
-                        	<div className="text-sm space-y-1">
-                        		<p className="text-blue-600 dark:text-blue-400">
-                        			🕐 총 휴게시간: {formatBreakTime(totalBreakTime)}
-                        		</p>
-                        		{/* 총합에서는 이미 위에 차액 표시되므로 제거 */}
-                        	</div>
-                        )}
-                        	</div>
-                        )}
-                        <div className="flex flex-col gap-3 w-full">
-							<button
-								onClick={handleAddRecord}
-                                className="px-3 py-2 bg-mint-green dark:bg-mint-green-dark text-white rounded-full font-medium hover:bg-mint-green-dark dark:hover:bg-mint-green focus:outline-none focus:ring-2 focus:ring-mint-green dark:focus:ring-mint-green-dark focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 w-full">
-								<PlusIcon size={25} className="font-black" />
-							</button>
-                            <button onClick={onClose} className="px-3 py-2 bg-medium-gray dark:bg-gray-600 text-white rounded-full font-medium hover:bg-gray-600 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-medium-gray dark:focus:ring-gray-500 focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 w-full">
-								닫기
-							</button>
+					{/* 일급 총합 정보 */}
+					{dailyRecords.length > 0 && (
+						<div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+							<h3 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-3">📊 오늘의 급여 요약</h3>
+							
+							{(() => {
+								// 기준 예상 금액 (휴게시간 포함 최대 가능)
+								const maxPossibleWage = dailyRecords.reduce((total, record) => {
+									if (record.wage_type === "daily") {
+										return total + (record.daily_wage || 0)
+									}
+									
+									if (record.start_time && record.end_time && record.jobs) {
+										const actualHourlyRate = hourlyRatesMap.get(record.id) || 0
+										if (actualHourlyRate > 0) {
+											const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
+											// 휴게시간 포함 최대 시간으로 계산
+											const maxHours = workAndBreakTime.totalHours
+											return total + Math.round(maxHours * actualHourlyRate) + (record.meal_allowance || 0)
+										}
+									}
+									
+									return total + (record.daily_wage || 0)
+								}, 0)
+								
+								// 실제 받은 금액
+								const actualDailyWage = dailyRecords.reduce((total, record) => total + (record.daily_wage || 0), 0)
+								
+								// 휴게시간으로 차감된 금액
+								const wageLoss = maxPossibleWage - actualDailyWage
+								
+								// 총 휴게시간
+								const totalBreakTime = dailyRecords.reduce((total, record) => {
+									if (!record.start_time || !record.end_time || !record.jobs) return total
+									const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
+									return total + workAndBreakTime.breakTime.breakMinutes
+								}, 0)
+								
+								return (
+									<div className="space-y-2">
+										{maxPossibleWage > actualDailyWage ? (
+											<>
+												<div className="flex justify-between items-center">
+													<span className="text-sm text-gray-600 dark:text-gray-400">기준 예상 급여:</span>
+													<span className="font-medium text-gray-700 dark:text-gray-300">{maxPossibleWage.toLocaleString()}원</span>
+												</div>
+												<div className="flex justify-between items-center">
+													<span className="text-sm text-green-700 dark:text-green-400">실제 받는 급여:</span>
+													<span className="font-bold text-green-700 dark:text-green-400 text-lg">{actualDailyWage.toLocaleString()}원</span>
+												</div>
+												<div className="flex justify-between items-center">
+													<span className="text-sm text-orange-600 dark:text-orange-400">휴게시간 차감:</span>
+													<span className="font-medium text-orange-600 dark:text-orange-400">-{wageLoss.toLocaleString()}원</span>
+												</div>
+											</>
+										) : (
+											<div className="flex justify-between items-center">
+												<span className="text-sm text-green-700 dark:text-green-400">총 급여:</span>
+												<span className="font-bold text-green-700 dark:text-green-400 text-lg">{actualDailyWage.toLocaleString()}원</span>
+											</div>
+										)}
+										
+										{totalBreakTime > 0 && (
+											<div className="flex justify-between items-center pt-2 border-t border-blue-200 dark:border-blue-700">
+												<span className="text-sm text-blue-600 dark:text-blue-400">총 휴게시간:</span>
+												<span className="font-medium text-blue-600 dark:text-blue-400">{formatBreakTime(totalBreakTime)}</span>
+											</div>
+										)}
+									</div>
+								)
+							})()}
 						</div>
+					)}
+
+					{/* 액션 버튼 */}
+					<div className="mt-6 flex gap-3">
+						<button
+							onClick={handleAddRecord}
+							className="flex-1 bg-mint-green dark:bg-mint-green-dark text-white py-3 px-4 rounded-xl font-medium hover:bg-mint-green-dark dark:hover:bg-mint-green transition-all duration-200 flex items-center justify-center gap-2"
+						>
+							<PlusIcon size={20} />
+							근무 추가
+						</button>
+						<button
+							onClick={onClose}
+							className="flex-1 bg-gray-400 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200"
+						>
+							닫기
+						</button>
 					</div>
 				</div>
 			</div>

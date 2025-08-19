@@ -265,9 +265,14 @@ const AppContent = () => {
 			console.error("Error inserting new hourly rate:", insertError)
 			showToast("저장하지 못했어요", "error")
 		} else {
-            
 			showToast("시급을 저장했어요", "success")
 			fetchJobs() // 시급 저장 후 직업 목록을 다시 가져와 최신 시급 정보 반영
+			
+			// 🎯 캐시 무효화: 시급 변경으로 인한 급여 재계산 필요
+			try { 
+				window.dispatchEvent(new Event('work-records-changed'))
+				console.log('💾 시급 변경으로 인한 급여 캐시 무효화 완료')
+			} catch (_) {}
 		}
 	}
 

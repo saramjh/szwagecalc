@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react"
 import { supabase } from "../supabaseClient"
+import { useModalManager } from "../utils/modalManager"
 import { getJobChipStyle } from "../constants/JobColors"
 import dayjs from "dayjs"
 
 const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jobs }) => {
+	const { openModal, closeModal } = useModalManager()
 	const [hourlyRate, setHourlyRate] = useState(0)
 	const [selectedJobId, setSelectedJobId] = useState(null)
     const [effectiveDate, setEffectiveDate] = useState(dayjs().format("YYYY-MM-DD"))
@@ -15,20 +17,20 @@ const HourlyRateSettingModal = ({ isOpen, onClose, onSaveHourlyRate, session, jo
 		if (isOpen) {
 			setShowModal(true) // 모달을 DOM에 렌더링 시작
 			setTimeout(() => setAnimateModal(true), 10) // 약간의 지연 후 애니메이션 시작
-			document.body.classList.add("modal-open") // 모달이 열릴 때 body 스크롤 잠금
+			openModal() // 🎯 모달 매니저로 헤더 숨김 관리
 		} else {
 			setAnimateModal(false) // 애니메이션 역재생 시작
 			setTimeout(() => setShowModal(false), 300) // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
-			document.body.classList.remove("modal-open") // 모달이 닫힐 때 body 스크롤 잠금 해제
+			closeModal() // 🎯 모달 매니저로 헤더 복원 관리
 		}
-	}, [isOpen])
+	}, [isOpen, openModal, closeModal])
 
 	// 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
 	useEffect(() => {
 		return () => {
-			document.body.classList.remove("modal-open")
+			closeModal() // 🎯 모달 매니저로 정리
 		}
-	}, [])
+	}, [closeModal])
 
 	useEffect(() => {
 		const fetchCurrentHourlyRate = async () => {

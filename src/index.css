@@ -5,6 +5,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 🎯 Safe Area Support for Mobile */
+@supports (padding: max(0px)) {
+  .pb-safe {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+}
+
 /* 🎯 Interactive Tour Styles */
 @layer components {
   .tour-highlight {

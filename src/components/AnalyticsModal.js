@@ -3,9 +3,11 @@ import dayjs from "dayjs"
 // 🚀 트리셰이킹 최적화: 필요한 아이콘만 import
 import { X, TrendingUp, Clock, DollarSign, Calendar, BarChart3, PieChart, Target, Activity, ArrowUp, ArrowDown, Minus, Zap, Timer, Award, Lightbulb, AlertTriangle } from "lucide-react"
 import { useToast } from "../contexts/ToastContext"
+import { useModalManager } from "../utils/modalManager"
 
 const AnalyticsModal = ({ isOpen, onClose, workRecords, jobs, session }) => {
 	const showToast = useToast()
+	const { openModal, closeModal } = useModalManager()
 	const [selectedPeriod, setSelectedPeriod] = useState("3months") // 3months, 6months, 1year
 	const [selectedTab, setSelectedTab] = useState("overview") // overview, income, productivity, insights
 	const [showModal, setShowModal] = useState(false)
@@ -15,20 +17,20 @@ const AnalyticsModal = ({ isOpen, onClose, workRecords, jobs, session }) => {
 		if (isOpen) {
 			setShowModal(true)
 			setTimeout(() => setAnimateModal(true), 10)
-			document.body.classList.add('modal-open') // 🎯 헤더 숨기기
+			openModal() // 🎯 모달 매니저로 헤더 숨김 관리
 		} else {
 			setAnimateModal(false)
 			setTimeout(() => setShowModal(false), 300)
-			document.body.classList.remove('modal-open') // 🎯 헤더 복원
+			closeModal() // 🎯 모달 매니저로 헤더 복원 관리
 		}
-	}, [isOpen])
+	}, [isOpen, openModal, closeModal])
 
 	// 🧹 컴포넌트 언마운트 시 클린업
 	useEffect(() => {
 		return () => {
-			document.body.classList.remove('modal-open')
+			closeModal() // 🎯 모달 매니저로 정리
 		}
-	}, [])
+	}, [closeModal])
 
 	// 📊 기간별 데이터 필터링
 	const filteredRecords = useMemo(() => {
@@ -999,7 +1001,7 @@ const AnalyticsModal = ({ isOpen, onClose, workRecords, jobs, session }) => {
 				<div className="bg-gray-50 dark:bg-gray-800 px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 flex-shrink-0">
 					<button
 						onClick={onClose}
-						className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-gray-400 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors text-sm sm:text-base"
+						className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-gray-400 dark:bg-gray-600 text-gray-700 dark:text-white rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors text-sm sm:text-base"
 					>
 						닫기
 					</button>
@@ -1086,7 +1088,7 @@ const AnalyticsModal = ({ isOpen, onClose, workRecords, jobs, session }) => {
 								showToast('리포트 내보내기에 실패했습니다', 'error')
 							}
 						}}
-						className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-mint-green text-white rounded-lg hover:bg-mint-green-dark transition-colors text-sm sm:text-base break-keep"
+						className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-mint-green text-white rounded-full hover:bg-mint-green-dark transition-colors text-sm sm:text-base break-keep"
 					>
 						리포트 내보내기
 					</button>

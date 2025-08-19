@@ -438,6 +438,16 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 										+{weeklyAllowanceSummary.totalAllowance.toLocaleString()}원
 									</span>
 								</div>
+								{/* 무단결근으로 인한 제외 안내 */}
+								{(weeklyAllowanceSummary.totalWeeks - weeklyAllowanceSummary.eligibleWeeks) > 0 && (
+									<div className="mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+										<span>⚠️</span>
+										<span>
+											{weeklyAllowanceSummary.totalWeeks - weeklyAllowanceSummary.eligibleWeeks}주가 
+											무단결근 또는 근무시간 부족으로 주휴수당에서 제외되었습니다
+										</span>
+									</div>
+								)}
 							</div>
 						</div>
 					</div>
@@ -505,18 +515,28 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 									)
 								})()}
 
-								{/* Work Details (Time, Duration, Meal Allowance) */}
+								{/* Work Details (Time, Duration, Meal Allowance) or Absence */}
 								<div className="text-xs text-medium-gray dark:text-light-gray mb-1">
-									{/* Start ~ End Time and Work Duration */}
-									{(record.start_time && record.end_time) && (
-										<p>
-											{record.start_time?.slice(0, 5) || '--:--'} ~ {record.end_time?.slice(0, 5) || '--:--'}
-											<span className="ml-2">({formatDuration(record.start_time, record.end_time)})</span>
-										</p>
-									)}
-									{/* Meal Allowance (only if > 0) */}
-									{(record.meal_allowance || 0) > 0 && (
-										<p>식대: {(record.meal_allowance || 0).toLocaleString()}원</p>
+									{record.is_unexcused_absence ? (
+										/* 무단결근 표시 */
+										<div className="flex items-center gap-1 text-red-600 dark:text-red-400">
+											<span>⚠️ 무단결근</span>
+											<span className="text-xs text-gray-500 dark:text-gray-400">(주휴수당 제외)</span>
+										</div>
+									) : (
+										<>
+											{/* Start ~ End Time and Work Duration */}
+											{(record.start_time && record.end_time) && (
+												<p>
+													{record.start_time?.slice(0, 5) || '--:--'} ~ {record.end_time?.slice(0, 5) || '--:--'}
+													<span className="ml-2">({formatDuration(record.start_time, record.end_time)})</span>
+												</p>
+											)}
+											{/* Meal Allowance (only if > 0) */}
+											{(record.meal_allowance || 0) > 0 && (
+												<p>식대: {(record.meal_allowance || 0).toLocaleString()}원</p>
+											)}
+										</>
 									)}
 								</div>
 

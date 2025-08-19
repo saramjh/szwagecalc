@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
+import { Sun, Moon } from "lucide-react"
 
 const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, deferredPrompt, onInstallPWA, forceOpen }) => {
 	const [isOpen, setIsOpen] = useState(false)
@@ -120,7 +121,7 @@ const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, 
 						</div>
 					)}
 					<button onClick={toggleDarkMode} className="block w-full text-left px-4 py-2 text-dark-navy dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-						{isDarkMode ? "라이트 모드" : "다크 모드"}
+						{isDarkMode ? <Sun /> : <Moon />}
 					</button>
 					<button
 						onClick={() => {

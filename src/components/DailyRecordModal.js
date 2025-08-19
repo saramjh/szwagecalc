@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react"
 import dayjs from "dayjs"
 import { DollarSign } from "lucide-react"
 import { parseHHmm } from "../utils/time"
+import { useModalManager } from "../utils/modalManager"
 import { supabase } from "../supabaseClient" // Supabase 클라이언트 임포트
 import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
@@ -13,6 +14,7 @@ import { calculateWorkAndBreakTime, formatBreakTime, calculateBreakTimeWageDiffe
 const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, recordToEdit, size = "medium", prefill }) => {
 	const showToast = useToast()
 	const showConfirm = useConfirm()
+	const { openModal, closeModal } = useModalManager()
 	const [startTime, setStartTime] = useState("")
 	const [endTime, setEndTime] = useState("")
 	const [mealAllowance, setMealAllowance] = useState(0)
@@ -61,7 +63,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		if (isOpen) {
 			setShowModal(true) // 모달을 DOM에 렌더링 시작
 			setTimeout(() => setAnimateModal(true), 10) // 약간의 지연 후 애니메이션 시작
-			document.body.classList.add("modal-open") // 모달이 열릴 때 body 스크롤 잠금
+			openModal() // 🎯 모달 매니저로 헤더 숨김 관리
 			
 			if (recordToEdit) {
 				// 수정 모드: 기존 레코드 데이터로 폼 초기화
@@ -97,9 +99,9 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		} else {
 			setAnimateModal(false) // 애니메이션 역재생 시작
 			setTimeout(() => setShowModal(false), 300) // 애니메이션 완료 후 DOM에서 제거 (300ms는 transition-duration과 일치)
-			document.body.classList.remove("modal-open") // 모달이 닫힐 때 body 스크롤 잠금 해제
+			closeModal() // 🎯 모달 매니저로 헤더 복원 관리
 		}
-	}, [isOpen, recordToEdit, prefill, jobs, resetForm])
+	}, [isOpen, recordToEdit, prefill, jobs, resetForm, openModal, closeModal])
 
 	// 모달이 닫힐 때 폼 리셋 (별도 useEffect로 분리)
 	useEffect(() => {
@@ -114,9 +116,9 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 	// 컴포넌트 언마운트 시 클린업 (혹시 모를 경우 대비)
 	useEffect(() => {
 		return () => {
-			document.body.classList.remove("modal-open")
+			closeModal() // 🎯 모달 매니저로 정리
 		}
-	}, [])
+	}, [closeModal])
 
 	// 선택된 직업 또는 날짜가 변경될 때 해당 시점의 시급을 가져오는 useEffect
 	useEffect(() => {

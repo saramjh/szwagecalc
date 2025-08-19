@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { supabase } from "../supabaseClient"
-
+import { useModalManager } from "../utils/modalManager"
 import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
 // 🚀 트리셰이킹 최적화: 개별 import
@@ -18,6 +18,7 @@ const colorPresets = JOB_COLORS.map(color => ({
 }))
 
 const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
+	const { openModal, closeModal } = useModalManager()
 	const showToast = useToast()
 	const showConfirm = useConfirm()
 	const [newJobName, setNewJobName] = useState("")
@@ -44,7 +45,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 		if (isOpen) {
 			setShowModal(true)
 			setTimeout(() => setAnimateModal(true), 10)
-			document.body.classList.add("modal-open")
+			openModal() // 🎯 모달 매니저로 헤더 숨김 관리
 			setViewMode("list") // Always start with the list view when opening
 		} else {
 			setAnimateModal(false)
@@ -62,15 +63,15 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 				setPaydayError("")
 				setViewMode("list") // Reset view mode on close
 			}, 300)
-			document.body.classList.remove("modal-open")
+			closeModal() // 🎯 모달 매니저로 헤더 복원 관리
 		}
-	}, [isOpen])
+	}, [isOpen, openModal, closeModal])
 
 	useEffect(() => {
 		return () => {
-			document.body.classList.remove("modal-open")
+			closeModal() // 🎯 모달 매니저로 정리
 		}
-	}, [])
+	}, [closeModal])
 
 	const handlePaydayChange = (e) => {
 		const value = e.target.value
@@ -115,6 +116,13 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 				clearBreakTimeCache() // 휴게시간 캐시 무효화
 				clearWeeklyAllowanceCache() // 주휴수당 캐시 무효화
 				fetchJobs()
+				
+				// 🎯 캐시 무효화: 직업 수정으로 인한 급여 재계산 필요
+				try { 
+					window.dispatchEvent(new Event('work-records-changed'))
+					console.log('💾 직업 수정으로 인한 급여 캐시 무효화 완료')
+				} catch (_) {}
+				
 				setViewMode("list") // Go back to list view
 			}
 		} else {
@@ -130,6 +138,13 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 				clearBreakTimeCache() // 휴게시간 캐시 무효화
 				clearWeeklyAllowanceCache() // 주휴수당 캐시 무효화
 				fetchJobs()
+				
+				// 🎯 캐시 무효화: 직업 변경으로 인한 급여 재계산 필요
+				try { 
+					window.dispatchEvent(new Event('work-records-changed'))
+					console.log('💾 직업 추가로 인한 급여 캐시 무효화 완료')
+				} catch (_) {}
+				
 				setViewMode("list") // Go back to list view
 			}
 		}
@@ -145,7 +160,16 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 				showToast(`삭제하지 못했어요`, "error")
 			} else {
 				showToast("삭제했어요", "success")
+				clearBreakTimeCache() // 휴게시간 캐시 무효화
+				clearWeeklyAllowanceCache() // 주휴수당 캐시 무효화
 				fetchJobs()
+				
+				// 🎯 캐시 무효화: 직업 삭제로 인한 급여 재계산 필요
+				try { 
+					window.dispatchEvent(new Event('work-records-changed'))
+					console.log('💾 직업 삭제로 인한 급여 캐시 무효화 완료')
+				} catch (_) {}
+				
 				handleCancelEdit() // Reset form if the deleted job was being edited
 			}
 		})

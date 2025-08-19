@@ -4,10 +4,15 @@ import './index.css';
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
-// 🌙 즉시 다크모드 강제 적용 (가장 빠른 시점)
-document.documentElement.classList.add("dark")
-localStorage.setItem("theme", "dark")
-console.log("🌙 index.js에서 강제 다크모드 적용됨")
+// 🌙 저장된 테마 설정 복원 (사용자 선택 존중)
+const savedTheme = localStorage.getItem("theme")
+const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+
+if (savedTheme === "dark" || (!savedTheme && systemPrefersDark)) {
+	document.documentElement.classList.add("dark")
+} else {
+	document.documentElement.classList.remove("dark")
+}
 
 // React 17 스타일 렌더링으로 임시 변경
 ReactDOM.render(<App />, document.getElementById('root'));
