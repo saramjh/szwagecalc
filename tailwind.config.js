@@ -1,6 +1,30 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
 	content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
+	safelist: [
+		// 다크모드 핵심 클래스들 강제 포함
+		'dark:bg-gray-800',
+		'dark:bg-gray-900', 
+		'dark:bg-gray-700',
+		'dark:text-white',
+		'dark:text-gray-300',
+		'dark:text-light-gray',
+		'dark:border-gray-700',
+		'dark:border-gray-600',
+		'dark:hover:bg-gray-700',
+		'dark:hover:bg-gray-600',
+		'dark:shadow-lg',
+		'dark:shadow-xl',
+		'dark:shadow-2xl',
+		'dark:shadow-black/50',
+		'dark:bg-opacity-70',
+		'dark:from-deep-navy',
+		'dark:to-charcoal-gray',
+		// 패턴 기반 포함
+		{
+			pattern: /dark:(bg|text|border|shadow|from|to)-(gray|white|black)/,
+		},
+	],
 	theme: {
 		extend: {
 			colors: {

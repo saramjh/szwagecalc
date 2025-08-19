@@ -8,6 +8,10 @@ import { ConfirmProvider } from "./contexts/ConfirmContext"
 import { warmupBreakTimeCache, calculateWorkAndBreakTime } from "./utils/breakTime"
 // import { clearWeeklyAllowanceCache } from "./utils/weeklyAllowance" // 현재 미사용
 
+
+
+
+
 const HourlyRateSettingModal = lazy(() => import("./components/HourlyRateSettingModal"))
 const JobManagementModal = lazy(() => import("./components/JobManagementModal"))
 
@@ -353,7 +357,7 @@ const AppContent = () => {
 				</header>
 			)}
 
-            <div className="App bg-gradient-to-b from-cream-white to-gray-50 dark:from-deep-navy dark:to-charcoal-gray min-h-screen flex flex-col items-center justify-center px-4 py-6 pt-16 max-w-[390px] w-full mx-auto overflow-hidden">
+                            <div className="App bg-gradient-to-b from-cream-white to-gray-50 dark:from-deep-navy dark:to-charcoal-gray min-h-screen flex flex-col items-center justify-center px-4 py-6 pt-16 max-w-[390px] w-full mx-auto overflow-hidden">
 				{!session ? (
 					<div className="w-full max-w-sm mx-auto">
 						{/* 🌟 Hero Section with Animation */}

@@ -520,8 +520,52 @@ body {
 .heat-3 { background: linear-gradient(to bottom, rgba(16,185,129,0.22), rgba(16,185,129,0.22)); }
 .heat-4 { background: linear-gradient(to bottom, rgba(16,185,129,0.30), rgba(16,185,129,0.30)); }
 .heat-5 { background: linear-gradient(to bottom, rgba(16,185,129,0.38), rgba(16,185,129,0.38)); }
+
+/* Dark mode heatmap */
+.dark .heat-1 { background: linear-gradient(to bottom, rgba(60,160,138,0.20), rgba(60,160,138,0.20)); }
+.dark .heat-2 { background: linear-gradient(to bottom, rgba(60,160,138,0.28), rgba(60,160,138,0.28)); }
+.dark .heat-3 { background: linear-gradient(to bottom, rgba(60,160,138,0.36), rgba(60,160,138,0.36)); }
+.dark .heat-4 { background: linear-gradient(to bottom, rgba(60,160,138,0.44), rgba(60,160,138,0.44)); }
+.dark .heat-5 { background: linear-gradient(to bottom, rgba(60,160,138,0.52), rgba(60,160,138,0.52)); }
+
+/* 🌙 완전한 다크모드 CSS */
+.dark .bg-white { background-color: #1f2937 !important; }
+.dark .bg-gray-800 { background-color: #1f2937 !important; }
+.dark .bg-gray-900 { background-color: #111827 !important; }
+.dark .bg-gray-700 { background-color: #374151 !important; }
+.dark .bg-cream-white { background-color: #1f2937 !important; }
+
+.dark .text-white { color: #ffffff !important; }
+.dark .text-gray-300 { color: #d1d5db !important; }
+.dark .text-dark-navy { color: #ffffff !important; }
+.dark .text-medium-gray { color: #d1d5db !important; }
+
+.dark .border-gray-700 { border-color: #374151 !important; }
+.dark .border-gray-600 { border-color: #4b5563 !important; }
+.dark .border-gray-200 { border-color: #374151 !important; }
+
+.dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15) !important; }
+.dark .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important; }
+.dark .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important; }
+.dark .shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15) !important; }
+
+.dark .hover\:bg-gray-100:hover { background-color: #374151 !important; }
+.dark .hover\:bg-gray-700:hover { background-color: #4b5563 !important; }
+.dark .hover\:bg-gray-600:hover { background-color: #4b5563 !important; }
+
+.dark .bg-opacity-70 { background-color: rgba(0, 0, 0, 0.7) !important; }
+
+/* 앱 배경 그라데이션 */
+.dark .from-cream-white { --tw-gradient-from: #000000; }
+.dark .to-gray-50 { --tw-gradient-to: #2C313C; }
+.dark .from-deep-navy { --tw-gradient-from: #000000; }
+.dark .to-charcoal-gray { --tw-gradient-to: #2C313C; }
+
 .payday-ring { box-shadow: 0 0 0 2px rgba(16,185,129,1) inset; border-radius: 0.5rem; }
+.dark .payday-ring { box-shadow: 0 0 0 2px rgba(60,160,138,1) inset; border-radius: 0.5rem; }
+
 .today-ring { box-shadow: 0 0 0 1px rgba(15,23,42,0.9) inset; border-radius: 0.5rem; }
+.dark .today-ring { box-shadow: 0 0 0 1px rgba(255,255,255,0.8) inset; border-radius: 0.5rem; }
 
 /* Calendar cell stroke drawn inside without affecting layout (avoid gutter overlap) */
 .cell-stroke { border: none !important; outline: 1px solid var(--border-primary); outline-offset: -1px; box-sizing: border-box; }

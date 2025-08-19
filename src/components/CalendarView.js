@@ -22,6 +22,28 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 	const [selectedMonthForMonthlyModal, setSelectedMonthForMonthlyModal] = useState(new Date())
 	const [isUsageGuideModalOpen, setIsUsageGuideModalOpen] = useState(false)
 	const [isInteractiveGuideOpen, setIsInteractiveGuideOpen] = useState(false)
+	
+	// 🌙 다크모드 상태 추적
+	const [isDarkMode, setIsDarkMode] = useState(false)
+	
+	useEffect(() => {
+		// 다크모드 상태 초기화 및 변경 감지
+		const updateDarkMode = () => {
+			const hasDarkClass = document.documentElement.classList.contains('dark')
+			setIsDarkMode(hasDarkClass)
+		}
+		
+		updateDarkMode()
+		
+		// DOM 변경 감지
+		const observer = new MutationObserver(updateDarkMode)
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['class']
+		})
+		
+		return () => observer.disconnect()
+	}, [])
 	const [isTourActive, setIsTourActive] = useState(false)
 	const [currentTourStep, setCurrentTourStep] = useState(0)
 	const [forceHamburgerOpen, setForceHamburgerOpen] = useState(false)
@@ -423,8 +445,8 @@ useEffect(() => {
     return (
         <div className="p-4 relative z-0  w-full">
       <div className="mb-4 space-y-2">
-        <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow p-3 flex justify-between">
-          <div className="text-sm text-medium-gray dark:text-light-gray">이번달 시급 누적</div>
+        <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow dark:shadow-lg p-3 flex justify-between">
+          <div className="text-sm text-medium-gray dark:text-gray-300">이번달 시급 누적</div>
           <div className="text-base font-bold text-dark-navy dark:text-white">{(summary.totalIncome || 0).toLocaleString()}원 · {Number.isFinite(summary.totalHours) ? summary.totalHours.toFixed(1) : '0.0'}h</div>
         </div>
         
@@ -438,18 +460,18 @@ useEffect(() => {
         </Suspense>
         
         {/* 예상 소득 카드 제거 */}
-        <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow p-3 flex justify-between">
-          <div className="text-sm text-medium-gray dark:text-light-gray">다음 급여일</div>
+        <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow dark:shadow-lg p-3 flex justify-between">
+          <div className="text-sm text-medium-gray dark:text-gray-300">다음 급여일</div>
           <div className="text-base font-bold text-dark-navy dark:text-white">{summary.nextPaydayText}</div>
         </div>
       </div>
-            <div className="bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-4">
+            <div className="bg-cream-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                     <button onClick={handlePrevMonth} className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-dark-navy dark:text-white">◀</button>
                     <div className="text-lg sm:text-xl font-bold text-dark-navy dark:text-white">{dayjs(date).format("YYYY년 M월")}</div>
                     <button onClick={handleNextMonth} className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-dark-navy dark:text-white">▶</button>
                 </div>
-                <div className="grid grid-cols-7 text-center text-xs sm:text-sm text-medium-gray dark:text-light-gray mb-1">
+                <div className="grid grid-cols-7 text-center text-xs sm:text-sm text-medium-gray dark:text-gray-300 mb-1">
                     {daysOfWeek.map((d, i) => (
                         <div key={d} className={`py-1 ${i === 0 ? 'text-coral-pink' : i === 6 ? 'text-mint-green-light' : ''}`}>{d}</div>
                     ))}
@@ -471,7 +493,7 @@ useEffect(() => {
                   const incomes = dayKeys.map((k) => totalsByDate[k] || 0)
                   const max = Math.max(...incomes, 1)
 					return (
-                        <div ref={chartRef} className="mt-4 pt-1 p-2 bg-white dark:bg-gray-800 rounded-lg shadow select-none">
+                        <div ref={chartRef} className="mt-4 pt-1 p-2 bg-white dark:bg-gray-700 rounded-lg shadow dark:shadow-lg select-none">
 							{/* 막대 영역: 고정 높이 + 그리드 배경 */}
 							<div className="relative h-20 rounded-md">
 								{/* 가이드 그리드 (25% 간격) */}
@@ -525,7 +547,7 @@ useEffect(() => {
 							<div className="mt-1 flex gap-2">
 								{incomes.map((val, i) => (
 									<div key={`label-${i}`} className="flex-1 min-w-0 text-center">
-										<div className="text-[11px] text-medium-gray">{["일","월","화","수","목","금","토"][i]}</div>
+										<div className="text-[11px] text-medium-gray dark:text-gray-400">{["일","월","화","수","목","금","토"][i]}</div>
 									</div>
 								))}
 							</div>
@@ -549,23 +571,23 @@ useEffect(() => {
 				<button
 					onClick={handleOpenHourlyRateModal}
 					data-tour="hourly-rate"
-                    className="w-full px-3 py-2.5 bg-lemon-yellow text-dark-navy rounded-full text-base font-medium shadow-md
-                   hover:bg-lemon-yellow focus:outline-none focus:ring-2 focus:ring-lemon-yellow focus:ring-opacity-50
+                    className="w-full px-3 py-2.5 bg-lemon-yellow dark:bg-lemon-yellow-dark text-dark-navy dark:text-gray-900 rounded-full text-base font-medium shadow-md dark:shadow-lg
+                   hover:bg-lemon-yellow dark:hover:bg-lemon-yellow focus:outline-none focus:ring-2 focus:ring-lemon-yellow dark:focus:ring-lemon-yellow-dark focus:ring-opacity-50
                    transition-all duration-300 ease-in-out transform hover:scale-105">
 					시급 설정
 				</button>
 				<button
 					onClick={handleMonthlyModalOpen}
 					data-tour="monthly-report"
-                    className="w-full px-3 py-2.5 bg-mint-green text-white rounded-full text-base font-medium shadow-md
-                   hover:bg-mint-green focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50
+                    className="w-full px-3 py-2.5 bg-mint-green dark:bg-mint-green-dark text-white rounded-full text-base font-medium shadow-md dark:shadow-lg
+                   hover:bg-mint-green dark:hover:bg-mint-green focus:outline-none focus:ring-2 focus:ring-mint-green dark:focus:ring-mint-green-dark focus:ring-opacity-50
                    transition-all duration-300 ease-in-out transform hover:scale-105">
 					월급 확인
 				</button>
 				<button
 					onClick={handleOpenInteractiveGuide}
-                    className="w-full px-3 py-2.5 bg-gradient-to-r from-mint-green to-emerald-500 text-white rounded-full text-base font-medium shadow-md
-                   hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50
+                    className="w-full px-3 py-2.5 bg-gradient-to-r from-mint-green to-emerald-500 dark:from-mint-green-dark dark:to-emerald-600 text-white rounded-full text-base font-medium shadow-md dark:shadow-lg
+                   hover:shadow-lg dark:hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-mint-green dark:focus:ring-mint-green-dark focus:ring-opacity-50
                    transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2">
 					<span>✨</span>
 					<span>가이드</span>

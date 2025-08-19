@@ -267,8 +267,8 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
 
 	return (
 		<>
-			<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
-				<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
+			<div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
+				<div className={`bg-cream-white dark:bg-gray-900 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/50 p-6 w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
 					<div className="flex justify-between items-start mb-4">
 						<div className="flex-1">
                             <h2 className="text-xl font-bold text-dark-navy dark:text-white">
@@ -459,10 +459,10 @@ const DailyRecordListModal = ({ selectedDate, isOpen, onClose, session, jobs }) 
                         <div className="flex flex-col gap-3 w-full">
 							<button
 								onClick={handleAddRecord}
-                                className="px-3 py-2 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 w-full">
+                                className="px-3 py-2 bg-mint-green dark:bg-mint-green-dark text-white rounded-full font-medium hover:bg-mint-green-dark dark:hover:bg-mint-green focus:outline-none focus:ring-2 focus:ring-mint-green dark:focus:ring-mint-green-dark focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 w-full">
 								<PlusIcon size={25} className="font-black" />
 							</button>
-                            <button onClick={onClose} className="px-3 py-2 bg-medium-gray text-white rounded-full font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 w-full">
+                            <button onClick={onClose} className="px-3 py-2 bg-medium-gray dark:bg-gray-600 text-white rounded-full font-medium hover:bg-gray-600 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-medium-gray dark:focus:ring-gray-500 focus:ring-opacity-50 transition-all duration-200 ease-in-out transform hover:scale-105 w-full">
 								닫기
 							</button>
 						</div>

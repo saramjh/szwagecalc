@@ -26,8 +26,8 @@ const ConfirmModal = ({ message, onConfirm, onCancel }) => {
   if (!showModal) return null;
 
   return (
-    		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'} z-layer-modal`}>
-      <div className={`bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-6 w-full max-w-xs mx-4 text-center transform transition-all duration-300 ease-out ${animateModal ? 'translate-y-0' : 'translate-y-10'}`}>
+    		<div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'} z-layer-modal`}>
+      <div className={`bg-cream-white dark:bg-gray-900 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/50 p-6 w-full max-w-xs mx-4 text-center transform transition-all duration-300 ease-out ${animateModal ? 'translate-y-0' : 'translate-y-10'}`}>
         <p className="text-dark-navy dark:text-white text-lg mb-6">{message}</p>
         <div className="flex justify-center space-x-4">
           <button

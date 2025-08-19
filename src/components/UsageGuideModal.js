@@ -64,8 +64,8 @@ const UsageGuideModal = ({ isOpen, onClose, manualContent }) => {
   };
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0" : "translate-y-10"}`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
+			<div className={`bg-cream-white dark:bg-gray-900 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/50 p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0" : "translate-y-10"}`}>
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">사용 가이드</h2>
 					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">

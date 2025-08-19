@@ -289,7 +289,7 @@ const InteractiveTour = ({
 	return (
 		<>
 			{/* 오버레이 */}
-			<div className="fixed inset-0 bg-black bg-opacity-50 z-[9999]" onClick={handleSkip} />
+			<div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-[9999]" onClick={handleSkip} />
 
 			{/* 투어 툴팁 */}
 			<div
@@ -302,17 +302,17 @@ const InteractiveTour = ({
 					maxWidth: window.innerWidth <= 640 ? `${Math.min(340, window.innerWidth - 32)}px` : '384px'
 				}}
 			>
-				<div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 relative">
+				<div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl dark:shadow-black/50 border border-gray-200 dark:border-gray-600 p-4 sm:p-6 relative">
 					{/* 화살표 */}
 					{tooltipStyle.adjustedPosition !== 'center' && (
-						<div className={`absolute w-3 h-3 bg-white dark:bg-gray-800 border rotate-45 ${
+						<div className={`absolute w-3 h-3 bg-white dark:bg-gray-900 border rotate-45 ${
 							tooltipStyle.adjustedPosition === 'top' 
-								? 'bottom-[-6px] left-1/2 transform -translate-x-1/2 border-b border-r border-gray-200 dark:border-gray-700'
+								? 'bottom-[-6px] left-1/2 transform -translate-x-1/2 border-b border-r border-gray-200 dark:border-gray-600'
 								: tooltipStyle.adjustedPosition === 'bottom'
-								? 'top-[-6px] left-1/2 transform -translate-x-1/2 border-t border-l border-gray-200 dark:border-gray-700'
+								? 'top-[-6px] left-1/2 transform -translate-x-1/2 border-t border-l border-gray-200 dark:border-gray-600'
 								: tooltipStyle.adjustedPosition === 'left'
-								? 'right-[-6px] top-1/2 transform -translate-y-1/2 border-t border-r border-gray-200 dark:border-gray-700'
-								: 'left-[-6px] top-1/2 transform -translate-y-1/2 border-b border-l border-gray-200 dark:border-gray-700'
+								? 'right-[-6px] top-1/2 transform -translate-y-1/2 border-t border-r border-gray-200 dark:border-gray-600'
+								: 'left-[-6px] top-1/2 transform -translate-y-1/2 border-b border-l border-gray-200 dark:border-gray-600'
 						}`} />
 					)}
 
@@ -326,7 +326,7 @@ const InteractiveTour = ({
 
 					{/* 단계 표시 */}
 					<div className="flex items-center space-x-2 mb-3">
-						<div className="w-8 h-8 bg-mint-green rounded-full flex items-center justify-center text-white text-sm font-bold">
+						<div className="w-8 h-8 bg-mint-green dark:bg-mint-green-dark rounded-full flex items-center justify-center text-white text-sm font-bold">
 							{activeStep + 1}
 						</div>
 						<span className="text-xs text-gray-500 dark:text-gray-400">
@@ -361,7 +361,7 @@ const InteractiveTour = ({
 							</button>
 							<button
 								onClick={handleNext}
-								className="bg-mint-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-1"
+								className="bg-mint-green dark:bg-mint-green-dark text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 dark:hover:bg-emerald-700 transition-colors flex items-center space-x-1"
 							>
 								<span className="break-keep">{activeStep === tourSteps.length - 1 ? '완료' : '다음'}</span>
 								{activeStep < tourSteps.length - 1 && <ChevronRightIcon className="w-4 h-4" />}
@@ -376,7 +376,7 @@ const InteractiveTour = ({
 							<div
 								key={index}
 								className={`h-1 flex-1 rounded-full transition-colors ${
-									index <= activeStep ? 'bg-mint-green' : 'bg-gray-200 dark:bg-gray-600'
+									index <= activeStep ? 'bg-mint-green dark:bg-mint-green-dark' : 'bg-gray-200 dark:bg-gray-600'
 								}`}
 							/>
 						))}

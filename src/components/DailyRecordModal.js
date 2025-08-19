@@ -368,8 +368,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
     }[size]
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} overflow-y-auto p-4 z-layer-modal`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full ${modalSizeClass} transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"} my-auto`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex justify-center items-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} overflow-y-auto p-4 z-layer-modal`}>
+			<div className={`bg-cream-white dark:bg-gray-900 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/50 p-6 w-full ${modalSizeClass} transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"} my-auto`}>
 				<div className="flex justify-between items-start mb-4">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">{recordToEdit ? "근무 기록 편집" : "새 근무 기록"}</h2>
 					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">

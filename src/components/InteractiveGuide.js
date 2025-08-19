@@ -116,12 +116,12 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 	const progressPercentage = (completedSteps / quickStartSteps.length) * 100
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal p-4`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-xl w-full max-w-lg min-h-[80vh] max-h-[95vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal p-4`}>
+			<div className={`bg-cream-white dark:bg-gray-900 rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-black/50 w-full max-w-lg min-h-[80vh] max-h-[95vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
 				
 				{/* 🎨 헤더 - Etos 스타일 그라데이션 */}
-				<div className="bg-gradient-to-r from-mint-green to-emerald-500 py-4 sm:py-6 text-white relative overflow-hidden flex-shrink-0">
-					<div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+				<div className="bg-gradient-to-r from-mint-green to-emerald-500 dark:from-mint-green-dark dark:to-emerald-600 py-4 sm:py-6 text-white relative overflow-hidden flex-shrink-0">
+					<div className="absolute top-0 right-0 w-32 h-32 bg-white dark:bg-mint-green opacity-10 dark:opacity-20 rounded-full -mr-16 -mt-16"></div>
 					<div className="relative z-10">
 						<div className="flex justify-between items-start mb-3 sm:mb-4 px-6">
 							<div>
@@ -139,14 +139,14 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 						{/* 진행 상황 표시 */}
 						{activeTab === 'quickstart' && (
 							<div className="mt-2 sm:mt-4 mx-6">
-								<div className="bg-dark-navy bg-opacity-20 rounded-xl p-3 sm:p-4 backdrop-blur-sm border border-white border-opacity-20">
+								<div className="bg-dark-navy dark:bg-gray-800 bg-opacity-20 dark:bg-opacity-90 rounded-xl p-3 sm:p-4 backdrop-blur-sm border border-white dark:border-gray-600 border-opacity-20 dark:border-opacity-40">
 									<div className="flex items-center justify-between mb-2">
 										<span className="text-xs sm:text-sm font-medium text-white drop-shadow-md">설정 진행률</span>
 										<span className="text-xs sm:text-sm text-white drop-shadow-md">{completedSteps}/{quickStartSteps.length}</span>
 									</div>
-									<div className="w-full bg-dark-navy bg-opacity-30 rounded-full h-2">
+									<div className="w-full bg-dark-navy dark:bg-gray-600 bg-opacity-30 dark:bg-opacity-50 rounded-full h-2">
 										<div 
-											className="bg-white h-2 rounded-full transition-all duration-500 ease-out shadow-sm"
+											className="bg-white dark:bg-mint-green h-2 rounded-full transition-all duration-500 ease-out shadow-sm"
 											style={{ width: `${progressPercentage}%` }}
 										></div>
 									</div>
@@ -157,8 +157,8 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 				</div>
 
 				{/* 🎯 탭 네비게이션 - Etos 카드 스타일 */}
-				<div className="px-6 pt-3 pb-4 sm:pt-4 sm:pb-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0 bg-gradient-to-b from-mint-green/5 to-transparent">
-					<div className="flex space-x-2">
+				<div className="px-6 pt-3 pb-4 sm:pt-4 sm:pb-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0 bg-gradient-to-b from-mint-green/5 dark:from-mint-green/10 to-transparent">
+					<div className="flex space-x-1 sm:space-x-2">
 						{[
 							{ id: 'quickstart', label: '빠른 시작', icon: SparklesIcon },
 							{ id: 'features', label: '주요 기능', icon: BookOpenIcon },
@@ -167,18 +167,18 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 							<button
 								key={tab.id}
 								onClick={() => setActiveTab(tab.id)}
-								className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+								className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
 									activeTab === tab.id 
 										? 'bg-mint-green text-white shadow-lg' 
 										: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
 								}`}
 							>
 								{typeof tab.icon === 'string' ? (
-									<span>{tab.icon}</span>
+									<span className="text-sm sm:text-base">{tab.icon}</span>
 								) : (
-									<tab.icon className="w-4 h-4" />
+									<tab.icon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
 								)}
-								<span>{tab.label}</span>
+								<span className="whitespace-nowrap">{tab.label}</span>
 							</button>
 						))}
 					</div>
@@ -191,9 +191,9 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 					{activeTab === 'quickstart' && (
 						<div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
 							{progressPercentage === 100 && (
-								<div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-6">
+								<div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700/50 rounded-xl p-4 mb-6">
 									<div className="flex items-center space-x-3">
-										<CheckCircleIcon className="w-6 h-6 text-green-600" />
+										<CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
 										<div>
 											<h3 className="font-semibold text-green-800 dark:text-green-200">완료했어요! 🎉</h3>
 											<p className="text-sm text-green-600 dark:text-green-300">이제 시급이요의 모든 기능을 사용할 수 있어요</p>
@@ -207,15 +207,15 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 									key={step.id}
 									className={`relative border rounded-xl p-4 transition-all duration-200 ${
 										step.completed 
-											? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
-											: 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-md'
+											? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700/50' 
+											: 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:shadow-md dark:hover:bg-gray-750'
 									}`}
 								>
 									<div className="flex items-start space-x-4">
 										<div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-xl ${
 											step.completed 
-												? 'bg-green-100 dark:bg-green-800' 
-												: 'bg-mint-green bg-opacity-10'
+												? 'bg-green-100 dark:bg-green-800/50' 
+												: 'bg-mint-green bg-opacity-10 dark:bg-mint-green-dark dark:bg-opacity-20'
 										}`}>
 											{step.completed ? '✅' : step.icon}
 										</div>
@@ -231,7 +231,7 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 											<p className="text-sm text-gray-600 dark:text-gray-300 mb-3 break-keep leading-relaxed">{step.description}</p>
 											
 											{step.benefit && (
-												<div className="bg-mint-green bg-opacity-10 rounded-lg p-3 mb-3">
+												<div className="bg-mint-green bg-opacity-10 dark:bg-mint-green-dark dark:bg-opacity-20 rounded-lg p-3 mb-3">
 													<p className="text-xs text-mint-800 dark:text-mint-200">💫 {step.benefit}</p>
 												</div>
 											)}
@@ -239,7 +239,7 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 											{!step.completed && (
 												<button
 													onClick={() => onStartTour?.(step.id)}
-													className="inline-flex items-center space-x-2 text-sm font-medium text-mint-green hover:text-mint-700 transition-colors duration-200"
+													className="inline-flex items-center space-x-2 text-sm font-medium text-mint-green dark:text-mint-green hover:text-mint-700 dark:hover:text-mint-green-dark transition-colors duration-200"
 												>
 													<PlayIcon className="w-4 h-4" />
 													<span className="break-keep">{step.action}</span>
@@ -257,13 +257,13 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 					{activeTab === 'features' && (
 						<div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
 							{features.map(feature => (
-								<div key={feature.id} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+								<div key={feature.id} className="border border-gray-200 dark:border-gray-600 rounded-xl overflow-hidden">
 									<button
 										onClick={() => setExpandedItem(expandedItem === feature.id ? null : feature.id)}
-										className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+										className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors duration-200"
 									>
 										<div className="flex items-center space-x-4">
-											<div className="w-12 h-12 bg-mint-green bg-opacity-10 rounded-xl flex items-center justify-center text-2xl">
+											<div className="w-12 h-12 bg-mint-green bg-opacity-10 dark:bg-mint-green-dark dark:bg-opacity-20 rounded-xl flex items-center justify-center text-2xl">
 												{feature.icon}
 											</div>
 											<div className="flex-1 min-w-0">
@@ -275,13 +275,13 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 									</button>
 									
 									{expandedItem === feature.id && (
-										<div className="px-4 pb-4 bg-gray-50 dark:bg-gray-800">
-											<div className="bg-white dark:bg-gray-700 rounded-lg p-3">
+										<div className="px-4 pb-4 bg-gray-50 dark:bg-gray-800/50">
+											<div className="bg-white dark:bg-gray-700/50 rounded-lg p-3">
 												<h4 className="font-medium text-sm text-gray-800 dark:text-gray-200 mb-2">알아두면 좋은 점:</h4>
 												<ul className="space-y-1">
 													{feature.tips.map((tip, index) => (
 														<li key={index} className="text-xs text-gray-600 dark:text-gray-300 flex items-start space-x-2">
-															<span className="text-mint-green mt-1 flex-shrink-0">•</span>
+															<span className="text-mint-green dark:text-mint-green mt-1 flex-shrink-0">•</span>
 															<span className="break-keep leading-relaxed">{tip}</span>
 														</li>
 													))}
@@ -298,7 +298,7 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 					{activeTab === 'tips' && (
 						<div className="p-4 sm:p-6 space-y-3">
 							{tips.map((tip, index) => (
-								<div key={index} className="bg-gradient-to-r from-mint-green to-emerald-500 bg-opacity-5 border border-mint-green border-opacity-20 rounded-xl p-4">
+								<div key={index} className="bg-gradient-to-r from-mint-green to-emerald-500 bg-opacity-5 dark:bg-opacity-10 border border-mint-green dark:border-mint-green-dark border-opacity-20 dark:border-opacity-30 rounded-xl p-4">
 									<h3 className="font-semibold text-dark-navy dark:text-white mb-2 break-keep">{tip.title}</h3>
 									<p className="text-sm text-gray-600 dark:text-gray-300 break-keep leading-relaxed">{tip.content}</p>
 									{tip.title.includes('가이드 투어') && (
@@ -320,7 +320,7 @@ const InteractiveGuide = ({ isOpen, onClose, currentStep = 0, userProgress = {},
 
 				{/* 🚀 액션 버튼 - 고정 위치 */}
 				{activeTab === 'quickstart' && (
-					<div className="p-4 sm:p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
+					<div className="p-4 sm:p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
 						{progressPercentage < 100 ? (
 							<button
 								onClick={() => onStartTour?.()}

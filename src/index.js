@@ -1,11 +1,11 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+// React 17 스타일 렌더링으로 임시 변경
+ReactDOM.render(<App />, document.getElementById('root'));
 
 // PWA Service Worker 등록 및 자동 업데이트 처리 (개발 모드에서는 비활성화)
 if (process.env.NODE_ENV === 'production') {

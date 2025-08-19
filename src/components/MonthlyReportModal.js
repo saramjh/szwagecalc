@@ -247,8 +247,8 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 	if (!showModal) return null
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-2xl shadow-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal`}>
+			<div className={`bg-cream-white dark:bg-gray-900 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/50 p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}>
 				<div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-dark-navy dark:text-white">{dayjs(selectedMonth).format("YYYY년 M월")} 월급 보고서</h2>
 					<button onClick={onClose} className="text-medium-gray dark:text-light-gray hover:text-dark-navy dark:hover:text-white text-2xl transition-all duration-200 ease-in-out transform hover:scale-105">
@@ -259,7 +259,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 				<div className="mb-4">
 					<label className="block text-sm font-medium text-medium-gray dark:text-light-gray mb-1">직업 필터</label>
 					<div className="mt-1 flex flex-wrap gap-2">
-						<button onClick={() => setSelectedJobFilterId("all")} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${selectedJobFilterId === "all" ? "bg-mint-green text-white" : "bg-gray-200 text-dark-navy dark:bg-gray-700 dark:text-white"}`}>
+						<button onClick={() => setSelectedJobFilterId("all")} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${selectedJobFilterId === "all" ? "bg-mint-green dark:bg-mint-green-dark text-white" : "bg-gray-200 dark:bg-gray-700 text-dark-navy dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"}`}>
 							모든 직업
 						</button>
 						{jobs.map((job) => (

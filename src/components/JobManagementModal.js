@@ -198,8 +198,8 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 	if (!showModal) return null
 
 	return (
-		<div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal p-4`}>
-			<div className={`bg-cream-white dark:bg-charcoal-gray rounded-lg shadow-lg w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0" : "translate-y-10"} flex flex-col max-h-[90vh]`}>
+		<div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center transition-opacity duration-300 ease-out ${animateModal ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} z-layer-modal p-4`}>
+			<div className={`bg-cream-white dark:bg-gray-900 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/50 w-full max-w-md transform transition-all duration-300 ease-out ${animateModal ? "translate-y-0" : "translate-y-10"} flex flex-col max-h-[90vh]`}>
 				{/* 🎯 이토스 디자인: 고정 헤더 영역 */}
 				<div className="flex justify-between items-center p-6 pb-4 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
 					<h2 className="text-xl font-bold text-dark-navy dark:text-white">
