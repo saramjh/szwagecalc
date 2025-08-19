@@ -23,27 +23,7 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 	const [isUsageGuideModalOpen, setIsUsageGuideModalOpen] = useState(false)
 	const [isInteractiveGuideOpen, setIsInteractiveGuideOpen] = useState(false)
 	
-	// 🌙 다크모드 상태 추적
-	const [isDarkMode, setIsDarkMode] = useState(false)
-	
-	useEffect(() => {
-		// 다크모드 상태 초기화 및 변경 감지
-		const updateDarkMode = () => {
-			const hasDarkClass = document.documentElement.classList.contains('dark')
-			setIsDarkMode(hasDarkClass)
-		}
-		
-		updateDarkMode()
-		
-		// DOM 변경 감지
-		const observer = new MutationObserver(updateDarkMode)
-		observer.observe(document.documentElement, {
-			attributes: true,
-			attributeFilter: ['class']
-		})
-		
-		return () => observer.disconnect()
-	}, [])
+
 	const [isTourActive, setIsTourActive] = useState(false)
 	const [currentTourStep, setCurrentTourStep] = useState(0)
 	const [forceHamburgerOpen, setForceHamburgerOpen] = useState(false)
@@ -98,6 +78,7 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
     setActiveBarIndex(null)
   }, [date, selectedDateForDailyModal, isMonthlyModalOpen, isDailyRecordListModalOpen, isUsageGuideModalOpen])
 
+	// 🚀 성능 최적화: 월별 캐싱된 데이터 조회
 	const fetchWorkRecords = useCallback(async () => {
 		try {
 			let userId = session && session.user ? session.user.id : null
@@ -106,10 +87,20 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 				userId = userData && userData.user ? userData.user.id : null
 			}
 			if (!userId) return
+			
+			// 🎯 최적화: 현재 월 ±1개월만 조회 (3개월 범위)
+			const currentMonth = dayjs(date)
+			const startDate = currentMonth.subtract(1, 'month').startOf('month').format('YYYY-MM-DD')
+			const endDate = currentMonth.add(1, 'month').endOf('month').format('YYYY-MM-DD')
+			
 			const { data, error } = await supabase
 				.from("work_records")
 				.select("*, jobs(job_name)")
 				.eq("user_id", userId)
+				.gte("date", startDate)
+				.lte("date", endDate)
+				.order("date", { ascending: false })
+				
 			if (error) {
 				console.error("Error fetching work records:", error)
 				return
@@ -118,7 +109,7 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 		} catch (err) {
 			console.error("Unexpected error fetching work records:", err)
 		}
-	}, [session])
+	}, [session, date])
 
 	useEffect(() => {
 		if (session) {
@@ -132,24 +123,32 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [])
 
-  // Realtime: work_records 변경 시 자동 갱신
+  // 🚀 최적화된 실시간 구독: 현재 표시 범위만 감지
   useEffect(() => {
     if (!session) return
+    
+    const currentMonth = dayjs(date)
+    const startDate = currentMonth.subtract(1, 'month').startOf('month').format('YYYY-MM-DD')
+    const endDate = currentMonth.add(1, 'month').endOf('month').format('YYYY-MM-DD')
+    
     const channel = supabase
-      .channel('work_records_changes')
+      .channel(`work_records_${currentMonth.format('YYYY-MM')}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'work_records',
-        filter: `user_id=eq.${session.user.id}`,
-      }, () => {
+        filter: `user_id=eq.${session.user.id}&date=gte.${startDate}&date=lte.${endDate}`,
+      }, (payload) => {
+        // 🎯 스마트 업데이트: 변경된 레코드만 반영
+        console.log('📡 실시간 업데이트:', payload.eventType, payload.new?.date)
         fetchWorkRecords()
       })
       .subscribe()
+      
     return () => {
       try { supabase.removeChannel(channel) } catch (_) {}
     }
-  }, [session, fetchWorkRecords])
+  }, [session, fetchWorkRecords, date])
 
   // Global event bus: other modals dispatch 'work-records-changed' after mutations
   useEffect(() => {
@@ -158,16 +157,21 @@ useEffect(() => {
     return () => window.removeEventListener('work-records-changed', handler)
   }, [fetchWorkRecords])
 
-  useEffect(() => {
+  // 🚀 성능 최적화: 월별 요약 결과 메모이제이션
+  const computedSummary = useMemo(() => {
     const sum = computeMonthlySummary(workRecords, date)
     const next = findNextPayday(jobs, date)
-    setSummary({
+    return {
       totalIncome: sum.totalIncome,
       totalHours: sum.totalHours,
       averageHourly: sum.averageHourly,
       nextPaydayText: next ? `${next.date.format("M월 D일")}` : "—",
-    })
+    }
   }, [workRecords, jobs, date])
+  
+  useEffect(() => {
+    setSummary(computedSummary)
+  }, [computedSummary])
 
     const handleDateClick = (newDate) => {
         setSelectedDateForDailyModal(newDate)
