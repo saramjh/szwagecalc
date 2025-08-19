@@ -1,4 +1,5 @@
 import dayjs from "dayjs"
+import { calculateWorkAndBreakTime } from "./breakTime"
 
 function parseHoursFromRecord(record) {
   if (!record.start_time || !record.end_time) return 0
@@ -14,6 +15,43 @@ function parseHoursFromRecord(record) {
   return end.diff(start, "minute") / 60
 }
 
+// 휴게시간 정책을 반영한 급여 재계산 헬퍼 함수
+function recalculateWageWithBreakTime(record) {
+  // 일급제는 저장된 값 그대로 사용
+  if (record.wage_type === "daily") {
+    return record.daily_wage || 0
+  }
+  
+  // 시급제는 휴게시간 정책을 반영하여 재계산
+  if (record.start_time && record.end_time && record.jobs) {
+    const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
+    
+    // 휴게시간이 없거나 무급인 경우에만 재계산 필요
+    if (workAndBreakTime.breakTime.breakMinutes === 0 || !workAndBreakTime.breakTime.isPaid) {
+      // 급여 대상 시간 계산
+      let payableHours = workAndBreakTime.workHours
+      if (workAndBreakTime.breakTime.isPaid) {
+        payableHours = workAndBreakTime.totalHours
+      }
+      
+      // 기존 저장된 값에서 시급 역산 (식대 제외)
+      const wageWithoutMeal = (record.daily_wage || 0) - (record.meal_allowance || 0)
+      // 💡 저장된 급여는 이미 휴게시간이 반영된 값이므로 실제 급여 대상 시간으로 나누어야 함
+      let payableHoursForRate = workAndBreakTime.workHours // 기본: 순 근무시간
+      if (workAndBreakTime.breakTime.isPaid) {
+        payableHoursForRate = workAndBreakTime.totalHours // 유급인 경우: 총 시간
+      }
+      const estimatedHourlyRate = Math.round(wageWithoutMeal / (payableHoursForRate || 1))
+      const recalculatedWage = Math.round(payableHours * estimatedHourlyRate) + (record.meal_allowance || 0)
+      
+      return recalculatedWage
+    }
+  }
+  
+  // 기본값: 저장된 값 사용
+  return record.daily_wage || 0
+}
+
 export function filterRecordsByMonth(records, referenceDate) {
   const ref = dayjs(referenceDate)
   return (records || []).filter((r) => dayjs(r.date).isSame(ref, "month"))
@@ -24,7 +62,7 @@ export function computeMonthlySummary(records, referenceDate) {
   let totalIncome = 0
   let totalHours = 0
   for (const r of monthly) {
-    totalIncome += r.daily_wage || 0
+    totalIncome += recalculateWageWithBreakTime(r)
     totalHours += parseHoursFromRecord(r)
   }
   const averageHourly = totalHours > 0 ? Math.round(totalIncome / totalHours) : 0
@@ -41,7 +79,7 @@ export function computeRecentAverageDailyIncome(records, referenceDate, lookback
   const byDate = new Map()
   for (const r of within) {
     const key = dayjs(r.date).format("YYYY-MM-DD")
-    byDate.set(key, (byDate.get(key) || 0) + (r.daily_wage || 0))
+    byDate.set(key, (byDate.get(key) || 0) + recalculateWageWithBreakTime(r))
   }
   const days = Array.from(byDate.values())
   if (days.length === 0) return 0

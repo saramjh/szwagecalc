@@ -5,6 +5,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 🎯 Interactive Tour Styles */
+@layer components {
+  .tour-highlight {
+    @apply relative;
+    z-index: 9998 !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3), 0 0 0 8px rgba(16, 185, 129, 0.1);
+    border-radius: 8px;
+    animation: tour-pulse 2s infinite;
+  }
+
+  .word-break-keep {
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  
+  @keyframes tour-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3), 0 0 0 8px rgba(16, 185, 129, 0.1);
+    }
+    50% {
+      box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.4), 0 0 0 12px rgba(16, 185, 129, 0.15);
+    }
+  }
+}
+
 /* ============= 시급이요 브랜드/시맨틱 컬러 (라이트 모드) ============= */
 :root {
   /* Primary - 라벤더 퍼플 */

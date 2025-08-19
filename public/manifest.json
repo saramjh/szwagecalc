@@ -1,6 +1,8 @@
 {
 	"short_name": "시급이요",
 	"name": "시급이요",
+	"description": "시급 계산과 근무 관리를 한번에! 휴게시간, 주휴수당까지 자동 계산",
+	"version": "2.1.0",
 	"icons": [
 		{
 			"src": "favicon.ico",
@@ -10,12 +12,14 @@
 		{
 			"src": "logo192.png",
 			"type": "image/png",
-			"sizes": "192x192"
+			"sizes": "192x192",
+			"purpose": "maskable any"
 		},
 		{
 			"src": "logo512.png",
 			"type": "image/png",
-			"sizes": "512x512"
+			"sizes": "512x512",
+			"purpose": "maskable any"
 		}
 	],
 	"start_url": ".",
@@ -23,5 +27,23 @@
 	"theme_color": "#10B981",
 	"background_color": "#F9FAFB",
 	"scope": "/",
-	"orientation": "portrait-primary"
+	"orientation": "portrait-primary",
+	"categories": ["productivity", "finance", "business"],
+	"shortcuts": [
+		{
+			"name": "근무 기록 추가",
+			"short_name": "근무 추가",
+			"description": "새로운 근무 기록을 빠르게 추가",
+			"url": "/#add-record",
+			"icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "월급 확인",
+			"short_name": "월급",
+			"description": "이번 달 월급과 주휴수당 확인",
+			"url": "/#monthly-report",
+			"icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+		}
+	],
+	"prefer_related_applications": false
 }

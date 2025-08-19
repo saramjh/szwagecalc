@@ -5,6 +5,8 @@ import { supabase } from "./supabaseClient"
 import dayjs from "dayjs"
 import { ToastProvider, useToast } from "./contexts/ToastContext"
 import { ConfirmProvider } from "./contexts/ConfirmContext"
+import { warmupBreakTimeCache, calculateWorkAndBreakTime } from "./utils/breakTime"
+// import { clearWeeklyAllowanceCache } from "./utils/weeklyAllowance" // 현재 미사용
 
 const HourlyRateSettingModal = lazy(() => import("./components/HourlyRateSettingModal"))
 const JobManagementModal = lazy(() => import("./components/JobManagementModal"))
@@ -91,12 +93,18 @@ const AppContent = () => {
 
 	const fetchJobs = useCallback(async () => {
 		if (!session) return
-		const { data, error } = await supabase.from("jobs").select("id, job_name, description, payday, color").eq("user_id", session.user.id).eq("is_deleted", false).order("created_at", { ascending: true })
+		const { data, error } = await supabase.from("jobs").select("id, job_name, description, payday, color, break_time_enabled, break_time_paid, break_time_policies, weekly_allowance_enabled, weekly_allowance_min_hours").eq("user_id", session.user.id).eq("is_deleted", false).order("created_at", { ascending: true })
 
 		if (error) {
 			console.error("Error fetching jobs:", error)
 		} else {
 			setJobs(data)
+			
+			// 🚀 성능 최적화: 캐시 예열
+			if (data && data.length > 0) {
+				warmupBreakTimeCache(data)
+				console.log('💾 휴게시간 캐시 예열 완료:', data.length, '개 직업')
+			}
 		}
 	}, [session])
 
@@ -119,31 +127,82 @@ const AppContent = () => {
 		return () => subscription.unsubscribe()
 	}, [])
 
-  // CSV export listener: 현재 월 work_records를 조회해 CSV 생성
+  // CSV export listener: 현재 월 work_records를 조회해 CSV 생성 (휴게시간 정책 반영)
   useEffect(() => {
     const handler = async () => {
       if (!session) return
       const startOfMonth = dayjs().startOf("month").format("YYYY-MM-DD")
       const endOfMonth = dayjs().endOf("month").format("YYYY-MM-DD")
+      
+      // 근무기록과 직업정보, 휴게시간 정책 정보 함께 조회
       const { data, error } = await supabase
         .from("work_records")
-        .select("id,date,start_time,end_time,daily_wage,meal_allowance,notes,jobs(job_name)")
+        .select("id,date,start_time,end_time,daily_wage,meal_allowance,notes,wage_type,job_id,jobs(job_name,break_time_enabled,break_time_paid,break_time_policies)")
         .eq("user_id", session.user.id)
         .gte("date", startOfMonth)
         .lte("date", endOfMonth)
         .order("date", { ascending: true })
       if (error) return
+
+      // 시급 정보 조회 (시급제 기록들을 위해)
+      const recordIds = (data || []).filter(r => r.wage_type === "hourly").map(r => r.id)
+      const hourlyRatesMap = new Map()
+      
+      if (recordIds.length > 0) {
+        for (const recordId of recordIds) {
+          const record = data.find(r => r.id === recordId)
+          if (!record || !record.date) continue
+          
+          const { data: rateData } = await supabase
+            .from("hourly_rate_history")
+            .select("hourly_rate")
+            .eq("user_id", session.user.id)
+            .eq("job_id", record.job_id)
+            .lte("effective_date", record.date)
+            .order("effective_date", { ascending: false })
+            .limit(1)
+          
+          if (rateData && rateData.length > 0) {
+            hourlyRatesMap.set(recordId, rateData[0].hourly_rate)
+          }
+        }
+      }
+
       const rows = [
-        ["date","job_name","start_time","end_time","daily_wage","meal_allowance","notes"],
-        ...(data || []).map(r => [
-          r.date,
-          r.jobs?.job_name || "",
-          r.start_time || "",
-          r.end_time || "",
-          (r.daily_wage || 0).toString(),
-          (r.meal_allowance || 0).toString(),
-          (r.notes || "").replaceAll("\n"," ")
-        ])
+        ["date","job_name","start_time","end_time","calculated_wage","stored_wage","meal_allowance","break_minutes","notes"],
+        ...(data || []).map(r => {
+          let calculatedWage = r.daily_wage || 0
+          let breakMinutes = 0
+          
+          // 시급제인 경우 휴게시간 정책을 반영한 실시간 계산
+          if (r.wage_type === "hourly" && r.start_time && r.end_time && r.jobs) {
+            const actualHourlyRate = hourlyRatesMap.get(r.id) || 0
+            if (actualHourlyRate > 0) {
+              const workAndBreakTime = calculateWorkAndBreakTime(r.start_time, r.end_time, r.jobs)
+              breakMinutes = workAndBreakTime.breakTime.breakMinutes
+              
+              // 급여 대상 시간 계산 (휴게시간 정책 반영)
+              let payableHours = workAndBreakTime.workHours
+              if (workAndBreakTime.breakTime.isPaid) {
+                payableHours = workAndBreakTime.totalHours
+              }
+              
+              calculatedWage = Math.round(payableHours * actualHourlyRate) + (r.meal_allowance || 0)
+            }
+          }
+          
+          return [
+            r.date,
+            r.jobs?.job_name || "",
+            r.start_time || "",
+            r.end_time || "",
+            calculatedWage.toString(),
+            (r.daily_wage || 0).toString(),
+            (r.meal_allowance || 0).toString(),
+            breakMinutes.toString(),
+            (r.notes || "").replaceAll("\n"," ")
+          ]
+        })
       ]
       const csv = rows.map(cols => cols.map((c) => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n")
       const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })

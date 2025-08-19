@@ -31,16 +31,59 @@ module.exports = {
       if (webpackConfig && webpackConfig.module && Array.isArray(webpackConfig.module.rules)) {
         webpackConfig.module.rules = visitRules(webpackConfig.module.rules);
       }
-      // 트리 셰이킹 최적화 옵션 명시
+      
+      // 개발 모드에서는 최적화 비활성화
+      if (process.env.NODE_ENV === 'development') {
+        return webpackConfig;
+      }
+      
+      // 프로덕션에서만 최적화 적용
       if (!webpackConfig.optimization) {
         webpackConfig.optimization = {};
       }
       webpackConfig.optimization.usedExports = true;
-      webpackConfig.optimization.sideEffects = true;
+      webpackConfig.optimization.sideEffects = false;
       webpackConfig.optimization.concatenateModules = true;
-      // 개발 소스맵 비활성화(경고 최소화 필요 시)
+      webpackConfig.optimization.innerGraph = true;
+      
+      // 청크 분할 최적화 (프로덕션만)
+      webpackConfig.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          dayjs: {
+            test: /[\\/]node_modules[\\/]dayjs[\\/]/,
+            name: 'dayjs',
+            chunks: 'all',
+            priority: 30,
+          },
+          supabase: {
+            test: /[\\/]node_modules[\\/]@supabase[\\/]/,
+            name: 'supabase',
+            chunks: 'all',
+            priority: 30,
+          },
+          lucide: {
+            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+            name: 'lucide',
+            chunks: 'all',
+            priority: 30,
+          },
+          react: {
+            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+            name: 'react',
+            chunks: 'all',
+            priority: 40,
+          },
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+            priority: 10,
+          },
+        },
+      };
+      
       webpackConfig.devtool = false;
-      // 소스맵 관련 경고 무시
       webpackConfig.ignoreWarnings = [
         /Failed to parse source map/,
       ];

@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useRef } from "react"
 
-const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, deferredPrompt, onInstallPWA }) => {
+const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, deferredPrompt, onInstallPWA, forceOpen }) => {
 	const [isOpen, setIsOpen] = useState(false)
 	const [isDarkMode, setIsDarkMode] = useState(false)
 	const menuRef = useRef(null) // 메뉴 컨테이너를 참조할 ref
+
+	// 투어에서 강제로 메뉴 열기
+	useEffect(() => {
+		if (forceOpen) {
+			setIsOpen(true)
+		}
+	}, [forceOpen])
 
 	useEffect(() => {
 		// localStorage에서 사용자 설정 모드를 읽어옴
@@ -95,7 +102,10 @@ const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, 
 
 	return (
 		<div className="relative" ref={menuRef}>
-			<button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-md text-dark-navy dark:text-white hover:bg-gray-200 dark:hover:bg-charcoal-gray focus:outline-none focus:ring-2 focus:ring-mint-green transition-all duration-200 ease-in-out">
+			<button 
+				onClick={() => setIsOpen(!isOpen)} 
+				data-tour="hamburger-menu"
+				className="p-2 rounded-md text-dark-navy dark:text-white hover:bg-gray-200 dark:hover:bg-charcoal-gray focus:outline-none focus:ring-2 focus:ring-mint-green transition-all duration-200 ease-in-out">
 				<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
 				</svg>
@@ -117,6 +127,7 @@ const HamburgerMenu = ({ session, onLogout, username, onOpenJobManagementModal, 
 							setIsOpen(false)
 							onOpenJobManagementModal()
 						}}
+						data-tour="job-management"
 						className="block w-full text-left px-4 py-2 text-dark-navy dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
 						직업 관리
 					</button>

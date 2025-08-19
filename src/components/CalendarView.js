@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense, useRef } from "react"
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from "react"
 import dayjs from "dayjs"
 import { parseHHmm } from "../utils/time"
 import { supabase } from "../supabaseClient"
 import { computeMonthlySummary, findNextPayday } from "../utils/insights"
+import ContextualHelp from "./ContextualHelp"
 const DailyRecordListModal = lazy(() => import("./DailyRecordListModal"))
 const MonthlyReportModal = lazy(() => import("./MonthlyReportModal"))
 const UsageGuideModal = lazy(() => import("./UsageGuideModal"))
+const InteractiveGuide = lazy(() => import("./InteractiveGuide"))
+const InteractiveTour = lazy(() => import("./InteractiveTour"))
 const DailyRecordModal = lazy(() => import("./DailyRecordModal"))
+const WeeklyAllowanceCard = lazy(() => import("./WeeklyAllowanceCard"))
+const WeeklySummaryBar = lazy(() => import("./WeeklySummaryBar"))
 
 const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 	const [date, setDate] = useState(new Date())
@@ -16,6 +21,25 @@ const CalendarView = ({ onOpenHourlyRateModal, session, jobs }) => {
 	const [isMonthlyModalOpen, setIsMonthlyModalOpen] = useState(false)
 	const [selectedMonthForMonthlyModal, setSelectedMonthForMonthlyModal] = useState(new Date())
 	const [isUsageGuideModalOpen, setIsUsageGuideModalOpen] = useState(false)
+	const [isInteractiveGuideOpen, setIsInteractiveGuideOpen] = useState(false)
+	const [isTourActive, setIsTourActive] = useState(false)
+	const [currentTourStep, setCurrentTourStep] = useState(0)
+	const [forceHamburgerOpen, setForceHamburgerOpen] = useState(false)
+	const [hasCheckedReport, setHasCheckedReport] = useState(() => {
+		return localStorage.getItem('guide-progress-checkedReport') === 'true'
+	})
+	const [hasSetHourlyRate, setHasSetHourlyRate] = useState(() => {
+		return localStorage.getItem('guide-progress-setHourlyRate') === 'true'
+	})
+
+	// 진행 상태를 localStorage에 저장
+	useEffect(() => {
+		localStorage.setItem('guide-progress-checkedReport', hasCheckedReport.toString())
+	}, [hasCheckedReport])
+
+	useEffect(() => {
+		localStorage.setItem('guide-progress-setHourlyRate', hasSetHourlyRate.toString())
+	}, [hasSetHourlyRate])
   const [summary, setSummary] = useState({ totalIncome: 0, totalHours: 0, averageHourly: 0, nextPaydayText: "" })
   const [isQuickModalOpen, setIsQuickModalOpen] = useState(false)
   const [quickPrefill, setQuickPrefill] = useState(null)
@@ -145,18 +169,130 @@ useEffect(() => {
     const handleMonthlyModalOpen = () => {
         setSelectedMonthForMonthlyModal(date)
         setIsMonthlyModalOpen(true)
+        setHasCheckedReport(true) // 월급 확인 완료 상태 업데이트
     }
 
 	const handleMonthlyModalClose = () => {
 		setIsMonthlyModalOpen(false)
 	}
 
-	const handleOpenUsageGuideModal = () => {
-		setIsUsageGuideModalOpen(true)
-	}
+
 
 	const handleCloseUsageGuideModal = () => {
 		setIsUsageGuideModalOpen(false)
+	}
+
+	// 🎯 사용자 진행상황 계산
+	const userProgress = useMemo(() => {
+		return {
+			hasJobs: jobs && jobs.length > 0,
+			hasRecords: workRecords && workRecords.length > 0,
+			hasHourlyRate: hasSetHourlyRate,
+			checkedReport: hasCheckedReport,
+			weeklyHours: 0, // TODO: 주간 근무시간 계산
+			hasBreakTimeDifference: false // TODO: 휴게시간 차액 존재 여부
+		}
+	}, [jobs, workRecords, hasSetHourlyRate, hasCheckedReport])
+
+	// 🚀 인터랙티브 가이드 핸들러
+	const handleOpenInteractiveGuide = () => {
+		setIsInteractiveGuideOpen(true)
+	}
+
+	const handleCloseInteractiveGuide = () => {
+		setIsInteractiveGuideOpen(false)
+	}
+
+	const handleStartTour = (tourType) => {
+		// 기존 개별 액션들
+		if (typeof tourType === 'string') {
+			switch (tourType) {
+				case 'setup-job':
+					// TODO: 직업 관리 모달 열기
+					break
+				case 'set-hourly-rate':
+					handleOpenHourlyRateModal()
+					break
+				case 'first-record':
+					// 오늘 날짜로 빠른 기록 모달 열기
+					setSelectedDateForDailyModal(new Date())
+					setIsQuickModalOpen(true)
+					break
+				case 'check-report':
+					setSelectedMonthForMonthlyModal(new Date())
+					setIsMonthlyModalOpen(true)
+					setHasCheckedReport(true) // 월급 확인 완료 상태 업데이트
+					break
+				default:
+					break
+			}
+			setIsInteractiveGuideOpen(false)
+		} else {
+			// 인터랙티브 투어 시작
+			setIsInteractiveGuideOpen(false)
+			setIsTourActive(true)
+			setCurrentTourStep(0)
+			setForceHamburgerOpen(true) // 첫 번째 단계가 햄버거 메뉴이므로 열기
+		}
+	}
+
+	const handleTourComplete = () => {
+		setIsTourActive(false)
+		setCurrentTourStep(0)
+		setForceHamburgerOpen(false) // 투어 완료 시 햄버거 메뉴 닫기
+		// 투어 완료 후 가이드 다시 열기
+		setIsInteractiveGuideOpen(true)
+	}
+
+	const handleTourSkip = () => {
+		setIsTourActive(false)
+		setCurrentTourStep(0)
+		setForceHamburgerOpen(false) // 투어 건너뛰기 시 햄버거 메뉴 닫기
+	}
+
+	const handleTourStepChange = (step) => {
+		setCurrentTourStep(step)
+		// 첫 번째 단계(직업 설정)에서만 햄버거 메뉴 열기
+		setForceHamburgerOpen(step === 0)
+	}
+
+	// 시급 설정 모달 열기 래퍼
+	const handleOpenHourlyRateModal = () => {
+		setHasSetHourlyRate(true) // 시급 설정 시도 상태 업데이트
+		onOpenHourlyRateModal?.()
+	}
+
+	// 📱 상황별 도움말 액션 핸들러
+	const handleContextualAction = (actionType) => {
+		switch (actionType) {
+			case 'add-today':
+				setSelectedDateForDailyModal(new Date())
+				setIsQuickModalOpen(true)
+				break
+			case 'open-job-management':
+				// TODO: 직업 관리 모달 열기
+				break
+			case 'open-hourly-rate':
+				handleOpenHourlyRateModal()
+				break
+			case 'open-monthly-report':
+				setSelectedMonthForMonthlyModal(new Date())
+				setIsMonthlyModalOpen(true)
+				setHasCheckedReport(true) // 월급 확인 완료 상태 업데이트
+				break
+			default:
+				break
+		}
+	}
+
+	// 상황별 도움말 컨텍스트 결정
+	const getHelpContext = () => {
+		if (!userProgress.hasJobs) return 'no-jobs'
+		if (!userProgress.hasHourlyRate) return 'no-hourly-rate'
+		if (!userProgress.hasRecords) return 'empty-calendar'
+		if (userProgress.weeklyHours >= 15) return 'weekly-allowance-eligible'
+		if (new Date().getDate() > 25) return 'monthly-summary'
+		return null
 	}
 
 	const getPaydayJobsForDate = (date) => {
@@ -242,6 +378,7 @@ useEffect(() => {
                 <div key={formattedDate} className="calendar-cell">
                     <button
                         onClick={() => handleDateClick(cellDate)}
+                        data-tour={isToday ? "calendar-date" : undefined}
                         className={`calendar-cell-inner cell-stroke hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors heat-${heat} ${
                             paydayJobs.length > 0 ? "payday-ring" : ""
                         } ${isToday ? "today-ring" : ""}`}
@@ -256,6 +393,8 @@ useEffect(() => {
                                     <span className="badge-text">{chipHours}h</span>
                                 </span>
                             )}
+                            
+
                         </div>
                     </button>
                 </div>
@@ -285,9 +424,19 @@ useEffect(() => {
         <div className="p-4 relative z-0  w-full">
       <div className="mb-4 space-y-2">
         <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow p-3 flex justify-between">
-          <div className="text-sm text-medium-gray dark:text-light-gray">이번달 누적</div>
+          <div className="text-sm text-medium-gray dark:text-light-gray">이번달 시급 누적</div>
           <div className="text-base font-bold text-dark-navy dark:text-white">{(summary.totalIncome || 0).toLocaleString()}원 · {Number.isFinite(summary.totalHours) ? summary.totalHours.toFixed(1) : '0.0'}h</div>
         </div>
+        
+        {/* 🎯 Etos 디자인: 주휴수당 현황 카드 */}
+        <Suspense fallback={<div className="w-full h-20 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"></div>}>
+          <WeeklyAllowanceCard 
+            workRecords={workRecords} 
+            jobs={jobs} 
+            selectedDate={date} 
+          />
+        </Suspense>
+        
         {/* 예상 소득 카드 제거 */}
         <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow p-3 flex justify-between">
           <div className="text-sm text-medium-gray dark:text-light-gray">다음 급여일</div>
@@ -384,27 +533,42 @@ useEffect(() => {
 					)
                 })()}
             </div>
-            <div className="flex flex-col space-y-2 mt-4 w-full justify-center">
+            
+            {/* 🎯 Etos 디자인: 주간별 주휴수당 요약 */}
+            <div className="mt-6 mb-6">
+              <Suspense fallback={<div className="w-full h-20 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"></div>}>
+                <WeeklySummaryBar 
+                  selectedDate={date} 
+                  workRecords={workRecords} 
+                  jobs={jobs} 
+                />
+              </Suspense>
+            </div>
+            
+            <div className="flex flex-col space-y-3 w-full justify-center">
 				<button
-					onClick={onOpenHourlyRateModal}
-                    className="w-full px-3 py-2 bg-lemon-yellow text-dark-navy rounded-full text-base font-medium shadow-md
+					onClick={handleOpenHourlyRateModal}
+					data-tour="hourly-rate"
+                    className="w-full px-3 py-2.5 bg-lemon-yellow text-dark-navy rounded-full text-base font-medium shadow-md
                    hover:bg-lemon-yellow focus:outline-none focus:ring-2 focus:ring-lemon-yellow focus:ring-opacity-50
-                   transition-all duration-300 ease-in-out transform hover:scale-105 mb-2 sm:mb-0">
+                   transition-all duration-300 ease-in-out transform hover:scale-105">
 					시급 설정
 				</button>
 				<button
 					onClick={handleMonthlyModalOpen}
-                    className="w-full px-3 py-2 bg-mint-green text-white rounded-full text-base font-medium shadow-md
+					data-tour="monthly-report"
+                    className="w-full px-3 py-2.5 bg-mint-green text-white rounded-full text-base font-medium shadow-md
                    hover:bg-mint-green focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50
-                   transition-all duration-300 ease-in-out transform hover:scale-105 mb-2 sm:mb-0">
+                   transition-all duration-300 ease-in-out transform hover:scale-105">
 					월급 확인
 				</button>
 				<button
-					onClick={handleOpenUsageGuideModal}
-                    className="w-full px-3 py-2 bg-medium-gray text-white rounded-full text-base font-medium shadow-md
-                   hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-gray focus:ring-opacity-50
-                   transition-all duration-300 ease-in-out transform hover:scale-105">
-					사용법
+					onClick={handleOpenInteractiveGuide}
+                    className="w-full px-3 py-2.5 bg-gradient-to-r from-mint-green to-emerald-500 text-white rounded-full text-base font-medium shadow-md
+                   hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50
+                   transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2">
+					<span>✨</span>
+					<span>가이드</span>
 				</button>
 			</div>
             <Suspense fallback={null}>
@@ -415,6 +579,14 @@ useEffect(() => {
             </Suspense>
             <Suspense fallback={null}>
                 <UsageGuideModal isOpen={isUsageGuideModalOpen} onClose={handleCloseUsageGuideModal} manualContent={usageManualContent} />
+            </Suspense>
+            <Suspense fallback={null}>
+                <InteractiveGuide 
+                    isOpen={isInteractiveGuideOpen} 
+                    onClose={handleCloseInteractiveGuide}
+                    userProgress={userProgress}
+                    onStartTour={handleStartTour}
+                />
             </Suspense>
             <Suspense fallback={null}>
               {isQuickModalOpen && (
@@ -428,6 +600,25 @@ useEffect(() => {
                 />
               )}
             </Suspense>
+
+						{/* 🎯 상황별 도움말 시스템 */}
+			<ContextualHelp
+				context={getHelpContext()}
+				userProgress={userProgress}
+				onAction={handleContextualAction}
+			/>
+
+			{/* 🚀 인터랙티브 투어 */}
+			<Suspense fallback={null}>
+				<InteractiveTour
+					isActive={isTourActive}
+					currentStep={currentTourStep}
+					onStepChange={handleTourStepChange}
+					onComplete={handleTourComplete}
+					onSkip={handleTourSkip}
+				/>
+			</Suspense>
+
 		</div>
 	)
 }

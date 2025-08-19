@@ -1,9 +1,48 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import dayjs from "dayjs"
 import "dayjs/locale/ko"
 import { supabase } from "../supabaseClient"
 import { getJobChipStyle } from "../constants/JobColors"
 import { parseHHmm } from "../utils/time"
+import { calculateWorkAndBreakTime, formatBreakTime, calculateBreakTimeWageDifference } from "../utils/breakTime"
+import { calculateMonthlyWeeklyAllowance } from "../utils/weeklyAllowance"
+
+// 휴게시간 정책을 반영한 급여 재계산 헬퍼 함수
+function recalculateWageWithBreakTime(record) {
+  // 일급제는 저장된 값 그대로 사용
+  if (record.wage_type === "daily") {
+    return record.daily_wage || 0
+  }
+  
+  // 시급제는 휴게시간 정책을 반영하여 재계산
+  if (record.start_time && record.end_time && record.jobs) {
+    const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
+    
+    // 휴게시간이 없거나 무급인 경우에만 재계산 필요
+    if (workAndBreakTime.breakTime.breakMinutes === 0 || !workAndBreakTime.breakTime.isPaid) {
+      // 급여 대상 시간 계산
+      let payableHours = workAndBreakTime.workHours
+      if (workAndBreakTime.breakTime.isPaid) {
+        payableHours = workAndBreakTime.totalHours
+      }
+      
+      // 기존 저장된 값에서 시급 역산 (식대 제외)
+      const wageWithoutMeal = (record.daily_wage || 0) - (record.meal_allowance || 0)
+      // 💡 저장된 급여는 이미 휴게시간이 반영된 값이므로 실제 급여 대상 시간으로 나누어야 함
+      let payableHoursForRate = workAndBreakTime.workHours // 기본: 순 근무시간
+      if (workAndBreakTime.breakTime.isPaid) {
+        payableHoursForRate = workAndBreakTime.totalHours // 유급인 경우: 총 시간
+      }
+      const estimatedHourlyRate = Math.round(wageWithoutMeal / (payableHoursForRate || 1))
+      const recalculatedWage = Math.round(payableHours * estimatedHourlyRate) + (record.meal_allowance || 0)
+      
+      return recalculatedWage
+    }
+  }
+  
+  // 기본값: 저장된 값 사용
+  return record.daily_wage || 0
+}
 
 dayjs.locale('ko')
 
@@ -12,6 +51,10 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 	const [totalWorkHours, setTotalWorkHours] = useState(0)
 	const [totalMealAllowance, setTotalMealAllowance] = useState(0)
 	const [totalGrossIncome, setTotalGrossIncome] = useState(0)
+	const [totalBreakMinutes, setTotalBreakMinutes] = useState(0)
+	const [totalWageDifference, setTotalWageDifference] = useState(0)
+	const [hourlyRatesMap, setHourlyRatesMap] = useState(new Map()) // 총 휴게시간 (분)
+	const [weeklyAllowanceSummary, setWeeklyAllowanceSummary] = useState({ totalAllowance: 0, eligibleWeeks: 0, totalWeeks: 0, jobAllowances: [] }) // 주휴수당 요약
 	const [selectedJobFilterId, setSelectedJobFilterId] = useState("all") // 선택된 직업 필터 ID 상태 ('all' 또는 job.id)
 
 	const [showModal, setShowModal] = useState(false) // 모달의 실제 렌더링 여부
@@ -36,13 +79,22 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 		}
 	}, [])
 
+	// 직업 ID로 빠른 조회를 위한 Map 생성 (메모이제이션)
+	const jobsMap = useMemo(() => {
+		const map = new Map()
+		jobs.forEach(job => map.set(job.id, job))
+		return map
+	}, [jobs])
+
 	const calculateMonthlySummary = useCallback((records) => {
 		let totalIncome = 0
 		let totalHours = 0
 		let totalMeal = 0
+		let totalBreak = 0
+		let totalDiff = 0
 
         records.forEach((record) => {
-			totalIncome += record.daily_wage || 0
+			totalIncome += recalculateWageWithBreakTime(record)
 			totalMeal += record.meal_allowance || 0
 
           if (record.start_time && record.end_time) {
@@ -53,14 +105,69 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
                         end = end.add(1, "day")
                     }
                     totalHours += end.diff(start, "minute") / 60
+                    
+                    // 휴게시간 및 차액 계산 (Map을 사용한 빠른 조회)
+                    const job = jobsMap.get(record.job_id)
+                    if (job) {
+                        const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, job)
+                        totalBreak += workAndBreakTime.breakTime.breakMinutes
+                        
+                        // 시급제인 경우에만 차액 계산
+                        if (record.wage_type === "hourly") {
+                            // 🎯 실제 설정된 시급 사용
+                            const actualHourlyRate = hourlyRatesMap.get(record.id) || 0
+                            const wageDiff = calculateBreakTimeWageDifference(
+                                record.start_time, 
+                                record.end_time, 
+                                job, 
+                                actualHourlyRate
+                            )
+                            totalDiff += wageDiff.wageDifference
+                        }
+                    }
                 }
           }
 		})
 
-		setTotalGrossIncome(totalIncome);
-    setTotalWorkHours(totalHours);
-    setTotalMealAllowance(totalMeal);
-  }, []);
+				setTotalGrossIncome(totalIncome);
+		setTotalWorkHours(totalHours);
+		setTotalMealAllowance(totalMeal);
+		setTotalBreakMinutes(totalBreak);
+		setTotalWageDifference(totalDiff);
+  	}, [jobsMap, hourlyRatesMap]);
+
+	// 시급 정보 일괄 조회
+	const fetchHourlyRates = useCallback(async (records) => {
+		if (!session || !records.length) return
+
+		const ratesMap = new Map()
+
+		// 각 기록별로 시급 조회
+		for (const record of records) {
+			if (record.wage_type === "hourly" && record.job_id && record.date) {
+				// 날짜 유효성 검사
+				if (!dayjs(record.date).isValid()) {
+					console.warn("Invalid record date:", record.date)
+					continue
+				}
+				const { data, error } = await supabase
+					.from("hourly_rate_history")
+					.select("hourly_rate")
+					.eq("job_id", record.job_id)
+					.eq("user_id", session.user.id)
+					.lte("effective_date", record.date)
+					.or("end_date.is.null,end_date.gte." + record.date)
+					.order("effective_date", { ascending: false })
+					.limit(1)
+
+				if (!error && data?.[0]) {
+					ratesMap.set(record.id, data[0].hourly_rate)
+				}
+			}
+		}
+
+		setHourlyRatesMap(ratesMap)
+	}, [session])
 
   const formatDuration = (start_time, end_time) => {
     if (!start_time || !end_time) return '0시간 0분';
@@ -119,9 +226,17 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 			setMonthlyRecords([])
 		} else {
 			setMonthlyRecords(data || [])
-			calculateMonthlySummary(data || [])
+			
+			// 시급 정보 조회 후 요약 계산
+			fetchHourlyRates(data || []).then(() => {
+				calculateMonthlySummary(data || [])
+				
+				// 주휴수당 계산
+				const weeklyAllowanceResult = calculateMonthlyWeeklyAllowance(data || [], jobs, selectedMonth)
+				setWeeklyAllowanceSummary(weeklyAllowanceResult)
+			})
 		}
-	}, [session, selectedMonth, selectedJobFilterId, calculateMonthlySummary])
+	}, [session, selectedMonth, selectedJobFilterId, calculateMonthlySummary, fetchHourlyRates, jobs])
 
 	useEffect(() => {
 		if (isOpen && selectedMonth && session) {
@@ -169,50 +284,237 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 						<p className="text-dark-navy dark:text-white text-sm font-semibold">총 식대</p>
 						<p className="text-dark-navy dark:text-white text-base">{(totalMealAllowance || 0).toLocaleString()}원</p>
 					</div>
+					{/* 🎯 이토스 디자인: 휴게시간 통계 추가 */}
+					{totalBreakMinutes > 0 && (
+						<div className="space-y-2 mb-2">
+							<div className="flex justify-between items-center">
+								<p className="text-dark-navy dark:text-white text-sm font-semibold">총 휴게시간</p>
+								<p className="text-dark-navy dark:text-white text-base">{formatBreakTime(totalBreakMinutes)}</p>
+							</div>
+							{totalWageDifference > 0 && (
+								<div className="flex justify-between items-center">
+									<p className="text-orange-600 dark:text-orange-400 text-sm font-semibold">휴게시간 차감</p>
+									<p className="text-orange-600 dark:text-orange-400 text-base">-{totalWageDifference.toLocaleString()}원</p>
+								</div>
+							)}
+						</div>
+					)}
 					<div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
 						<p className="text-dark-navy dark:text-white text-lg font-bold">총 수입</p>
-												<p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap">{(totalGrossIncome || 0).toLocaleString()}원</p>
+						<p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap">
+							{((totalGrossIncome || 0) + (weeklyAllowanceSummary.totalAllowance || 0)).toLocaleString()}원
+						</p>
 					</div>
+					
+					{/* 🎯 주휴수당 포함 안내 */}
+					{weeklyAllowanceSummary.totalAllowance > 0 && (
+						<div className="flex justify-between items-center text-xs text-gray-600 dark:text-gray-400 mt-1">
+							<span>기본 급여 + 주휴수당</span>
+							<span>
+								{(totalGrossIncome || 0).toLocaleString()}원 + {weeklyAllowanceSummary.totalAllowance.toLocaleString()}원
+							</span>
+						</div>
+					)}
 				</div>
 
-				<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3">일별 상세 내역</h3>
-				<div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md p-2">
+				{/* 🎯 Etos 디자인: 직업별 휴게시간 차감 요약 */}
+				{(() => {
+					// 직업별 휴게시간 차감 요약 계산
+					const jobBreakdownMap = new Map()
+					
+					monthlyRecords.forEach(record => {
+						if (record.wage_type === "hourly" && record.start_time && record.end_time && record.jobs) {
+							const jobId = record.job_id
+							const jobName = record.jobs.job_name || "알 수 없는 직업"
+							const jobColor = record.jobs.color || "#6B7280"
+							
+							if (!jobBreakdownMap.has(jobId)) {
+								jobBreakdownMap.set(jobId, {
+									jobName,
+									jobColor,
+									totalWageDifference: 0,
+									totalBreakMinutes: 0,
+									recordCount: 0
+								})
+							}
+							
+							const breakdown = jobBreakdownMap.get(jobId)
+							const actualHourlyRate = hourlyRatesMap.get(record.id) || 0
+							
+							if (actualHourlyRate > 0) {
+								const wageDiff = calculateBreakTimeWageDifference(
+									record.start_time, record.end_time, record.jobs, actualHourlyRate
+								)
+								const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
+								
+								breakdown.totalWageDifference += wageDiff.wageDifference
+								breakdown.totalBreakMinutes += workAndBreakTime.breakTime.breakMinutes
+								breakdown.recordCount += 1
+							}
+						}
+					})
+					
+					const jobBreakdowns = Array.from(jobBreakdownMap.values()).filter(b => b.totalWageDifference > 0)
+					
+					return jobBreakdowns.length > 0 && (
+						<div className="mb-6">
+							<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3">💸 직업별 휴게시간 차감 내역</h3>
+							<div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 space-y-3">
+								{jobBreakdowns.map(breakdown => (
+									<div key={breakdown.jobName} className="flex justify-between items-center">
+										<div className="flex items-center gap-2">
+											<div 
+												className="w-3 h-3 rounded-full"
+												style={{ backgroundColor: breakdown.jobColor }}
+											></div>
+											<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+												{breakdown.jobName}
+											</span>
+											<span className="text-xs text-gray-500 dark:text-gray-400">
+												({breakdown.recordCount}일, {formatBreakTime(breakdown.totalBreakMinutes)})
+											</span>
+										</div>
+										<span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+											-{breakdown.totalWageDifference.toLocaleString()}원
+										</span>
+									</div>
+								))}
+								<div className="pt-2 border-t border-orange-300 dark:border-orange-700">
+									<div className="flex justify-between items-center">
+										<span className="text-sm font-semibold text-orange-700 dark:text-orange-300">총 휴게시간 차감</span>
+										<span className="text-base font-bold text-orange-600 dark:text-orange-400">
+											-{totalWageDifference.toLocaleString()}원
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					)
+				})()}
+
+				{/* 🎯 Etos 디자인: 주휴수당 요약 */}
+				{weeklyAllowanceSummary.totalAllowance > 0 && (
+					<div className="mb-6">
+						<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3">💰 주휴수당 요약</h3>
+						<div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 space-y-3">
+							{/* 직업별 주휴수당 */}
+							{weeklyAllowanceSummary.jobAllowances.map(jobAllowance => (
+								<div key={jobAllowance.jobName} className="flex justify-between items-center">
+									<div className="flex items-center gap-2">
+										<div 
+											className="w-3 h-3 rounded-full"
+											style={{ backgroundColor: jobAllowance.jobColor }}
+										></div>
+										<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+											{jobAllowance.jobName}
+										</span>
+										<span className="text-xs text-gray-500 dark:text-gray-400">
+											({jobAllowance.weekCount}주)
+										</span>
+									</div>
+									<span className="text-sm font-semibold text-green-600 dark:text-green-400">
+										+{jobAllowance.totalAmount.toLocaleString()}원
+									</span>
+								</div>
+							))}
+							
+							{/* 총합 */}
+							<div className="pt-2 border-t border-green-300 dark:border-green-700">
+								<div className="flex justify-between items-center">
+									<div className="flex items-center gap-2">
+										<span className="text-sm font-semibold text-green-700 dark:text-green-300">총 주휴수당</span>
+										<span className="text-xs text-gray-500 dark:text-gray-400">
+											({weeklyAllowanceSummary.eligibleWeeks}/{weeklyAllowanceSummary.totalWeeks}주 지급)
+										</span>
+									</div>
+									<span className="text-base font-bold text-green-600 dark:text-green-400">
+										+{weeklyAllowanceSummary.totalAllowance.toLocaleString()}원
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				)}
+
+				<h3 className="text-lg font-semibold text-dark-navy dark:text-white mb-3">📋 일별 상세 내역</h3>
+				<div className="max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-md p-2">
 					{monthlyRecords.length === 0 ? (
 						<p className="text-medium-gray dark:text-light-gray text-center py-4">기록된 내역이 없습니다.</p>
 					) : (
-						            monthlyRecords.map((record) => (
-              <div key={record.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 mb-3 last:mb-0">
-                {/* Top Row: Date (Left) and Daily Wage (Right, Emphasized) */}
-                <div className="flex justify-between items-center mb-1">
-                  <p className="text-sm font-medium text-dark-navy dark:text-white">
-                    {/* 날짜 형식 변경: YYYY년 M월 D일 (ddd) -> M월 D일 (ddd) */}
-                    {dayjs(record.date).format('M월 D일 (ddd)')}
-                  </p>
-                  <p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap flex-shrink-0">
-                    +{(record.daily_wage || 0).toLocaleString()}원
-                  </p>
-                </div>
+						monthlyRecords.map((record) => (
+							<div key={record.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 mb-3 last:mb-0">
+								{/* Top Row: Date (Left) and Daily Wage (Right, Emphasized) */}
+								<div className="flex justify-between items-center mb-2">
+									<p className="text-sm font-medium text-dark-navy dark:text-white">
+										{dayjs(record.date).format('M월 D일 (ddd)')}
+									</p>
+									<p className="text-xl font-extrabold text-mint-green dark:text-mint-green-light whitespace-nowrap flex-shrink-0">
+										+{recalculateWageWithBreakTime(record).toLocaleString()}원
+									</p>
+								</div>
 
-                {/* Bottom Section: Work Details (Time, Duration, Meal Allowance) */}
-                <div className="text-xs text-medium-gray dark:text-light-gray mb-1">
-                  {/* Start ~ End Time and Work Duration */}
-                  {(record.start_time && record.end_time) && (
-                    <p>
-                      {record.start_time?.slice(0, 5) || '--:--'} ~ {record.end_time?.slice(0, 5) || '--:--'}
-                      <span className="ml-2">({formatDuration(record.start_time, record.end_time)})</span>
-                    </p>
-                  )}
-                  {/* Meal Allowance (only if > 0) */}
-                  {(record.meal_allowance || 0) > 0 && (
-                    <p>식대: {(record.meal_allowance || 0).toLocaleString()}원</p>
-                  )}
-                </div>
+								{/* 🎯 Etos 디자인: 휴게시간 상세 정보 */}
+								{record.wage_type === "hourly" && record.start_time && record.end_time && record.jobs && (() => {
+									const workAndBreakTime = calculateWorkAndBreakTime(record.start_time, record.end_time, record.jobs)
+									const actualHourlyRate = hourlyRatesMap.get(record.id) || 0
+									
+									if (workAndBreakTime.breakTime.breakMinutes === 0) return null
+									
+									const wageDiff = actualHourlyRate > 0 ? calculateBreakTimeWageDifference(
+										record.start_time, record.end_time, record.jobs, actualHourlyRate
+									) : { wageDifference: 0, breakTimePaid: 0 }
+									
+									return (
+										<div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+											<div className="flex justify-between items-center text-xs">
+												<div className="flex items-center gap-2">
+													<span className="text-blue-600 dark:text-blue-400">⏰</span>
+													<span className="text-blue-700 dark:text-blue-300">
+														휴게시간 {formatBreakTime(workAndBreakTime.breakTime.breakMinutes)}
+													</span>
+													{actualHourlyRate > 0 && (
+														<span className="text-gray-500 dark:text-gray-400">
+															(시급 {actualHourlyRate.toLocaleString()}원)
+														</span>
+													)}
+												</div>
+												{actualHourlyRate > 0 && (
+													<span className={`font-medium ${
+														workAndBreakTime.breakTime.isPaid 
+															? "text-green-600 dark:text-green-400" 
+															: "text-orange-600 dark:text-orange-400"
+													}`}>
+														{workAndBreakTime.breakTime.isPaid 
+															? `+${wageDiff.breakTimePaid.toLocaleString()}원 포함`
+															: `-${wageDiff.wageDifference.toLocaleString()}원 차감`
+														}
+													</span>
+												)}
+											</div>
+										</div>
+									)
+								})()}
 
-                {/* Bottom Row: Job Title (Colored Chip) */}
-                {record.jobs?.job_name && (
-                  <div>
-                    <span
-                      className="inline-block px-2 py-1 rounded-full text-xs font-semibold mt-1"
+								{/* Work Details (Time, Duration, Meal Allowance) */}
+								<div className="text-xs text-medium-gray dark:text-light-gray mb-1">
+									{/* Start ~ End Time and Work Duration */}
+									{(record.start_time && record.end_time) && (
+										<p>
+											{record.start_time?.slice(0, 5) || '--:--'} ~ {record.end_time?.slice(0, 5) || '--:--'}
+											<span className="ml-2">({formatDuration(record.start_time, record.end_time)})</span>
+										</p>
+									)}
+									{/* Meal Allowance (only if > 0) */}
+									{(record.meal_allowance || 0) > 0 && (
+										<p>식대: {(record.meal_allowance || 0).toLocaleString()}원</p>
+									)}
+								</div>
+
+								{/* Bottom Row: Job Title (Colored Chip) */}
+								{record.jobs?.job_name && (
+									<div>
+										<span
+											className="inline-block px-2 py-1 rounded-full text-xs font-semibold mt-1"
                       style={getJobChipStyle(record.jobs, true)}
                     >
                       {record.jobs.job_name}
@@ -225,7 +527,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 				</div>
 
 				<div className="mt-6 text-center">
-					<button onClick={onClose} className="px-6 py-3 bg-mint-green text-white rounded-full font-medium hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 text-lg font-semibold transition-all duration-200 ease-in-out transform hover:scale-105">
+					<button onClick={onClose} className="px-6 py-3 bg-mint-green text-white rounded-full hover:bg-mint-green-dark focus:outline-none focus:ring-2 focus:ring-mint-green focus:ring-opacity-50 text-lg font-semibold transition-all duration-200 ease-in-out transform hover:scale-105">
 						닫기
 					</button>
 				</div>

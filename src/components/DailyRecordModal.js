@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import dayjs from "dayjs"
 import { parseHHmm } from "../utils/time"
 import { supabase } from "../supabaseClient" // Supabase 클라이언트 임포트
@@ -7,6 +7,7 @@ import { useConfirm } from "../contexts/ConfirmContext"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { getJobChipStyle } from "../constants/JobColors"
+import { calculateWorkAndBreakTime, formatBreakTime, calculateBreakTimeWageDifference } from "../utils/breakTime"
 
 const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, recordToEdit, size = "medium", prefill }) => {
 	const showToast = useToast()
@@ -22,6 +23,10 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 	const [selectedJobId, setSelectedJobId] = useState(null) // 선택된 직업 ID 상태
 	const [wageType, setWageType] = useState("hourly") // 급여 방식: "hourly" 또는 "daily"
 	const [fixedDailyWage, setFixedDailyWage] = useState(0) // 일급제 직접 입력 금액
+	const [breakTimeInfo, setBreakTimeInfo] = useState({ breakMinutes: 0, breakHours: 0, isPaid: false }) // 휴게시간 정보
+	const [showRecalculationNotice, setShowRecalculationNotice] = useState(false) // 재계산 안내 표시 여부
+	const [breakTimeWageDiff, setBreakTimeWageDiff] = useState({ breakTimePaid: 0, breakTimeUnpaid: 0, wageDifference: 0 }) // 휴게시간 차액 정보
+
 
 	const [showModal, setShowModal] = useState(false) // 모달의 실제 렌더링 여부
 	const [animateModal, setAnimateModal] = useState(false) // 애니메이션 클래스 적용 여부
@@ -37,6 +42,10 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		setWageType("hourly")
 		setFixedDailyWage(0)
 		setSelectedJobId(null)
+		setBreakTimeInfo({ breakMinutes: 0, breakHours: 0, isPaid: false })
+		setShowRecalculationNotice(false)
+		setBreakTimeWageDiff({ breakTimePaid: 0, breakTimeUnpaid: 0, wageDifference: 0 })
+
 	}, [])
 
 	// jobs가 변경될 때만 첫 번째 job으로 설정
@@ -64,6 +73,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				setNotes(recordToEdit.notes || "")
 				setDailyWage(recordToEdit.daily_wage || 0)
 				setWageType(recordToEdit.wage_type || "hourly")
+
 				if (recordToEdit.wage_type === "daily") {
 					setFixedDailyWage(recordToEdit.daily_wage || 0)
 				}
@@ -138,8 +148,14 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 		fetchHourlyRateForDate()
 	}, [session, selectedJobId, selectedDate])
 
-	// 시간 또는 시급이 변경될 때 일급을 계산하는 useEffect
+	// 현재 선택된 직업 정보 메모이제이션
+	const currentJob = useMemo(() => {
+		return jobs.find(job => job.id === selectedJobId)
+	}, [jobs, selectedJobId])
+
+	// 시간 또는 시급이 변경될 때 일급과 휴게시간을 계산하는 useEffect
 	useEffect(() => {
+		
 		if (wageType === "hourly") {
 			// 시급제: 시간 기반 계산
 			if (startTime && endTime && hourlyRateForDate !== 0) {
@@ -147,27 +163,63 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
                 let endMoment = parseHHmm(endTime)
                 if (!startMoment || !endMoment) {
                     setDailyWage(0)
+                    setBreakTimeInfo({ breakMinutes: 0, breakHours: 0, isPaid: false })
                     return
                 }
                 if (endMoment.isBefore(startMoment)) {
                     setTimeError(true)
                     setDailyWage(0)
+                    setBreakTimeInfo({ breakMinutes: 0, breakHours: 0, isPaid: false })
                     return
                 }
 				setTimeError(false)
 
-                const hours = endMoment.diff(startMoment, "minute") / 60
-				const calculatedWage = Math.round(hours * hourlyRateForDate) + mealAllowance
+				// 휴게시간 포함 계산
+				const workAndBreakTime = calculateWorkAndBreakTime(startTime, endTime, currentJob)
+				setBreakTimeInfo(workAndBreakTime.breakTime)
+
+				// 💰 휴게시간 차액 계산
+				const wageDiff = calculateBreakTimeWageDifference(startTime, endTime, currentJob, hourlyRateForDate)
+				setBreakTimeWageDiff(wageDiff)
+
+				// 급여 계산 (휴게시간 유급/무급 고려)
+				let payableHours = workAndBreakTime.workHours
+				if (workAndBreakTime.breakTime.isPaid) {
+					payableHours = workAndBreakTime.totalHours // 휴게시간도 급여에 포함
+				}
+				
+				const calculatedWage = Math.round(payableHours * hourlyRateForDate) + mealAllowance
+				
+				// 편집 모드에서 기존 급여와 새 계산이 다른 경우 안내 표시
+				if (recordId && recordToEdit && Math.abs(calculatedWage - (recordToEdit?.daily_wage || 0)) > 100) {
+					setShowRecalculationNotice(true)
+				} else {
+					setShowRecalculationNotice(false)
+				}
+				
 				setDailyWage(calculatedWage)
 			} else {
 				setDailyWage(0)
+				setBreakTimeInfo({ breakMinutes: 0, breakHours: 0, isPaid: false })
+				setBreakTimeWageDiff({ breakTimePaid: 0, breakTimeUnpaid: 0, wageDifference: 0 })
 			}
 		} else if (wageType === "daily") {
 			// 일급제: 고정 일급 + 식대
 			setTimeError(false)
 			setDailyWage(fixedDailyWage + mealAllowance)
+			
+			// 일급제에서도 휴게시간 정보 표시
+			if (startTime && endTime) {
+				const workAndBreakTime = calculateWorkAndBreakTime(startTime, endTime, currentJob)
+				setBreakTimeInfo(workAndBreakTime.breakTime)
+				// 일급제에서는 차액 정보 초기화
+				setBreakTimeWageDiff({ breakTimePaid: 0, breakTimeUnpaid: 0, wageDifference: 0 })
+			} else {
+				setBreakTimeInfo({ breakMinutes: 0, breakHours: 0, isPaid: false })
+				setBreakTimeWageDiff({ breakTimePaid: 0, breakTimeUnpaid: 0, wageDifference: 0 })
+			}
 		}
-	}, [wageType, startTime, endTime, hourlyRateForDate, mealAllowance, fixedDailyWage])
+	}, [wageType, startTime, endTime, hourlyRateForDate, mealAllowance, fixedDailyWage, currentJob, recordId, recordToEdit])
 
 	const handleSave = async () => {
 		if (!session || !selectedJobId || !selectedDate) {
@@ -230,14 +282,20 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 			notes: notes,
 			wage_type: wageType,
 			work_description: notes,
+
 		}
 
 		if (wageType === "hourly") {
-			// 시급제: 시간 + 계산된 일급
-            const startMoment = parseHHmm(startTime)
-            const endMoment = parseHHmm(endTime)
-            const hours = endMoment.diff(startMoment, "minute") / 60
-			const calculatedDailyWage = Math.round(hours * hourlyRateForDate) + mealAllowance
+			// 시급제: 휴게시간 정책을 고려한 정확한 계산
+			const workAndBreakTime = calculateWorkAndBreakTime(startTime, endTime, currentJob)
+			
+			// 급여 대상 시간 계산 (휴게시간 유급/무급 고려)
+			let payableHours = workAndBreakTime.workHours // 기본적으로 실 근무시간
+			if (workAndBreakTime.breakTime.isPaid) {
+				payableHours = workAndBreakTime.totalHours // 휴게시간도 급여에 포함
+			}
+			
+			const calculatedDailyWage = Math.round(payableHours * hourlyRateForDate) + mealAllowance
 			
 			newRecord = {
 				...newRecord,
@@ -460,6 +518,8 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-mint-green focus:border-mint-green sm:text-sm bg-white dark:bg-charcoal-gray text-dark-navy dark:text-white"
 						/>
 					</div>
+
+					
 					<div>
 						<label htmlFor="notes" className="block text-sm font-medium text-medium-gray dark:text-light-gray">
 							비고
@@ -474,6 +534,64 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				</div>
 
 				<div className="mt-6 text-right text-lg font-semibold text-mint-green">예상 일급: {dailyWage.toLocaleString()}원</div>
+				
+				{/* 🎯 이토스 디자인: 휴게시간 정보 실시간 표시 */}
+				{breakTimeInfo.breakMinutes > 0 && (
+					<div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+						<div className="flex justify-between items-center text-sm">
+							<span className="text-blue-700 dark:text-blue-300 font-medium">
+								📋 예상 휴게시간
+							</span>
+							<span className="text-blue-800 dark:text-blue-200 font-semibold">
+								{formatBreakTime(breakTimeInfo.breakMinutes)}
+							</span>
+						</div>
+						
+						{/* 💰 급여 영향 정보 */}
+						{wageType === "hourly" && breakTimeInfo.breakMinutes > 0 && (
+							<div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700">
+								{breakTimeInfo.isPaid ? (
+									<div className="flex justify-between items-center text-xs">
+										<span className="text-green-600 dark:text-green-400">💰 휴게시간 급여 포함</span>
+										<span className="text-green-600 dark:text-green-400 font-medium">
+											+{breakTimeWageDiff.breakTimePaid.toLocaleString()}원
+										</span>
+									</div>
+								) : (
+									<div className="flex justify-between items-center text-xs">
+										<span className="text-orange-600 dark:text-orange-400">💸 휴게시간 무급 차감</span>
+										<span className="text-orange-600 dark:text-orange-400 font-medium">
+											-{breakTimeWageDiff.wageDifference.toLocaleString()}원
+										</span>
+									</div>
+								)}
+							</div>
+						)}
+						
+						{wageType === "daily" && (
+							<div className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+								ℹ️ 일급제는 휴게시간이 급여에 영향 없음
+							</div>
+						)}
+					</div>
+				)}
+				
+				{/* 🎯 이토스 디자인: 재계산 안내 메시지 */}
+				{showRecalculationNotice && (
+					<div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+						<div className="flex items-start space-x-2">
+							<span className="text-amber-600 dark:text-amber-400 text-lg">⚡</span>
+							<div className="flex-1">
+								<p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+									휴게시간 정책 적용으로 급여가 재계산되었습니다
+								</p>
+								<p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+									기존: {(recordToEdit?.daily_wage || 0).toLocaleString()}원 → 새 계산: {dailyWage.toLocaleString()}원
+								</p>
+							</div>
+						</div>
+					</div>
+				)}
 
                 <div className="mt-6 flex flex-col-reverse gap-3">
 					{recordId && (

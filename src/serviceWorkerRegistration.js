@@ -19,7 +19,7 @@ export function register(config) {
 			return
 		}
 
-				window.addEventListener("load", () => {
+		window.addEventListener("load", () => {
 			const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`
 
 			if (isLocalhost) {
@@ -28,7 +28,7 @@ export function register(config) {
 
 				// Add some additional logging to localhost, pointing developers to the
 				// service worker/PWA documentation.
-                navigator.serviceWorker.ready.then(() => {})
+				navigator.serviceWorker.ready.then(() => {})
 			} else {
 				// Is not localhost. Just register service worker
 				registerValidSW(swUrl, config)
@@ -49,20 +49,21 @@ function registerValidSW(swUrl, config) {
 				installingWorker.onstatechange = () => {
 					if (installingWorker.state === "installed") {
 						if (navigator.serviceWorker.controller) {
-							// At this point, the updated precached content has been fetched,
-							// but the previous service worker will still serve the older
-							// content until all client tabs are closed.
-                            
+							// 새 업데이트 사용 가능
+							console.log("🚀 새 업데이트가 있습니다! 새로고침하여 최신 기능을 사용하세요.")
 
 							// Execute callback
 							if (config && config.onUpdate) {
 								config.onUpdate(registration)
+							} else {
+								// 기본 업데이트 처리
+								if (window.confirm('새 업데이트가 있습니다. 지금 새로고침하시겠습니까?')) {
+									window.location.reload()
+								}
 							}
 						} else {
-							// At this point, everything has been precached.
-							// It's the perfect time to display a
-							// "Content is cached for offline use." message.
-                            
+							// 초기 설치 완료
+							console.log("💾 시급이요가 오프라인에서도 사용 가능합니다.")
 
 							// Execute callback
 							if (config && config.onSuccess) {
@@ -99,7 +100,7 @@ function checkValidServiceWorker(swUrl, config) {
 			}
 		})
 		.catch(() => {
-            
+			console.log("No internet connection found. App is running in offline mode.")
 		})
 }
 
