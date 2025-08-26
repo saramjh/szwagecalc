@@ -167,9 +167,20 @@ export function calculateMonthlyWeeklyAllowance(records, jobs, monthDate) {
   let totalAllowance = 0
   let eligibleWeeks = 0
   const jobAllowances = new Map()
+  const eligibleWeekDetails = []; // New array to store details of eligible weeks
   
   // 각 주별로 계산
   for (const weekStart of weeks) {
+    const weekEnd = weekStart.endOf('isoWeek'); // Get the end of the current week
+
+    // Only include allowance if the week's end date falls within the target month
+    if (weekEnd.month() !== month.month()) {
+      continue; // Skip if week ends in a different month
+    }
+
+    let weekTotalAllowance = 0;
+    const weekJobAllowances = new Map();
+
     const weeklyRecords = getWeeklyRecords(records, weekStart)
     
     // 직업별 주휴수당 계산
@@ -181,7 +192,8 @@ export function calculateMonthlyWeeklyAllowance(records, jobs, monthDate) {
       if (allowanceResult.eligible && allowanceResult.allowanceAmount > 0) {
         totalAllowance += allowanceResult.allowanceAmount
         eligibleWeeks++
-        
+        weekTotalAllowance += allowanceResult.allowanceAmount; // Add to week's total
+
         if (!jobAllowances.has(job.id)) {
           jobAllowances.set(job.id, {
             jobName: job.job_name,
@@ -190,11 +202,33 @@ export function calculateMonthlyWeeklyAllowance(records, jobs, monthDate) {
             weekCount: 0
           })
         }
-        
         const jobSummary = jobAllowances.get(job.id)
         jobSummary.totalAmount += allowanceResult.allowanceAmount
         jobSummary.weekCount++
+
+        // Populate weekJobAllowances for eligibleWeekDetails
+        if (!weekJobAllowances.has(job.id)) {
+          weekJobAllowances.set(job.id, {
+            jobName: job.job_name,
+            jobColor: job.color,
+            allowanceAmount: 0,
+            totalWorkHours: 0,
+            reason: allowanceResult.reason
+          });
+        }
+        const weekJobSummary = weekJobAllowances.get(job.id);
+        weekJobSummary.allowanceAmount += allowanceResult.allowanceAmount;
+        weekJobSummary.totalWorkHours += allowanceResult.totalWorkHours;
       }
+    }
+
+    if (weekTotalAllowance > 0) {
+      eligibleWeekDetails.push({
+        weekStart: weekStart.format('YYYY-MM-DD'),
+        weekEnd: weekEnd.format('YYYY-MM-DD'),
+        totalAllowance: weekTotalAllowance,
+        jobAllowances: Array.from(weekJobAllowances.values())
+      });
     }
   }
   
@@ -202,7 +236,8 @@ export function calculateMonthlyWeeklyAllowance(records, jobs, monthDate) {
     totalAllowance,
     eligibleWeeks,
     totalWeeks: weeks.length,
-    jobAllowances: Array.from(jobAllowances.values())
+    jobAllowances: Array.from(jobAllowances.values()),
+    eligibleWeekDetails // Remove placeholder
   }
 }
 
@@ -226,6 +261,7 @@ export function getCurrentWeekProgress(records, job, referenceDate = new Date())
   const minHours = job?.weekly_allowance_min_hours || 15.0
   const progress = Math.min(100, (result.totalWorkHours / minHours) * 100)
   
+  const monthAttributedTo = endOfWeek.month(); // 0-indexed month of the week's end
   return {
     ...result,
     weekStart: startOfWeek.format('YYYY-MM-DD'),
@@ -234,7 +270,8 @@ export function getCurrentWeekProgress(records, job, referenceDate = new Date())
     daysPassed,
     progressPercent: Math.round(progress),
     hoursNeeded: Math.max(0, minHours - result.totalWorkHours),
-    isCurrentWeek: true
+    isCurrentWeek: true,
+    monthAttributedTo // Add the month index this allowance is attributed to
   }
 }
 
@@ -246,14 +283,24 @@ export function clearWeeklyAllowanceCache() {
 }
 
 /**
- * 주간을 문자열로 포맷
- * @param {string|Date} weekStart - 주 시작일
- * @returns {string} 예: "12월 2주차 (12/9~12/15)"
+ * 주간을 문자열로 포맷 (ISO Week 기준)
+ * @param {string|Date} weekStart - 주 시작일 (ISO Week 기준)
+ * @param {string|Date} targetMonthDate - 이 주가 귀속될 월 (주휴수당 계산 기준)
+ * @returns {string} 예: "7/24~7/30 (7월 귀속)" 또는 "7/31~8/6 (8월 귀속)"
  */
-export function formatWeekRange(weekStart) {
-  const start = dayjs(weekStart)
-  const end = start.endOf('isoWeek')
-  const weekOfMonth = Math.ceil(start.date() / 7)
-  
-  return `${start.format('M월')} ${weekOfMonth}주차 (${start.format('M/D')}~${end.format('M/D')})`
+export function formatWeekRange(weekStart, targetMonthDate) {
+  const start = dayjs(weekStart);
+  const end = start.endOf('isoWeek');
+  const targetMonth = dayjs(targetMonthDate);
+
+  let monthAttribution = '';
+  if (end.month() === targetMonth.month()) {
+    monthAttribution = ` (${targetMonth.format('M월')} 귀속)`;
+  } else {
+    // This case should ideally not happen if eligibleWeekDetails is correctly filtered
+    // but as a fallback, attribute to the month the week ends in.
+    monthAttribution = ` (${end.format('M월')} 귀속)`;
+  }
+
+  return `${start.format('M/D')}~${end.format('M/D')}${monthAttribution}`;
 }

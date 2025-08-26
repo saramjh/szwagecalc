@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react"
 import dayjs from "dayjs"
+import { dateCalc } from "../utils/dayjsUtils" // Import dateCalc
 import "dayjs/locale/ko"
 import { Target, FileText, TrendingDown, Clock } from "lucide-react"
 import { supabase } from "../supabaseClient"
 import { getJobChipStyle } from "../constants/JobColors"
 import { parseHHmm } from "../utils/time"
 import { calculateWorkAndBreakTime, formatBreakTime, calculateBreakTimeWageDifference } from "../utils/breakTime"
-import { calculateMonthlyWeeklyAllowance } from "../utils/weeklyAllowance"
+import { useReportCache } from "../contexts/ReportCacheContext";
+import { calculateMonthlyWeeklyAllowance, formatWeekRange } from "../utils/weeklyAllowance"
 
 // 휴게시간 정책을 반영한 급여 재계산 헬퍼 함수
 function recalculateWageWithBreakTime(record) {
@@ -60,6 +62,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 
 	const [showModal, setShowModal] = useState(false) // 모달의 실제 렌더링 여부
 	const [animateModal, setAnimateModal] = useState(false) // 애니메이션 클래스 적용 여부
+  const { getCachedReport, setCachedReport } = useReportCache();
 
 	useEffect(() => {
 		if (isOpen) {
@@ -86,6 +89,13 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 		jobs.forEach(job => map.set(job.id, job))
 		return map
 	}, [jobs])
+
+  // 🎯 선택된 월의 기록만 필터링 (메모이제이션)
+  const recordsForSelectedMonth = useMemo(() => {
+    if (!monthlyRecords || !selectedMonth) return [];
+    const targetMonth = dayjs(selectedMonth).month();
+    return monthlyRecords.filter(record => dayjs(record.date).month() === targetMonth);
+  }, [monthlyRecords, selectedMonth]);
 
 	const calculateMonthlySummary = useCallback((records) => {
 		let totalIncome = 0
@@ -209,41 +219,58 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
   };
 
   const fetchMonthlyRecords = useCallback(async () => {
-		if (!session) return
+    if (!session) return;
 
-    const startOfMonth = dayjs(selectedMonth).startOf("month").format("YYYY-MM-DD")
-    const endOfMonth = dayjs(selectedMonth).endOf("month").format("YYYY-MM-DD")
+    const monthStr = dayjs(selectedMonth).format('YYYY-MM');
+    const cacheKey = `${monthStr}-${selectedJobFilterId}`;
+    const cachedData = getCachedReport(monthStr, selectedJobFilterId);
 
-		let query = supabase.from("work_records").select("*, jobs(job_name, color)").eq("user_id", session.user.id).gte("date", startOfMonth).lte("date", endOfMonth)
+    if (cachedData) {
+      setMonthlyRecords(cachedData);
+      return;
+    }
 
-		if (selectedJobFilterId !== "all") {
-			query = query.eq("job_id", selectedJobFilterId)
-		}
+    const { startDate: reportStartDate, endDate: reportEndDate } = dateCalc.getReportBoundaries(dayjs(selectedMonth).year(), dayjs(selectedMonth).month());
 
-		const { data, error } = await query.order("date", { ascending: true })
+    let query = supabase.from("work_records").select("*, jobs(job_name, color)").eq("user_id", session.user.id).gte("date", reportStartDate.format("YYYY-MM-DD")).lte("date", reportEndDate.format("YYYY-MM-DD"));
 
-		if (error) {
-			console.error("Error fetching monthly work records:", error)
-			setMonthlyRecords([])
-		} else {
-			setMonthlyRecords(data || [])
-			
-			// 시급 정보 조회 후 요약 계산
-			fetchHourlyRates(data || []).then(() => {
-				calculateMonthlySummary(data || [])
-				
-				// 주휴수당 계산
-				const weeklyAllowanceResult = calculateMonthlyWeeklyAllowance(data || [], jobs, selectedMonth)
-				setWeeklyAllowanceSummary(weeklyAllowanceResult)
-			})
-		}
-	}, [session, selectedMonth, selectedJobFilterId, calculateMonthlySummary, fetchHourlyRates, jobs])
+    if (selectedJobFilterId !== "all") {
+      query = query.eq("job_id", selectedJobFilterId);
+    }
+
+    const { data, error } = await query.order("date", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching monthly work records:", error);
+      setMonthlyRecords([]);
+    } else {
+      const allFetchedRecords = data || [];
+      setCachedReport(monthStr, selectedJobFilterId, allFetchedRecords);
+      setMonthlyRecords(allFetchedRecords);
+    }
+  }, [session, selectedMonth, selectedJobFilterId, getCachedReport, setCachedReport]);
 
 	useEffect(() => {
 		if (isOpen && selectedMonth && session) {
 			fetchMonthlyRecords()
 		}
-	}, [isOpen, selectedMonth, session, fetchMonthlyRecords])
+	}, [isOpen, selectedMonth, session, fetchMonthlyRecords, selectedJobFilterId])
+
+  // 🎯 계산 로직을 monthlyRecords가 아닌 필터링된 recordsForSelectedMonth 기준으로 실행
+	useEffect(() => {
+    if (monthlyRecords.length > 0) {
+      // 시급 정보는 모든 기록에 대해 조회
+      fetchHourlyRates(monthlyRecords).then(() => {
+        // 월간 요약은 필터링된 기록으로 계산
+        calculateMonthlySummary(recordsForSelectedMonth);
+        
+        // 주휴수당은 필터링되지 않은 전체 기록으로 계산
+        const weeklyAllowanceResult = calculateMonthlyWeeklyAllowance(monthlyRecords, jobs, selectedMonth);
+        setWeeklyAllowanceSummary(weeklyAllowanceResult);
+      });
+    }
+  }, [monthlyRecords, recordsForSelectedMonth, jobs, selectedMonth, fetchHourlyRates, calculateMonthlySummary]);
+
 
 	if (!showModal) return null
 
@@ -309,12 +336,18 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 					
 					{/* 🎯 주휴수당 포함 안내 */}
 					{weeklyAllowanceSummary.totalAllowance > 0 && (
-						<div className="flex justify-between items-center text-xs text-gray-600 dark:text-gray-400 mt-1">
-							<span>기본 급여 + 주휴수당</span>
-							<span>
-								{(totalGrossIncome || 0).toLocaleString()}원 + {weeklyAllowanceSummary.totalAllowance.toLocaleString()}원
-							</span>
-						</div>
+						<>
+							<div className="flex justify-between items-center text-xs text-gray-600 dark:text-gray-400 mt-1">
+								<span>기본 급여 + 주휴수당</span>
+								<span>
+									{(totalGrossIncome || 0).toLocaleString()}원 + {weeklyAllowanceSummary.totalAllowance.toLocaleString()}원
+								</span>
+							</div>
+							<div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+								<p>참고: 월 경계를 포함하는 주의 주휴수당은</p>
+								<p>해당 주가 끝나는 달의 급여에 합산됩니다.</p>
+							</div>
+						</>
 					)}
 				</div>
 
@@ -323,7 +356,7 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 					// 직업별 휴게시간 차감 요약 계산
 					const jobBreakdownMap = new Map()
 					
-					monthlyRecords.forEach(record => {
+					recordsForSelectedMonth.forEach(record => {
 						if (record.wage_type === "hourly" && record.start_time && record.end_time && record.jobs) {
 							const jobId = record.job_id
 							const jobName = record.jobs.job_name || "알 수 없는 직업"
@@ -404,24 +437,37 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 							주휴수당 요약
 						</h3>
 						<div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 space-y-3">
-							{/* 직업별 주휴수당 */}
-							{weeklyAllowanceSummary.jobAllowances.map(jobAllowance => (
-								<div key={jobAllowance.jobName} className="flex justify-between items-center">
-									<div className="flex items-center gap-2">
-										<div 
-											className="w-3 h-3 rounded-full"
-											style={{ backgroundColor: jobAllowance.jobColor }}
-										></div>
-										<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-											{jobAllowance.jobName}
-										</span>
-										<span className="text-xs text-gray-500 dark:text-gray-400">
-											({jobAllowance.weekCount}주)
-										</span>
+							{/* 주차별 주휴수당 상세 */}
+							{weeklyAllowanceSummary.eligibleWeekDetails.map(weekDetail => (
+								<div key={weekDetail.weekStart} className="rounded-lg border p-3 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 mb-2 last:mb-0">
+									<div className="flex items-center justify-between mb-2">
+										<div className="flex items-center gap-2">
+											<span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+												{formatWeekRange(weekDetail.weekStart, selectedMonth)}
+											</span>
+										</div>
+										<div className="text-right">
+											<span className="text-sm font-semibold text-green-600 dark:text-green-400">
+												+{weekDetail.totalAllowance.toLocaleString()}원
+											</span>
+										</div>
 									</div>
-									<span className="text-sm font-semibold text-green-600 dark:text-green-400">
-										+{jobAllowance.totalAmount.toLocaleString()}원
-									</span>
+									<div className="space-y-1">
+										{weekDetail.jobAllowances.map(jobAllowance => (
+											<div key={jobAllowance.jobName} className="flex items-center justify-between text-xs">
+												<div className="flex items-center gap-1.5">
+													<div className="w-2 h-2 rounded-full" style={{ backgroundColor: jobAllowance.jobColor }}></div>
+													<span className="text-gray-600 dark:text-gray-400">{jobAllowance.jobName}</span>
+													<span className="text-gray-500 dark:text-gray-500">{jobAllowance.totalWorkHours.toFixed(1)}h</span>
+												</div>
+												<div className="text-right">
+													<span className="text-green-600 dark:text-green-400 font-medium">
+														+{jobAllowance.allowanceAmount.toLocaleString()}원
+													</span>
+												</div>
+											</div>
+										))}
+									</div>
 								</div>
 							))}
 							
@@ -458,10 +504,10 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 					일별 상세 내역
 				</h3>
 				<div className="max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-md p-2">
-					{monthlyRecords.length === 0 ? (
+					{recordsForSelectedMonth.length === 0 ? (
 						<p className="text-medium-gray dark:text-light-gray text-center py-4">기록된 내역이 없습니다.</p>
 					) : (
-						monthlyRecords.map((record) => (
+						recordsForSelectedMonth.map((record) => (
 							<div key={record.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 mb-3 last:mb-0">
 								{/* Top Row: Date (Left) and Daily Wage (Right, Emphasized) */}
 								<div className="flex justify-between items-center mb-2">

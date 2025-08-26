@@ -6,6 +6,7 @@ import { useModalManager } from "../utils/modalManager"
 import { supabase } from "../supabaseClient" // Supabase 클라이언트 임포트
 import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
+import { useReportCache } from "../contexts/ReportCacheContext";
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { getJobChipStyle } from "../constants/JobColors"
@@ -15,6 +16,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 	const showToast = useToast()
 	const showConfirm = useConfirm()
 	const { openModal, closeModal } = useModalManager()
+  const { clearCache: clearReportCache } = useReportCache();
 	const [startTime, setStartTime] = useState("")
 	const [endTime, setEndTime] = useState("")
 	const [mealAllowance, setMealAllowance] = useState(0)
@@ -328,6 +330,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				if (error) throw error
 				showToast("저장했어요", "success")
 			}
+            clearReportCache(); // 보고서 캐시 무효화
             // Broadcast change for screens not subscribed or throttled
             try { window.dispatchEvent(new Event('work-records-changed')) } catch (_) {}
             onClose()
@@ -353,6 +356,7 @@ const DailyRecordModal = ({ selectedDate, isOpen, onClose, session, jobs, record
 				}
 
 				showToast("삭제했어요", "success")
+        clearReportCache(); // 보고서 캐시 무효화
 				onClose() // 모달 닫기
 				resetForm() // 폼 초기화
 			} catch (error) {

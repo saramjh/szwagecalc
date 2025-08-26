@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient"
 import { useModalManager } from "../utils/modalManager"
 import { useToast } from "../contexts/ToastContext"
 import { useConfirm } from "../contexts/ConfirmContext"
+import { useReportCache } from "../contexts/ReportCacheContext";
 // 🚀 트리셰이킹 최적화: 개별 import
 // 🚀 트리셰이킹 최적화: 필요한 아이콘만 import
 import { PencilIcon, Trash2Icon, PlusIcon, Target, Calendar, CheckCircle, XCircle } from "lucide-react"
@@ -21,6 +22,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 	const { openModal, closeModal } = useModalManager()
 	const showToast = useToast()
 	const showConfirm = useConfirm()
+  const { clearCache: clearReportCache } = useReportCache();
 	const [newJobName, setNewJobName] = useState("")
 	const [newJobDescription, setNewJobDescription] = useState("")
 	const [newPayday, setNewPayday] = useState("")
@@ -115,6 +117,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 				showToast("직업 정보를 바꿨어요", "success")
 				clearBreakTimeCache() // 휴게시간 캐시 무효화
 				clearWeeklyAllowanceCache() // 주휴수당 캐시 무효화
+        clearReportCache(); // 월별 보고서 캐시 무효화
 				fetchJobs()
 				
 				// 🎯 캐시 무효화: 직업 수정으로 인한 급여 재계산 필요
@@ -137,6 +140,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 				showToast("새로운 직업을 추가했어요", "success")
 				clearBreakTimeCache() // 휴게시간 캐시 무효화
 				clearWeeklyAllowanceCache() // 주휴수당 캐시 무효화
+        clearReportCache(); // 월별 보고서 캐시 무효화
 				fetchJobs()
 				
 				// 🎯 캐시 무효화: 직업 변경으로 인한 급여 재계산 필요
@@ -162,6 +166,7 @@ const JobManagementModal = ({ isOpen, onClose, session, jobs, fetchJobs }) => {
 				showToast("삭제했어요", "success")
 				clearBreakTimeCache() // 휴게시간 캐시 무효화
 				clearWeeklyAllowanceCache() // 주휴수당 캐시 무효화
+        clearReportCache(); // 월별 보고서 캐시 무효화
 				fetchJobs()
 				
 				// 🎯 캐시 무효화: 직업 삭제로 인한 급여 재계산 필요

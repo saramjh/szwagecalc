@@ -5,6 +5,7 @@ import { supabase } from "./supabaseClient"
 import dayjs from "dayjs"
 import { ToastProvider, useToast } from "./contexts/ToastContext"
 import { ConfirmProvider } from "./contexts/ConfirmContext"
+import { ReportCacheProvider } from "./contexts/ReportCacheContext";
 import { warmupBreakTimeCache, calculateWorkAndBreakTime } from "./utils/breakTime"
 // import { clearWeeklyAllowanceCache } from "./utils/weeklyAllowance" // 현재 미사용
 
@@ -467,7 +468,9 @@ function App() {
 	return (
 		<ToastProvider>
 			<ConfirmProvider>
-				<AppContent />
+				<ReportCacheProvider>
+					<AppContent />
+				</ReportCacheProvider>
 			</ConfirmProvider>
 		</ToastProvider>
 	)

@@ -66,6 +66,17 @@ export const dateCalc = {
     return dayjs(date).endOf('isoWeek')
   },
 
+  // 월별 리포트의 데이터 조회 범위(주의 시작/종료일 기준)
+  getReportBoundaries(year, month) {
+    const startOfMonth = dayjs(new Date(year, month, 1)).startOf('month');
+    const endOfMonth = dayjs(new Date(year, month, 1)).endOf('month');
+
+    const startDate = startOfMonth.startOf('isoWeek');
+    const endDate = endOfMonth.endOf('isoWeek');
+
+    return { startDate, endDate };
+  },
+
   // 두 날짜 간의 차이 (일 단위)
   diffInDays(date1, date2) {
     return dayjs(date1).diff(dayjs(date2), 'day')

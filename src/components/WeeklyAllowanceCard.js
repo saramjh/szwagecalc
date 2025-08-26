@@ -12,10 +12,15 @@ const WeeklyAllowanceCard = ({ workRecords, jobs, selectedDate = new Date() }) =
   }
 
   // 현재 주의 진행 상황 계산
+  const currentMonthIndex = dayjs(selectedDate).month(); // Get the 0-indexed month of the selected date
+
   const weekProgresses = enabledJobs.map(job => {
     const progress = getCurrentWeekProgress(workRecords, job, selectedDate)
     return { job, progress }
-  })
+  }).filter(({ progress }) => {
+    // Only include progress if the allowance is attributed to the current month being viewed
+    return progress.monthAttributedTo === currentMonthIndex;
+  });
 
   // 주휴수당 대상인 직업이 하나라도 있는지 확인
   const hasEligibleJobs = weekProgresses.some(({ progress }) => progress.eligible)
@@ -25,7 +30,7 @@ const WeeklyAllowanceCard = ({ workRecords, jobs, selectedDate = new Date() }) =
     return null // 아무 진행도 없으면 숨김
   }
 
-  const currentWeek = formatWeekRange(dayjs(selectedDate).startOf('isoWeek'))
+  const currentWeek = formatWeekRange(dayjs(selectedDate).startOf('isoWeek'), selectedDate)
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">

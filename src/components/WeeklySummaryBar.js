@@ -38,7 +38,7 @@ const WeeklySummaryBar = ({ selectedDate, workRecords, jobs }) => {
       weeks.push({
         start: weekStart,
         end: weekEnd,
-        label: formatWeekRange(weekStart),
+        label: formatWeekRange(weekStart, currentMonth), // Pass currentMonth for correct attribution
         isCurrentWeek: dayjs().isBetween(weekStart, weekEnd, 'day', '[]')
       })
     }
@@ -47,6 +47,11 @@ const WeeklySummaryBar = ({ selectedDate, workRecords, jobs }) => {
 
   // 🎯 Etos 디자인: 토스 스타일 요약 데이터 계산
   const summary = weeks.reduce((acc, week) => {
+    // Only include allowance if the week's end date falls within the current month
+    if (week.end.month() !== currentMonth.month()) {
+      return acc; // Skip if week ends in a different month
+    }
+
     const weeklyRecords = getWeeklyRecords(workRecords, week.start)
     let weekTotal = 0
     let weekEligible = false
@@ -172,11 +177,16 @@ const WeeklySummaryBar = ({ selectedDate, workRecords, jobs }) => {
       
       {/* 🎯 토스 스타일 확장 영역 (접기/펼치기) */}
       <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-        isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        isExpanded ? 'min-h-fit opacity-100' : 'max-h-0 opacity-0'
       }`}>
         <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
           <div className="space-y-3 mt-3">
             {weeks.map((week, index) => {
+              // Only render this week's details if its allowance is attributed to the current month
+              if (week.end.month() !== currentMonth.month()) {
+                return null;
+              }
+
               const weeklyRecords = getWeeklyRecords(workRecords, week.start)
               
               // 각 직업별 주휴수당 계산
