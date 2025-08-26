@@ -222,7 +222,6 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
     if (!session) return;
 
     const monthStr = dayjs(selectedMonth).format('YYYY-MM');
-    const cacheKey = `${monthStr}-${selectedJobFilterId}`;
     const cachedData = getCachedReport(monthStr, selectedJobFilterId);
 
     if (cachedData) {
