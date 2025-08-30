@@ -490,22 +490,30 @@ useEffect(() => {
                   const weekRange = `${start.format('M/D')} - ${end.format('M/D')}`
                   const isCurrentWeek = dayjs().isBetween(start, end, 'day', '[]')
                   
-                  // 날짜별 합계 맵 (YYYY-MM-DD → sum)
-                  const totalsByDate = (workRecords || []).reduce((map, r) => {
+                  // 날짜별 기록 그룹 맵 (YYYY-MM-DD → records[])
+                  const recordsByDate = (workRecords || []).reduce((map, r) => {
                     const key = dayjs(r.date).format("YYYY-MM-DD")
-                    map[key] = (map[key] || 0) + (r.daily_wage || 0)
+                    if (!map[key]) {
+                      map[key] = []
+                    }
+                    map[key].push(r)
                     return map
                   }, {})
                   const dayKeys = Array.from({ length: 7 }).map((_, i) => start.add(i, "day").format("YYYY-MM-DD"))
-                  const incomes = dayKeys.map((k) => totalsByDate[k] || 0)
-                  const max = Math.max(...incomes, 1)
-                  const weekTotal = incomes.reduce((sum, income) => sum + income, 0)
+                  const dateRecords = dayKeys.map((k) => recordsByDate[k] || [])
+                  
+                  // 최대 수입 계산 (개별 기록 합계 기준)
+                  const dateTotals = dateRecords.map(records =>
+                    records.reduce((sum, r) => sum + (r.daily_wage || 0), 0)
+                  )
+                  const max = Math.max(...dateTotals, 1)
+                  const weekTotal = dateTotals.reduce((sum, total) => sum + total, 0)
                   
 					return (
                         <div className="mt-4">
                             {/* 🏷️ 주차 소제목 */}
                             <div className="flex items-center justify-between mb-2 px-1">
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                                <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center">
                                     <BarChart3 className="w-4 h-4 mr-1.5 text-mint-green" />
                                     {weekRange} 수입 현황
                                     {isCurrentWeek && (
@@ -529,47 +537,102 @@ useEffect(() => {
 									}}
 								/>
 								<div className="relative flex items-end h-full gap-2 w-full">
-									{incomes.map((val, i) => {
-										const h = Math.max(4, Math.round((val / max) * 80))
-                                    return (
-                                        <div
-                                            key={i}
-                                            className="relative flex-1 min-w-0 flex justify-center"
-                                            onPointerEnter={(e) => { if (e.pointerType === 'mouse') setActiveBarIndex(i) }}
-                                            onPointerLeave={(e) => { if (e.pointerType === 'mouse') setActiveBarIndex(null) }}
-                                            onPointerDown={(e) => {
-                                                if (e.pointerType === 'touch') setActiveBarIndex(i)
-                                                if (e.pointerType === 'mouse') setActiveBarIndex(i)
-                                            }}
-                                            role="button"
-                                            aria-label={`수입 ${val.toLocaleString()}원`}
-                                        >
-                                            <div className="w-8 bg-mint-green rounded-t-md shadow-sm" style={{ height: `${h}px` }} />
-                                            {activeBarIndex === i && val > 0 && (
-                                                <div
-                                                    className="absolute left-1/2 -translate-x-1/2"
-                                                    style={{ bottom: `${h + 6}px` }}
-                                                >
-                                                    {/* speech bubble with bordered tail */}
-                                                    <div className="relative inline-block whitespace-nowrap">
-                                                        <div className="px-2 py-1 bg-white dark:bg-gray-900 border border-mint-green text-[12px] font-semibold text-dark-navy dark:text-white rounded-full shadow">
-                                                            +{val.toLocaleString()}원
-                                                        </div>
-                                                        {/* outer border tail */}
-                                                        <div className="absolute left-1/2 -translate-x-1/2 -bottom-[6px] w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-mint-green" />
-                                                        {/* inner fill tail */}
-                                                        <div className="absolute left-1/2 -translate-x-1/2 -bottom-[5px] w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] dark:border-t-gray-900 border-t-white" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-									})}
+									{dateRecords.map((records, i) => {
+								                                // 해당 날짜의 총 수입 계산
+								                                const dayTotal = records.reduce((sum, r) => sum + (r.daily_wage || 0), 0)
+								                                const totalHeight = Math.max(4, Math.round((dayTotal / max) * 80))
+								                                
+								                                // 기록이 없으면 빈 바 표시
+								                                if (records.length === 0) {
+								                                    return (
+								                                        <div
+								                                            key={i}
+								                                            className="relative flex-1 min-w-0 flex justify-center"
+								                                        >
+								                                            {/* 빈 바 (높이 0) */}
+								                                        </div>
+								                                    )
+								                                }
+								                                
+								                                return (
+								                                    <div
+								                                        key={i}
+								                                        className="relative flex-1 min-w-0 flex justify-center"
+								                                        onPointerEnter={(e) => { if (e.pointerType === 'mouse') setActiveBarIndex(i) }}
+								                                        onPointerLeave={(e) => { if (e.pointerType === 'mouse') setActiveBarIndex(null) }}
+								                                        onPointerDown={(e) => {
+								                                            if (e.pointerType === 'touch') setActiveBarIndex(i)
+								                                            if (e.pointerType === 'mouse') setActiveBarIndex(i)
+								                                        }}
+								                                        role="button"
+								                                        aria-label={`수입 ${dayTotal.toLocaleString()}원`}
+								                                    >
+								                                        {/* 누적 막대 그래프 (스택 형태) */}
+								                                        <div className="w-8 flex flex-col-reverse rounded-t-md shadow-sm overflow-hidden">
+								                                            {records.map((record, recordIndex) => {
+								                                                // 개별 기록의 높이 계산 (비율 유지)
+								                                                const recordAmount = record.daily_wage || 0
+								                                                const recordHeight = Math.max(
+								                                                    2,
+								                                                    Math.round((recordAmount / dayTotal) * totalHeight)
+								                                                )
+								                                                
+								                                                // 직업 색상 결정 (직업별 다른 색상)
+								                                                const jobColor = record.jobs?.color ||
+								                                                    ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336'][recordIndex % 5]
+								                                                
+								                                                return (
+								                                                    <div
+								                                                        key={recordIndex}
+								                                                        className="w-full"
+								                                                        style={{
+								                                                            height: `${recordHeight}px`,
+								                                                            backgroundColor: jobColor
+								                                                        }}
+								                                                    />
+								                                                )
+								                                            })}
+								                                        </div>
+								                                        
+								                                        {/* 툴팁 (상세 정보) */}
+								                                        {activeBarIndex === i && dayTotal > 0 && (
+								                                            <div
+								                                                className="absolute left-1/2 -translate-x-1/2 z-10"
+								                                                style={{ bottom: `${totalHeight + 6}px` }}
+								                                            >
+								                                                <div className="relative inline-block whitespace-nowrap">
+								                                                    <div className="px-3 py-2 bg-white dark:bg-gray-900 border border-mint-green text-[12px] text-dark-navy dark:text-white rounded-lg shadow">
+								                                                        <div className="font-semibold border-b border-gray-200 dark:border-gray-700 pb-1 mb-1">
+								                                                            총 +{dayTotal.toLocaleString()}원
+								                                                        </div>
+								                                                        <div className="space-y-1 max-w-[150px]">
+								                                                            {records.map((record, idx) => (
+								                                                                <div key={idx} className="flex justify-between items-center">
+								                                                                    <span className="truncate mr-2">
+								                                                                        {record.jobs?.job_name || '직업명 없음'}
+								                                                                    </span>
+								                                                                    <span className="font-medium whitespace-nowrap">
+								                                                                        {(record.daily_wage || 0).toLocaleString()}원
+								                                                                    </span>
+								                                                                </div>
+								                                                            ))}
+								                                                        </div>
+								                                                    </div>
+								                                                    {/* outer border tail */}
+								                                                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-[6px] w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-mint-green" />
+								                                                    {/* inner fill tail */}
+								                                                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-[5px] w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] dark:border-t-gray-900 border-t-white" />
+								                                                </div>
+								                                            </div>
+								                                        )}
+								                                    </div>
+								                                )
+								                            })}
 								</div>
 							</div>
 							{/* 라벨 영역: 요일만 표기 */}
 							<div className="mt-1 flex gap-2">
-								{incomes.map((val, i) => (
+								{dateRecords.map((_, i) => (
 									<div key={`label-${i}`} className="flex-1 min-w-0 text-center">
 										<div className="text-[11px] text-medium-gray dark:text-gray-400">{["일","월","화","수","목","금","토"][i]}</div>
 									</div>
