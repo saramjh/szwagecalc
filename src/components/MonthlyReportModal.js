@@ -255,20 +255,24 @@ const MonthlyReportModal = ({ isOpen, onClose, selectedMonth, session, jobs }) =
 		}
 	}, [isOpen, selectedMonth, session, fetchMonthlyRecords, selectedJobFilterId])
 
-  // 🎯 계산 로직을 monthlyRecords가 아닌 필터링된 recordsForSelectedMonth 기준으로 실행
-	useEffect(() => {
+  useEffect(() => {
     if (monthlyRecords.length > 0) {
-      // 시급 정보는 모든 기록에 대해 조회
-      fetchHourlyRates(monthlyRecords).then(() => {
-        // 월간 요약은 필터링된 기록으로 계산
-        calculateMonthlySummary(recordsForSelectedMonth);
-        
-        // 주휴수당은 필터링되지 않은 전체 기록으로 계산
-        const weeklyAllowanceResult = calculateMonthlyWeeklyAllowance(monthlyRecords, jobs, selectedMonth);
-        setWeeklyAllowanceSummary(weeklyAllowanceResult);
-      });
+      fetchHourlyRates(monthlyRecords);
     }
-  }, [monthlyRecords, recordsForSelectedMonth, jobs, selectedMonth, fetchHourlyRates, calculateMonthlySummary]);
+  }, [monthlyRecords, fetchHourlyRates]);
+
+  useEffect(() => {
+    if (monthlyRecords.length > 0) {
+      calculateMonthlySummary(recordsForSelectedMonth);
+    }
+  }, [monthlyRecords, recordsForSelectedMonth, calculateMonthlySummary]);
+
+  useEffect(() => {
+    if (monthlyRecords.length > 0) {
+      const weeklyAllowanceResult = calculateMonthlyWeeklyAllowance(monthlyRecords, jobs, selectedMonth);
+      setWeeklyAllowanceSummary(weeklyAllowanceResult);
+    }
+  }, [monthlyRecords, jobs, selectedMonth]);
 
 
 	if (!showModal) return null
