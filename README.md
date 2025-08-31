@@ -27,7 +27,7 @@
 
 ### 🚀 **바로가기**
 
-**[https://hrwage.run.place/](https://hrwage.run.place/)**
+**[https://sigub.kr/](https://sigub.kr/)**
 
 ---
 
@@ -103,14 +103,14 @@ React와 Supabase를 기반으로 빠르게 구현했으며, 사용자의 피드
 
 #### **Android (Chrome 기준)**
 
-1. [https://hrwage.run.place/](https://hrwage.run.place/)에 접속합니다.
+1. [https://sigub.kr/](https://sigub.kr/)에 접속합니다.
 2. 브라우저 우측 상단의 메뉴(︙)를 누릅니다.
 3. **"홈 화면에 추가"** 또는 **"앱 설치"**를 선택합니다.
 4. 안내에 따라 추가하면 홈 화면에 아이콘이 생성됩니다.
 
 #### **iPhone (Safari 기준)**
 
-1. [https://hrwage.run.place/](https://hrwage.run.place/)에 접속합니다.
+1. [https://sigub.kr/](https://sigub.kr/)에 접속합니다.
 2. 하단의 공유 버튼( )을 누릅니다.
 3. **"홈 화면에 추가"**를 선택합니다.
 4. 이름을 확인한 뒤 **"추가"**를 누르면 홈 화면에 아이콘이 생성됩니다.
